@@ -8,7 +8,7 @@ export default function Index() {
             <Text className="text-5xl text-white font-bold align-middle">
                 Welcome!
             </Text>
-            <Link href="/(onboarding)/hubSetup">Get Started </Link>
+            <Link href="/(onboarding)/hubSetup">Get Started</Link>
         </View>
     );
 }
