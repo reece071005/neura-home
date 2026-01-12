@@ -1,4 +1,5 @@
-import {StyleSheet, Text, View} from 'react-native';
+import {Image, Text, View} from 'react-native';
+import {Link} from "expo-router"
 import React from 'react';
 
 import Logo from '@/components/Logo';
@@ -17,16 +18,23 @@ const HubSearch = () => {
                         Neura Home is searching for your hub this may take a few minutes
                     </Text>
                 </View>
+
                 <View className="flex-1 items-center justify-center">
-                    <View className="relative items-center justifty-center">
+                    <View className="relative items-center justify-center" style={{width:260, height:260}}>
                         <Spinner size={260}></Spinner>
-                        <View className="absolute">
-                            <Logo color="gradient" shape="square" text="none" size={160}/>
+                        <View className="absolute inset-0 items-center justify-center">
+                            <Image
+                                source={require("../../assets/logo/png/logoGradientSquareNoText.png")}
+                                style-={{width:180, height:180}}
+                                resizeMode="contain"
+                            />
                         </View>
                     </View>
-                    <Text className="text-textSecondary text-body font-semibold">
-                        Add address manually
-                    </Text>
+                    <Link href="/(onboarding)/manualAddress" className="mt-36">
+                        <Text className="text-textSecondary text-body font-semibold">
+                            Add address manually
+                        </Text>
+                    </Link>
                 </View>
             </View>
         </View>
