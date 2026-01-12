@@ -8,13 +8,11 @@ type WhiteButtonProps = {
 
 const WhiteButton = ({title, onPress}: WhiteButtonProps) => {
     return (
-        <View className="flex">
-            <Pressable onPress={onPress} className="bg-white px-16 py-4 rounded-3xl">
-                <Text className="text-primaryTo font-bold text-center text-1xl">
-                    {title}
-                </Text>
-            </Pressable>
-        </View>
+        <Pressable onPress={onPress} className="bg-white px-16 py-4 rounded-3xl shadow-lg">
+            <Text className="text-primaryTo text-button font-bold text-center">
+                {title}
+            </Text>
+        </Pressable>
     )
 }
 

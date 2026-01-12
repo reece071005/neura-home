@@ -13,7 +13,6 @@
     },
     "android": {
       "package": "com.neurahome.app",
-
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/logo/png/logoGradientSquareNoText.png",
@@ -40,7 +39,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
