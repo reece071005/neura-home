@@ -1,11 +1,40 @@
 import {Image, Text, View} from 'react-native';
-import {Link} from "expo-router"
-import React from 'react';
+import {Link, router} from "expo-router"
+import React, { useEffect, useRef } from 'react';
 
 import Logo from '@/components/Logo';
 import Spinner from "@/components/Spinner";
 
+import {startHubDiscovery} from "@/services/hubDiscovery";
+
 const HubSearch = () => {
+    const navigated = useRef(false);
+
+    useEffect(()=> {
+        const stop = startHubDiscovery({
+            timeoutMs: 6000,
+            fake: {outcome: "timeout", delayMs: 5000},
+
+            onFound: (hub) => {
+                if (navigated.current) return;
+                navigated.current = true;
+
+                router.replace({
+                    pathname: "/(onboarding)/hubFound",
+                    params: {id: hub.id, name: hub.name, ip: hub.ip}
+                });
+            },
+
+            onTimeout: () => {
+                if (navigated.current) return;
+                navigated.current = true;
+
+                router.replace("/(onboarding)/hubNotFound");
+            },
+        });
+        return stop;
+    }, []);
+
     return (
         <View className="flex-1">
             <View className="flex-1"></View>

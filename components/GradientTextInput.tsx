@@ -27,7 +27,7 @@ const GradientTextInput = ({
     const gradientColors = useMemo(() => {
         if (mode === "error") return ["#EF4444", "#EF4444"]; // red
         if (mode === "focused") return ["#3DC4E0", "#4985EE"]; // <-- replace with your primaryFrom/primaryTo
-        return ["#E5E7EB", "#E5E7EB"]; // gray-200
+        return ["#C4C4C4", "#C4C4C4"]; // gray-200
     }, [mode]);
 
     return (
@@ -43,7 +43,7 @@ const GradientTextInput = ({
                 colors={gradientColors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={{ borderRadius: 30, padding: 2 }}
+                style={{ borderRadius: 32, padding: 2 }}
             >
                 <View className="bg-white rounded-[30px] px-4 py-3">
                     <TextInput

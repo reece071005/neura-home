@@ -14,6 +14,7 @@ module.exports = {
         textPrimary: '#000000',
         textSecondary: '#868686',
         textWhite: '#FFFFFF',
+        greyButton: '#C4C4C4'
       },
       fontFamily: {
         regular: ["Poppins"],
