@@ -1,42 +1,67 @@
-import {StyleSheet, Text, View, Dimensions} from 'react-native'
-import {router} from "expo-router";
-import React, { useMemo, useState } from 'react'
+import { Text, View } from 'react-native'
+import { router, Link} from "expo-router";
+import React, { useState } from 'react'
 
 import GradientButton from "@/components/GradientButton";
 import GradientTextInput from "@/components/GradientTextInput";
 
-import HubSetupIllustration from "@/assets/illustrations/manualIP.svg";
+import SignInIllustration from "@/assets/illustrations/signIn.svg";
 
 const HubSetup = () => {
-    const [ip, setIp] = useState("");
+    const [password, setPassword] = useState("");
+    const [username, setUsername] = useState("");
 
     return (
         <View className="flex-1">
-            <View className="flex-[2] justify-center items-center">
+            <View className="flex-[5] justify-center items-center">
                 <View className={"w-5/6"}>
-                    <HubSetupIllustration width="100%" height="100%"/>
+                    <SignInIllustration width="100%" height="100%"/>
                 </View>
             </View>
-            <View className="flex-1 bg-white px-6 pt-6 rounded-t-3xl">
+            <View className="flex-[5] bg-white px-6 pt-6 rounded-t-3xl">
                 <View className="gap-3">
                     <Text className="text-primaryTo font-bold text-h3 ">
-                        Manual address
+                        Hub 2 is already setup
                     </Text>
                     <Text className="text-textSecondary text-body font-semibold">
-                        If your device was not detected, you can enter the IP address of your hub
+                        Please sign in to access this hub
                     </Text>
                 </View>
                 <View className="flex-1 justify-center items-center gap-10">
-                    <GradientTextInput
-                          value={ip}
-                          onChangeText={setIp}
-                          placeholder="e.g. 192.168.1.100"
-                          keyboardType="numeric"
-                    />
-                    <GradientButton
-                        title={"Submit"}
-                        onPress={() => router.push("")}
-                    />
+                    <View className="w-full gap-6">
+                        <GradientTextInput
+                            label="Username"
+                            value={username}
+                            onChangeText={setUsername}
+                            placeholder="Username"
+                            keyboardType="numeric"
+                        />
+                        <GradientTextInput
+                            label="Password"
+                            value={password}
+                            onChangeText={setPassword}
+                            placeholder="Password"
+                            keyboardType="numeric"
+                            secureTextEntry
+                            showPasswordToggle
+                        />
+                    </View>
+                    <View className="w-full">
+                            <GradientButton
+                                title={"Sign In"}
+                                onPress={() => router.push("")}
+                            />
+                        <View className="items-center mt-3">
+                            <Text className="text-subtext font-medium">
+                                Want to reset your hub?
+                            </Text>
+                            <Link href={"/(onboarding)/hubAlreadySetup"}> {/*href needs to be updated*/}
+                                <Text className="text-primaryTo text-hint font-medium">
+                                    Reset here
+                                </Text>
+                            </Link>
+                        </View>
+                    </View>
                 </View>
             </View>
         </View>
@@ -44,4 +69,3 @@ const HubSetup = () => {
 }
 
 export default HubSetup
-const styles = StyleSheet.create({})

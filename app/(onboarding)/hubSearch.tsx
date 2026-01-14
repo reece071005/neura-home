@@ -13,7 +13,7 @@ const HubSearch = () => {
     useEffect(()=> {
         const stop = startHubDiscovery({
             timeoutMs: 6000,
-            fake: {outcome: "timeout", delayMs: 5000},
+            fake: {outcome: "found", delayMs: 5000},
 
             onFound: (hub) => {
                 if (navigated.current) return;

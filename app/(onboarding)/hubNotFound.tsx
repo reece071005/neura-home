@@ -30,7 +30,7 @@ const HubNotFound = () => {
                     />
                     <View className="items-center mt-3">
                         <Text className="font-medium text-subtext text-black">Can't find your hub?</Text>
-                        <Link className="font-regular text-hint text-primaryTo"   href={"/(onboarding)/manualAddress"}>Manual Address</Link>
+                        <Link className="font-medium text-hint text-primaryTo"   href={"/(onboarding)/manualAddress"}>Manual Address</Link>
                     </View>
                 </View>
             </View>
