@@ -4,7 +4,7 @@ import React from 'react'
 
 import GradientButton from "@/components/GradientButton";
 
-import HubSetupIllustration from "@/assets/illustrations/hubSetup.svg";
+import HubSetupIllustration from "@/assets/illustrations/manualIP.svg";
 
 const HubSetup = () => {
     return (

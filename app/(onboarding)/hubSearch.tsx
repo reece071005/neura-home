@@ -13,7 +13,7 @@ const HubSearch = () => {
     useEffect(()=> {
         const stop = startHubDiscovery({
             timeoutMs: 6000,
-            fake: {outcome: "timeout", delayMs: 5000},
+            fake: {outcome: "found", delayMs: 2000},
 
             onFound: (hub) => {
                 if (navigated.current) return;
@@ -39,7 +39,7 @@ const HubSearch = () => {
         <View className="flex-1">
             <View className="flex-1"></View>
             <View className="flex-[7] bg-white px-6 pt-6 rounded-t-3xl">
-                <View className="gap-2">
+                <View className="gap-1">
                     <Text className="text-primaryTo text-h3 font-bold">
                         Searching for your hub
                     </Text>

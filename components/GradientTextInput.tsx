@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TextInput } from 'react-native';
+import {View, Text, TextInput, Pressable} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const GradientTextInput = ({
     label,
@@ -13,11 +14,13 @@ const GradientTextInput = ({
     autoCapitalize = "none",
     autoCorrect = false,
     secureTextEntry = false,
+    showPasswordToggle = false,
     returnKeyType,
     onSubmitEditing,
     maxLength,
 }) => {
     const [focused, setFocused] = useState(false);
+    const [passwordHidden, setPasswordHidden] = useState(true);
 
     const mode = useMemo(()=> {
         if (error) return "error";
@@ -30,10 +33,13 @@ const GradientTextInput = ({
         return ["#C4C4C4", "#C4C4C4"]; // gray-200
     }, [mode]);
 
+    const isPasswordField = secureTextEntry || showPasswordToggle;
+    const effectiveSecure = isPasswordField ? passwordHidden : false;
+
     return (
         <View className="w-full">
             {!!label && (
-                <Text className="mb-2 text-textSecondary font-semibold">
+                <Text className="mb-0.5 text-textSecondary font-semibold pl-6">
                     {label}
                 </Text>
             )}
@@ -45,23 +51,39 @@ const GradientTextInput = ({
                 end={{ x: 1, y: 1 }}
                 style={{ borderRadius: 32, padding: 2 }}
             >
-                <View className="bg-white rounded-[30px] px-4 py-3">
-                    <TextInput
-                         placeholder={placeholder}
-                         value={value}
-                         onChangeText={onChangeText}
-                         placeholderTextColor="#868686"
-                         keyboardType={keyboardType}
-                         autoCapitalize={autoCapitalize}
-                         autoCorrect={autoCorrect}
-                         secureTextEntry={secureTextEntry}
-                         returnKeyType={returnKeyType}
-                         onSubmitEditing={onSubmitEditing}
-                         maxLength={maxLength}
-                         onFocus={() => setFocused(true)}
-                         onBlur={() => setFocused(false)}
-                         className="text-black font-semibold"
-                    />
+                <View className="bg-white rounded-[30px] px-4 py-2">
+                    <View className="flex-row items-center">
+                        {isPasswordField && (
+                            <Pressable
+                                onPress={() => setPasswordHidden((v) => !v)}
+                                hitSlop={10}
+                                className="pr-2"
+                                >
+                                <MaterialIcons
+                                    name={passwordHidden ? "visibility" : "visibility-off"}
+                                    size={22}
+                                    color="#868686"
+                                />
+                            </Pressable>
+                        )}
+                        <TextInput
+                             placeholder={placeholder}
+                             value={value}
+                             onChangeText={onChangeText}
+                             placeholderTextColor="#868686"
+                             keyboardType={keyboardType}
+                             autoCapitalize={autoCapitalize}
+                             autoCorrect={autoCorrect}
+                             secureTextEntry={effectiveSecure}
+                             returnKeyType={returnKeyType}
+                             onSubmitEditing={onSubmitEditing}
+                             maxLength={maxLength}
+                             onFocus={() => setFocused(true)}
+                             onBlur={() => setFocused(false)}
+                             className="flex-1 text-black font-semibold py-3"
+                        />
+
+                    </View>
                 </View>
             </LinearGradient>
       {!!error ? (
