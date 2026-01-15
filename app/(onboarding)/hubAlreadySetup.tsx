@@ -19,15 +19,15 @@ const HubSetup = () => {
                 </View>
             </View>
             <View className="flex-[5] bg-white px-6 pt-6 rounded-t-3xl">
-                <View className="gap-3">
-                    <Text className="text-primaryTo font-bold text-h3 ">
-                        Hub 2 is already setup
+                <View className="gap-1 mb-5">
+                    <Text className="text-primaryTo font-bold text-h3">
+                        Hub 1 is already setup
                     </Text>
                     <Text className="text-textSecondary text-body font-semibold">
                         Please sign in to access this hub
                     </Text>
                 </View>
-                <View className="flex-1 justify-center items-center gap-10">
+                <View className="flex-1 items-center gap-10">
                     <View className="w-full gap-6">
                         <GradientTextInput
                             label="Username"

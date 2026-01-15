@@ -14,7 +14,7 @@ const HubFound = () => {
         <View className="flex-1">
             <View className="flex-1"></View>
             <View className="flex-[7] bg-white px-6 pt-6 rounded-t-3xl">
-                <View className="gap-2">
+                <View className="gap-1">
                     <Text className="text-primaryTo text-h3 font-bold">
                         Hub's found
                     </Text>

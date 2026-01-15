@@ -39,7 +39,7 @@ const GradientTextInput = ({
     return (
         <View className="w-full">
             {!!label && (
-                <Text className="mb-2 text-textSecondary font-semibold pl-6">
+                <Text className="mb-0.5 text-textSecondary font-semibold pl-6">
                     {label}
                 </Text>
             )}
@@ -57,7 +57,7 @@ const GradientTextInput = ({
                             <Pressable
                                 onPress={() => setPasswordHidden((v) => !v)}
                                 hitSlop={10}
-                                className="pr-3"
+                                className="pr-2"
                                 >
                                 <MaterialIcons
                                     name={passwordHidden ? "visibility" : "visibility-off"}

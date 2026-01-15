@@ -18,7 +18,7 @@ const HubSetup = () => {
                 </View>
             </View>
             <View className="flex-1 bg-white px-6 pt-6 rounded-t-3xl">
-                <View className="gap-3">
+                <View className="gap-1">
                     <Text className="text-primaryTo font-bold text-h3 ">
                         Manual address
                     </Text>
@@ -33,6 +33,7 @@ const HubSetup = () => {
                           placeholder="e.g. 192.168.1.100"
                           keyboardType="numeric"
                     />
+
                     <GradientButton
                         title={"Submit"}
                         onPress={() => router.push("")}
