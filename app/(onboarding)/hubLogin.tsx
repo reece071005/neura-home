@@ -49,13 +49,13 @@ const HubSetup = () => {
                     <View className="w-full">
                             <GradientButton
                                 title={"Sign In"}
-                                onPress={() => router.push("")}
+                                onPress={() => router.push("/(onboarding)/haPrep")}
                             />
                         <View className="items-center mt-3">
                             <Text className="text-subtext font-medium">
                                 Want to reset your hub?
                             </Text>
-                            <Link href={"/(onboarding)/hubAlreadySetup"}> {/*href needs to be updated*/}
+                            <Link href={"/(onboarding)/hubNewAccount"}>
                                 <Text className="text-primaryTo text-hint font-medium">
                                     Reset here
                                 </Text>

@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import { router, Link } from "expo-router";
+import { router } from "expo-router";
 import React, { useState } from "react";
 
 import GradientButton from "@/components/GradientButton";
@@ -7,7 +7,7 @@ import GradientTextInput from "@/components/GradientTextInput";
 
 import SignInIllustration from "@/assets/illustrations/signIn.svg";
 
-const HubFreshSetup = () => {
+const HubNewAccount = () => {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -25,16 +25,14 @@ const HubFreshSetup = () => {
             <View className="flex-[5.5] bg-white px-6 pt-6 rounded-t-3xl -mt-6">
                 {/* Header */}
                 <View className="gap-1">
-                    <Text className="text-primaryTo font-bold text-h3">
-                        Set up your hub
-                    </Text>
+                    <Text className="text-primaryTo font-bold text-h3">Set up your hub</Text>
                     <Text className="text-textSecondary text-body font-semibold">
                         Create an account to link this hub to you
                     </Text>
                 </View>
 
                 {/* Form placement */}
-                <View className="flex-1 justify-end pb-8">
+                <View className="flex-1 justify-center pb-10">
                     <View className="w-full gap-5">
                         <GradientTextInput
                             label="Username"
@@ -67,20 +65,8 @@ const HubFreshSetup = () => {
                     <View className="w-full mt-7">
                         <GradientButton
                             title="Create Account"
-                            onPress={() => router.push("")} // hook up later
+                            onPress={() => router.push("/(onboarding)/haPrep")}
                         />
-
-                        <View className="items-center mt-3">
-                            <Text className="text-subtext font-medium">
-                                Already have an account?
-                            </Text>
-
-                            <Link href="/(onboarding)/hubAlreadySetup">
-                                <Text className="text-primaryTo text-hint font-medium">
-                                    Sign in here
-                                </Text>
-                            </Link>
-                        </View>
                     </View>
                 </View>
             </View>
@@ -88,4 +74,4 @@ const HubFreshSetup = () => {
     );
 };
 
-export default HubFreshSetup;
+export default HubNewAccount;

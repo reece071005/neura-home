@@ -6,7 +6,7 @@ import GradientButton from "@/components/GradientButton";
 
 import HubSetupIllustration from "@/assets/illustrations/manualIP.svg";
 
-const HubSetup = () => {
+const HubPrep = () => {
     return (
         <View className="flex-1">
             <View className="flex-[2] justify-center items-center">
@@ -35,5 +35,5 @@ const HubSetup = () => {
     )
 }
 
-export default HubSetup
+export default HubPrep
 const styles = StyleSheet.create({})
