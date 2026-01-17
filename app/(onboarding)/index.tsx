@@ -16,7 +16,7 @@ export default function Index() {
             />
             <WhiteButton
                 title="Get Started"
-                onPress={()=> router.push("/(onboarding)/hubSetup")}
+                onPress={()=> router.push("/(onboarding)/hubPrep")}
             />
         </View>
     );

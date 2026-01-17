@@ -26,7 +26,7 @@ const HubFound = () => {
                     {/* Hub 1 → already set up */}
                     <Pressable
                         onPress={() =>
-                            router.push("/(onboarding)/hubAlreadySetup")
+                            router.push("/(onboarding)/hubLogin")
                         }
                         className="flex-row border-2 border-greyButton rounded-3xl p-3 items-center gap-4"
                     >
@@ -48,7 +48,7 @@ const HubFound = () => {
                     <Pressable
                         onPress={() =>
                             router.push({
-                                pathname: "/(onboarding)/hubFreshSetup",
+                                pathname: "/(onboarding)/hubNewAccount",
                                 params: {
                                     id: "hub-2",
                                     name: "Neura Hub",
