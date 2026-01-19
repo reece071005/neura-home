@@ -55,7 +55,7 @@ const HubSetup = () => {
                             <Text className="text-subtext font-medium">
                                 Want to reset your hub?
                             </Text>
-                            <Link href={"/(onboarding)/hubAlreadySetup"}> {/*href needs to be updated*/}
+                            <Link href={"/(drawer)/(tabs)/mainDashboard"}> {/*href needs to be updated*/}
                                 <Text className="text-primaryTo text-hint font-medium">
                                     Reset here
                                 </Text>
