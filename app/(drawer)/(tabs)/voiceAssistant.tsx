@@ -9,6 +9,10 @@ const mainDashboard = () => {
 
     return (
         <View className="flex-1 justify-center items-center">
+            <View className="absolute top-safe left-safe pl-3 pt-3 z-50">
+                <BurgerSearchWidget size={100}></BurgerSearchWidget>
+            </View>
+
         </View>
     );
 }
