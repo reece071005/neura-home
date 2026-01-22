@@ -1,135 +1,286 @@
 // app/(drawer)/(tabs)/mainDashboard.tsx
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { ScrollView, View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Card from "@/components/ui/Card";
 
+import Card from "@/components/ui/Card";
+import LargeLightTile from "@/components/ui/LargeLightTile";
+
+// --------------------------------
+// Types
+// --------------------------------
 type Variant = "small" | "large";
 
+type TileKind =
+  | "light"
+  | "climate"
+  | "fan"
+  | "cover"
+  | "lock"
+  | "camera"
+  | "media"
+  | "generic";
+
+type Tile = {
+  id: string;
+  title: string;
+  kind: TileKind;
+  entityId?: string;
+  entityIds?: string[];
+};
+
 type FullRow = {
-    id: string;
-    type: "full";
-    variant: Variant;
-    item: { title: string };
+  id: string;
+  type: "full";
+  variant: Variant;
+  item: Tile;
 };
 
 type TwoRow = {
-    id: string;
-    type: "two";
-    variant: Variant;
-    items: [{ title: string }, { title: string }];
+  id: string;
+  type: "two";
+  variant: Variant;
+  items: [Tile, Tile];
 };
 
-// ✅ big card next to two stacked smalls
 type SplitRow = {
-    id: string;
-    type: "split";
-    left: { variant: "large"; title: string };
-    right: [{ variant: "small"; title: string }, { variant: "small"; title: string }];
+  id: string;
+  type: "split";
+  left: Tile & { variant: "large" };
+  right: [(Tile & { variant: "small" }), (Tile & { variant: "small" })];
 };
 
 type DashboardRow = FullRow | TwoRow | SplitRow;
 
 const GAP = 8;
 
+// --------------------------------
+// Layout
+// --------------------------------
 const LAYOUT: DashboardRow[] = [
-    { id: "ai", type: "full", variant: "large", item: { title: "AI Suggestions" } },
+  {
+    id: "row_primary",
+    type: "two",
+    variant: "large",
+    items: [
+      {
+        id: "light_primary",
+        title: "Primary Bedroom",
+        kind: "light",
+        entityId: "light.primary_bedroom",
+      },
+      {
+        id: "climate_primary",
+        title: "AC",
+        kind: "climate",
+        entityId: "climate.primary_bedroom",
+      },
+    ],
+  },
 
-    { id: "row1", type: "two", variant: "small", items: [{ title: "Light" }, { title: "AC" }] },
+  {
+    id: "row_secondary",
+    type: "two",
+    variant: "small",
+    items: [
+      {
+        id: "light_living",
+        title: "Living Room",
+        kind: "light",
+        entityId: "light.living_room",
+      },
+      {
+        id: "fan_living",
+        title: "Fan",
+        kind: "fan",
+        entityId: "fan.living_room",
+      },
+    ],
+  },
 
-    {
-        id: "row_split",
-        type: "split",
-        left: { variant: "large", title: "Blinds" },
-        right: [
-            { variant: "small", title: "Fan" },
-            { variant: "small", title: "Locks" },
-        ],
+  {
+    id: "row_split",
+    type: "split",
+    left: {
+      id: "blinds",
+      title: "Blinds",
+      kind: "cover",
+      entityId: "cover.living_room",
+      variant: "large",
     },
-
-    { id: "cam", type: "full", variant: "large", item: { title: "Camera" } },
-    {
-        id: "row_split",
-        type: "split",
-        left: {variant: "large", title: "Blinds"},
-        right: [
-            {variant: "small", title: "lock"},
-            {variant: "small", title: "light"},
-        ],
-    }
+    right: [
+      {
+        id: "lock",
+        title: "Locks",
+        kind: "lock",
+        entityId: "lock.front_door",
+        variant: "small",
+      },
+      {
+        id: "camera",
+        title: "Camera",
+        kind: "camera",
+        entityId: "camera.driveway",
+        variant: "small",
+      },
+    ],
+  },
 ];
 
-function TileTitle({ title }: { title: string }) {
-    return <Text className="text-black font-bold text-center">{title}</Text>;
+// --------------------------------
+// Generic fallback tile
+// --------------------------------
+function DashboardTile({ tile, variant }: { tile: Tile; variant: Variant }) {
+  return (
+    <Card variant={variant}>
+      <View style={{ alignItems: "center", justifyContent: "center", gap: 6 }}>
+        <Text style={{ fontSize: 22 }}>⬛️</Text>
+        <Text className="text-black font-bold text-center">{tile.title}</Text>
+      </View>
+    </Card>
+  );
 }
 
-function RenderRow({ row }: { row: DashboardRow }) {
-    switch (row.type) {
-        case "full":
-            return (
-                <Card variant={row.variant}>
-                    <TileTitle title={row.item.title} />
-                </Card>
-            );
+// --------------------------------
+// Tile Renderer (THIS IS THE KEY)
+// --------------------------------
+function RenderTile({
+  tile,
+  variant,
+  brightness,
+  setBrightness,
+}: {
+  tile: Tile;
+  variant: Variant;
+  brightness: number;
+  setBrightness: (v: number) => void;
+}) {
+  switch (tile.kind) {
+    case "light":
+      if (variant === "large") {
+        return (
+          <LargeLightTile
+            title={tile.title}
+            value={brightness}
+            onChange={setBrightness}
+            onMenuPress={() => console.log("menu")}
+            showBlueBorder
+          />
+        );
+      }
+      return <DashboardTile tile={tile} variant={variant} />;
 
-            case "two":
-                return (
-                    <View className={`flex-row`} style={{ gap: GAP }}>
-                        <View className="flex-1">
-                            <Card variant={row.variant}>
-                                <TileTitle title={row.items[0].title} />
-                            </Card>
-                        </View>
-                        <View className="flex-1">
-                            <Card variant={row.variant}>
-                                <TileTitle title={row.items[1].title} />
-                            </Card>
-                        </View>
-                    </View>
-                );
-
-                case "split":
-                    return (
-                        <View className="flex-row" style={{ gap: GAP }}>
-                            {/* Left: one large */}
-                            <View className="flex-1">
-                                <Card variant={row.left.variant}>
-                                    <TileTitle title={row.left.title} />
-                                </Card>
-                            </View>
-
-                            {/* Right: two small stacked */}
-                            <View className="flex-1" style={{ gap: GAP }}>
-                                <Card variant={row.right[0].variant}>
-                                    <TileTitle title={row.right[0].title} />
-                                </Card>
-                                <Card variant={row.right[1].variant}>
-                                    <TileTitle title={row.right[1].title} />
-                                </Card>
-                            </View>
-                        </View>
-                    );
-                    default:
-                        return null;
-    }
+    case "climate":
+    case "fan":
+    case "cover":
+    case "lock":
+    case "camera":
+    case "media":
+    default:
+      return <DashboardTile tile={tile} variant={variant} />;
+  }
 }
 
+// --------------------------------
+// Row Renderer (LAYOUT ONLY)
+// --------------------------------
+function RenderRow({
+  row,
+  brightness,
+  setBrightness,
+}: {
+  row: DashboardRow;
+  brightness: number;
+  setBrightness: (v: number) => void;
+}) {
+  switch (row.type) {
+    case "full":
+      return (
+        <RenderTile
+          tile={row.item}
+          variant={row.variant}
+          brightness={brightness}
+          setBrightness={setBrightness}
+        />
+      );
+
+    case "two":
+      return (
+        <View className="flex-row" style={{ gap: GAP }}>
+          <View className="flex-1">
+            <RenderTile
+              tile={row.items[0]}
+              variant={row.variant}
+              brightness={brightness}
+              setBrightness={setBrightness}
+            />
+          </View>
+          <View className="flex-1">
+            <RenderTile
+              tile={row.items[1]}
+              variant={row.variant}
+              brightness={brightness}
+              setBrightness={setBrightness}
+            />
+          </View>
+        </View>
+      );
+
+    case "split":
+      return (
+        <View className="flex-row" style={{ gap: GAP }}>
+          <View className="flex-1">
+            <RenderTile
+              tile={row.left}
+              variant={row.left.variant}
+              brightness={brightness}
+              setBrightness={setBrightness}
+            />
+          </View>
+
+          <View className="flex-1" style={{ gap: GAP }}>
+            <RenderTile
+              tile={row.right[0]}
+              variant={row.right[0].variant}
+              brightness={brightness}
+              setBrightness={setBrightness}
+            />
+            <RenderTile
+              tile={row.right[1]}
+              variant={row.right[1].variant}
+              brightness={brightness}
+              setBrightness={setBrightness}
+            />
+          </View>
+        </View>
+      );
+  }
+}
+
+// --------------------------------
+// Screen
+// --------------------------------
 export default function MainDashboard() {
-    return (
-        <SafeAreaView edges={["top"]} className="flex-1">
-            <ScrollView
-                className="flex-1 "
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 24, paddingTop: 64 }}
-                overScrollMode={"never"}
-                bounces={false}
-            >
-                <View className="px-4 pt-6" style={{ gap: GAP }}>
-                    {LAYOUT.map((row) => (
-                        <RenderRow key={row.id} row={row} />
-                    ))}
-                </View>
-            </ScrollView>
-        </SafeAreaView>
-    );
+  const layout = useMemo(() => LAYOUT, []);
+  const [brightness, setBrightness] = useState(0.6);
+
+  return (
+    <SafeAreaView edges={["top"]} className="flex-1">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 24, paddingTop: 64 }}
+      >
+        <View className="px-4 pt-6" style={{ gap: GAP }}>
+          {layout.map((row) => (
+            <RenderRow
+              key={row.id}
+              row={row}
+              brightness={brightness}
+              setBrightness={setBrightness}
+            />
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }

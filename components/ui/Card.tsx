@@ -21,7 +21,7 @@ const Card = ({
 
     const padding = {
         small: "p-4 h-[86px]",
-        large: "p-5 h-[180px]",
+        large: "p-4 h-[180px]",
     }[variant];
 
     const content = (
