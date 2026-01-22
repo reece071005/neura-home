@@ -16,7 +16,7 @@ export default function Index() {
             />
             <WhiteButton
                 title="Get Started"
-                onPress={()=> router.push("/(drawer)/adminPage")}
+                onPress={()=> router.push("/(onboarding)/hubPrep")}
             />
         </View>
     );
