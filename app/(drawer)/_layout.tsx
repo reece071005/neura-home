@@ -63,7 +63,7 @@ function CustomDrawerContent(props: any) {
                 className="flex-row items-center text-center"
                 onPress={() => {
                     props.navigation.closeDrawer();
-                    router.push("/"); //NEEDS TO BE CHANGED LATER. TEMPORARY ROUTE.
+                    router.push("/(drawer)/(tabs)/mainDashboard");
                 }}
             >
                 <TabIcon name="home" size={30}/>

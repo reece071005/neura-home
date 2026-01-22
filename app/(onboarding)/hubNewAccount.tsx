@@ -1,7 +1,6 @@
 import { Text, View } from "react-native";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { register } from "@/lib/api/auth"
 
 import GradientButton from "@/components/GradientButton";
 import GradientTextInput from "@/components/GradientTextInput";
@@ -13,15 +12,6 @@ const HubNewAccount = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const onRegister = async () => {
-        try{
-            await register(email, username, password);
-            router.replace("/(onboarding)/haPrep")
-        } catch (err: any){
-            console.error(err);
-            alert(err.message ?? "register failed");
-        }
-    }
     return (
         <View className="flex-1">
             {/* Illustration */}
@@ -75,7 +65,7 @@ const HubNewAccount = () => {
                     <View className="w-full mt-7">
                         <GradientButton
                             title="Create Account"
-                            onPress={onRegister}
+                            onPress={() => router.push("/(onboarding)/haPrep")}
                         />
                     </View>
                 </View>
