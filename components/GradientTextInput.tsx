@@ -10,6 +10,7 @@ const GradientTextInput = ({
     placeholder,
     helperText,
     error,
+    errorText,
     keyboardType = "default",
     autoCapitalize = "none",
     autoCorrect = false,
@@ -86,10 +87,10 @@ const GradientTextInput = ({
                     </View>
                 </View>
             </LinearGradient>
-      {!!error ? (
-        <Text className="mt-2 text-red-500 font-semibold">{error}</Text>
+      {!!error && errorText? (
+        <Text className="mt-2 pl-6 text-textAlert font-semibold">{errorText}</Text>
       ) : !!helperText ? (
-        <Text className="mt-2 text-textSecondary font-semibold">{helperText}</Text>
+        <Text className="mt-2 pl-6 text-textSecondary font-semibold">{helperText}</Text>
       ) : null}
     </View>
   );
