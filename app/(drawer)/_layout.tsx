@@ -1,5 +1,4 @@
 import { Drawer } from "expo-router/drawer";
-import {Platform} from "react-native";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { Text, Pressable } from "react-native";
 import { router } from "expo-router";
@@ -35,6 +34,7 @@ function CustomDrawerContent(props: any) {
                     History
                 </Text>
             </Pressable>
+
             <Pressable
                 className="flex-row items-center text-center"
                 onPress={() => {
@@ -42,11 +42,12 @@ function CustomDrawerContent(props: any) {
                     router.push("/(drawer)/(tabs)/mainDashboard");
                 }}
             >
-                <TabIcon name="home" size={30}/>
+                <TabIcon name="home" size={30} />
                 <Text className="text-textPrimary font-medium text-button pl-4">
                     Automations
                 </Text>
             </Pressable>
+
             <Pressable
                 className="flex-row items-center text-center"
                 onPress={() => {
@@ -54,26 +55,27 @@ function CustomDrawerContent(props: any) {
                     router.push("/(drawer)/(tabs)/mainDashboard");
                 }}
             >
-                <TabIcon name="home" size={30}/>
+                <TabIcon name="home" size={30} />
                 <Text className="text-textPrimary font-medium text-button pl-4">
                     Notifications
                 </Text>
             </Pressable>
+
+            {/* ✅ Devices routes into its own stack */}
             <Pressable
                 className="flex-row items-center text-center"
                 onPress={() => {
                     props.navigation.closeDrawer();
-                    router.push("/"); //NEEDS TO BE CHANGED LATER. TEMPORARY ROUTE.
+                    router.push("/(drawer)/devices");
                 }}
             >
-                <TabIcon name="home" size={30}/>
+                <TabIcon name="home" size={30} />
                 <Text className="text-textPrimary font-medium text-button pl-4">
                     Devices
                 </Text>
             </Pressable>
         </DrawerContentScrollView>
     );
-
 }
 
 export default function DrawerLayout() {
@@ -93,6 +95,15 @@ export default function DrawerLayout() {
             <Drawer.Screen
                 name="(tabs)"
                 options={{ drawerItemStyle: { display: "none" } }}
+            />
+
+            {/* ✅ IMPORTANT: hide Drawer header so Devices Stack controls back correctly */}
+            <Drawer.Screen
+                name="devices"
+                options={{
+                    drawerItemStyle: { display: "none" },
+                    headerShown: false,
+                }}
             />
         </Drawer>
     );
