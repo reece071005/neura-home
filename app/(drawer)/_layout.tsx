@@ -1,6 +1,6 @@
 import { Drawer } from "expo-router/drawer";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
-import { Text, Pressable } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { router } from "expo-router";
 
 import BurgerSearchWidget from "@/components/BurgerSearchWidget";
@@ -8,72 +8,91 @@ import TabIcon from "@/components/TabIcon";
 
 function CustomDrawerContent(props: any) {
     return (
-        <DrawerContentScrollView {...props}>
-            <Pressable
-                className="flex-row items-center text-center"
-                onPress={() => {
-                    props.navigation.closeDrawer();
-                    router.push("/(drawer)/(tabs)/mainDashboard");
-                }}
-            >
-                <TabIcon name="home" size={30} />
-                <Text className="text-textPrimary font-medium text-button pl-4">
-                    Dashboards
-                </Text>
-            </Pressable>
+        <DrawerContentScrollView
+            {...props}
+            contentContainerStyle={{ flexGrow: 1}}
+        >
+            <View className="gap-y-5">
+                <Pressable
+                    className="flex-row items-center text-center"
+                    onPress={() => {
+                        props.navigation.closeDrawer();
+                        router.push("/(drawer)/(tabs)/mainDashboard");
+                    }}
+                >
+                    <TabIcon name="home" size={30} />
+                    <Text className="text-textPrimary font-medium text-button pl-4">
+                        Dashboards
+                    </Text>
+                </Pressable>
 
-            <Pressable
-                className="flex-row items-center text-center"
-                onPress={() => {
-                    props.navigation.closeDrawer();
-                    router.push("/(drawer)/(tabs)/mainDashboard");
-                }}
-            >
-                <TabIcon name="home" size={30} />
-                <Text className="text-textPrimary font-medium text-button pl-4">
-                    History
-                </Text>
-            </Pressable>
+                <Pressable
+                    className="flex-row items-center text-center"
+                    onPress={() => {
+                        props.navigation.closeDrawer();
+                        router.push("/(drawer)/(tabs)/mainDashboard");
+                    }}
+                >
+                    <TabIcon name="history" size={30} />
+                    <Text className="text-textPrimary font-medium text-button pl-4">
+                        History
+                    </Text>
+                </Pressable>
 
-            <Pressable
-                className="flex-row items-center text-center"
-                onPress={() => {
-                    props.navigation.closeDrawer();
-                    router.push("/(drawer)/(tabs)/mainDashboard");
-                }}
-            >
-                <TabIcon name="home" size={30} />
-                <Text className="text-textPrimary font-medium text-button pl-4">
-                    Automations
-                </Text>
-            </Pressable>
+                <Pressable
+                    className="flex-row items-center text-center"
+                    onPress={() => {
+                        props.navigation.closeDrawer();
+                        router.push("/(drawer)/(tabs)/mainDashboard");
+                    }}
+                >
+                    <TabIcon name="automations" size={30} />
+                    <Text className="text-textPrimary font-medium text-button pl-4">
+                        Automations
+                    </Text>
+                </Pressable>
 
-            <Pressable
-                className="flex-row items-center text-center"
-                onPress={() => {
-                    props.navigation.closeDrawer();
-                    router.push("/(drawer)/(tabs)/mainDashboard");
-                }}
-            >
-                <TabIcon name="home" size={30} />
-                <Text className="text-textPrimary font-medium text-button pl-4">
-                    Notifications
-                </Text>
-            </Pressable>
+                <Pressable
+                    className="flex-row items-center text-center"
+                    onPress={() => {
+                        props.navigation.closeDrawer();
+                        router.push("/(drawer)/(tabs)/mainDashboard");
+                    }}
+                >
+                    <TabIcon name="notifications" size={30} />
+                    <Text className="text-textPrimary font-medium text-button pl-4">
+                        Notifications
+                    </Text>
+                </Pressable>
 
-            {/* ✅ Devices routes into its own stack */}
+                {/* ✅ Devices routes into its own stack */}
+                <Pressable
+                    className="flex-row items-center text-center"
+                    onPress={() => {
+                        props.navigation.closeDrawer();
+                        router.push("/(drawer)/devices");
+                    }}
+                >
+                    <TabIcon name="devices" size={30} />
+                    <Text className="text-textPrimary font-medium text-button pl-4">
+                        Devices
+                    </Text>
+                </Pressable>
+            </View>
+            <View className="mt-auto pb-2">
             <Pressable
                 className="flex-row items-center text-center"
                 onPress={() => {
                     props.navigation.closeDrawer();
-                    router.push("/(drawer)/devices");
+                    router.push("/(drawer)/userSettings");
                 }}
             >
-                <TabIcon name="home" size={30} />
+                <TabIcon name="settings" size={30} />
                 <Text className="text-textPrimary font-medium text-button pl-4">
-                    Devices
+                    Settings
                 </Text>
             </Pressable>
+            </View>
         </DrawerContentScrollView>
     );
 }
