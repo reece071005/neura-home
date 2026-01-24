@@ -1,6 +1,8 @@
 import { Tabs } from "expo-router";
 import {LinearGradient} from "expo-linear-gradient";
 import TabIcon from "@/components/TabIcon"
+import { MaterialIcons } from "@expo/vector-icons";
+
 
 export default function TabsLayout() {
     return (
@@ -39,6 +41,14 @@ export default function TabsLayout() {
                     options= {{
                         tabBarIcon: ({ focused }) => (
                             <TabIcon  name="microphone" focused={focused}/>
+                        ),
+                    }}
+                />
+                <Tabs.Screen
+                    name="cameraDashboard"
+                    options={{
+                        tabBarIcon: ({ focused }) => (
+                            <TabIcon name="camera" focused={focused} />
                         ),
                     }}
                 />
