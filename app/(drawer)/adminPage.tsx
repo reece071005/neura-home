@@ -1,6 +1,12 @@
 import { Text, View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import cancel from "/assets/icons/cancel.svg";
+import Account_Box from "@/assets/icons/Account_Box.svg";
+import automation from "@/assets/icons/automation.svg";
+import Cancel from "@/assets/icons/Cancel.svg";
+import device_hub from "@/assets/icons/device_hub.svg";
+import history from "@/assets/icons/history.svg";
+import routine from "@/assets/icons/routine.svg";
+
 import {
     useFonts,
     Poppins_400Regular,
@@ -43,8 +49,10 @@ const AdminPage =()  => {
 
                 {/*User 4*/}
                 <View className="flex-row items-start">
-                    <View className="w-10 h-10 bg-gray-100 rounded-full" />
-                    <View className="flex-1 ml-4">
+                    <View className="w-10 h-10 items-center">
+                        <Account_Box width={30} height={30} />
+                    </View>
+                    <View className="flex-1 ml-1">
                         <Text className="text-base font-regular text-black-900">User 4</Text>
                         <Text className="text-xs font-regular text-gray-500">Connected 2 Weeks Ago - 10/11/2025</Text>
                     </View>
@@ -54,8 +62,10 @@ const AdminPage =()  => {
 
                 {/*User 3*/}
                 <View className="flex-row items-start">
-                    <View className="w-10 h-10 bg-gray-100 rounded-full" />
-                    <View className="flex-1 ml-4">
+                    <View className="w-10 h-10 items-center">
+                        <Account_Box width={30} height={30} fill="#374151" />
+                    </View>
+                    <View className="flex-1 ml-1">
                         <Text className="text-base font-regular text-black-900">User 3</Text>
                         <Text className="text-xs font-regular text-gray-500">Connected 3 Weeks Ago - 3/11/2025</Text>
                     </View>
@@ -65,8 +75,10 @@ const AdminPage =()  => {
 
                 {/*User 2*/}
                 <View className="flex-row items-start">
-                    <View className="w-10 h-10 bg-gray-100 rounded-full" />
-                    <View className="flex-1 ml-4">
+                    <View className="w-10 h-10 items-center">
+                        <Account_Box width={30} height={30} fill="#374151" />
+                    </View>
+                    <View className="flex-1 ml-1">
                         <Text className="text-base font-regular text-black-900">User 2</Text>
                         <Text className="text-xs font-regular text-gray-500">Connected 2 Months Ago - 10/9/2025</Text>
                     </View>
@@ -76,8 +88,10 @@ const AdminPage =()  => {
 
                 {/*User 1*/}
                 <View className="flex-row items-start">
-                    <View className="w-10 h-10 bg-gray-100 rounded-full" />
-                    <View className="flex-1 ml-4">
+                    <View className="w-10 h-10 items-center">
+                        <Account_Box width={30} height={30} fill="#374151" />
+                    </View>
+                    <View className="flex-1 ml-1">
                         <Text className="text-base font-regular text-black-900">User 1</Text>
                         <Text className="text-xs font-regular text-gray-500">Connected 6 Months Ago - 10/5/2025</Text>
                     </View>
