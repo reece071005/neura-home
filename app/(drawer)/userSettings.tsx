@@ -2,6 +2,9 @@ import { Text, View, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
+//Logout function
+import { logout } from "@/lib/auth/session";
+
 // @ts-ignore
 import AccountIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientAccountOutline.svg";
 // @ts-ignore
@@ -36,7 +39,7 @@ export default function UserSettings() {
                 <SettingsItem title="Terms and Conditions" Icon={Terms_Conditions_Icon}/>
                 <SettingsItem title="Contact" Icon={ContactIcon}/>
                 <SettingsItem title="Feedback" Icon={FeedbackIcon}/>
-                <SettingsItem title="Logout" Icon={LogoutIcon} onPress={() => router.push("/")}/>
+                <SettingsItem title="Logout" Icon={LogoutIcon} onPress={logout}/>
 
                 <View style={{flex: 1}}></View>
             </ScrollView>
