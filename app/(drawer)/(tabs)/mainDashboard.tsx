@@ -3,8 +3,25 @@ import React, { useMemo, useState } from "react";
 import { ScrollView, View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import * as mdi from "@mdi/js";
+
 import Card from "@/components/ui/Card";
+
+// Header
+import SectionHeader from "@/components/ui/SectionHeader";
+
+// Lights
 import LargeLightTile from "@/components/ui/LargeLightTile";
+import SmallLightTile from "@/components/ui/SmallLightTile";
+
+// Climate
+import LargeClimateTile from "@/components/ui/LargeClimateTile";
+
+// Fans
+import SmallFanTile from "@/components/ui/SmallFanTile";
+
+// Covers
+import SmallCoverTile from "@/components/ui/SmallCoverTile";
 
 // --------------------------------
 // Types
@@ -12,20 +29,20 @@ import LargeLightTile from "@/components/ui/LargeLightTile";
 type Variant = "small" | "large";
 
 type TileKind =
-  | "light"
-  | "climate"
-  | "fan"
-  | "cover"
-  | "lock"
-  | "camera"
-  | "media"
-  | "generic";
+    | "light"
+    | "climate"
+    | "fan"
+    | "cover"
+    | "lock"
+    | "camera"
+    | "media"
+    | "generic";
 
 type Tile = {
-  id: string;
+  id: string;              // for layout uniqueness (headers/rows/etc.)
   title: string;
   kind: TileKind;
-  entityId?: string;
+  entityId?: string;       // HA entity_id
   entityIds?: string[];
 };
 
@@ -50,7 +67,14 @@ type SplitRow = {
   right: [(Tile & { variant: "small" }), (Tile & { variant: "small" })];
 };
 
-type DashboardRow = FullRow | TwoRow | SplitRow;
+type HeaderRow = {
+  id: string;
+  type: "header";
+  title: string;
+  iconPath?: string;
+};
+
+type DashboardRow = FullRow | TwoRow | SplitRow | HeaderRow;
 
 const GAP = 8;
 
@@ -58,43 +82,25 @@ const GAP = 8;
 // Layout
 // --------------------------------
 const LAYOUT: DashboardRow[] = [
+  { id: "hdr_living", type: "header", title: "Living Room", iconPath: mdi.mdiSofa },
   {
     id: "row_primary",
     type: "two",
     variant: "large",
     items: [
-      {
-        id: "light_primary",
-        title: "Primary Bedroom",
-        kind: "light",
-        entityId: "light.primary_bedroom",
-      },
-      {
-        id: "climate_primary",
-        title: "AC",
-        kind: "climate",
-        entityId: "climate.primary_bedroom",
-      },
+        { id: "light_living", title: "Lights", kind: "light", entityId: "light.reece_room" },
+      {id: "climate_living", title: "AC", kind: "climate", entityId: "climate.living_room" },
     ],
   },
 
+  { id: "hdr_master", type: "header", title: "Master Bedroom", iconPath: mdi.mdiBedEmpty },
   {
-    id: "row_secondary",
+    id: "row_primary2",
     type: "two",
-    variant: "small",
+    variant: "large",
     items: [
-      {
-        id: "light_living",
-        title: "Living Room",
-        kind: "light",
-        entityId: "light.living_room",
-      },
-      {
-        id: "fan_living",
-        title: "Fan",
-        kind: "fan",
-        entityId: "fan.living_room",
-      },
+        { id: "light_master", title: "Lights", kind: "light", entityId: "light.master_bedrom" },
+      { id: "climate_master", title: "AC", kind: "climate", entityId: "climate.master_bedroom" },
     ],
   },
 
@@ -102,27 +108,37 @@ const LAYOUT: DashboardRow[] = [
     id: "row_split",
     type: "split",
     left: {
-      id: "blinds",
-      title: "Blinds",
-      kind: "cover",
-      entityId: "cover.living_room",
+      id: "lights_master_bathroom",
+      title: "Bathroom Lights",
+      kind: "light",
+      entityId: "lights.master_bathroom",
       variant: "large",
     },
     right: [
+        {
+          id: "blind",
+          title: "Primary Bedroom",
+          kind: "cover",
+          entityId: "blind.primary_bedroom",
+          variant: "small",
+        },
       {
-        id: "lock",
-        title: "Locks",
-        kind: "lock",
-        entityId: "lock.front_door",
+        id: "fan",
+        title: "Fan",
+        kind: "fan",
+        entityId: "fan.master_bedroom",
         variant: "small",
       },
-      {
-        id: "camera",
-        title: "Camera",
-        kind: "camera",
-        entityId: "camera.driveway",
-        variant: "small",
-      },
+    ],
+  },
+
+  {
+    id: "row_secondary2",
+    type: "two",
+    variant: "small",
+    items: [
+        { id: "light_living2", title: "Living Room", kind: "light", entityId: "light.living_room" },
+      { id: "fan_living2", title: "Guest Bedroom", kind: "fan", entityId: "fan.living_room" },
     ],
   },
 ];
@@ -132,50 +148,107 @@ const LAYOUT: DashboardRow[] = [
 // --------------------------------
 function DashboardTile({ tile, variant }: { tile: Tile; variant: Variant }) {
   return (
-    <Card variant={variant}>
-      <View style={{ alignItems: "center", justifyContent: "center", gap: 6 }}>
-        <Text style={{ fontSize: 22 }}>⬛️</Text>
-        <Text className="text-black font-bold text-center">{tile.title}</Text>
-      </View>
-    </Card>
+      <Card variant={variant}>
+        <View style={{ alignItems: "center", justifyContent: "center", gap: 6 }}>
+          <Text style={{ fontSize: 22 }}>⬛️</Text>
+          <Text className="text-black font-bold text-center">{tile.title}</Text>
+        </View>
+      </Card>
   );
 }
 
 // --------------------------------
-// Tile Renderer (THIS IS THE KEY)
+// Tile Renderer
+// (NO HOOKS INSIDE THIS FUNCTION)
 // --------------------------------
 function RenderTile({
-  tile,
-  variant,
-  brightness,
-  setBrightness,
+                      tile,
+                      variant,
+                      lightValues,
+                      setLightValue,
+                      climateTemps,
+                      setClimateTemp,
 }: {
   tile: Tile;
   variant: Variant;
-  brightness: number;
-  setBrightness: (v: number) => void;
+  lightValues: Record<string, number>;
+  setLightValue: (entityId: string | undefined, v: number) => void;
+  climateTemps: Record<string, number>;
+  setClimateTemp: (entityId: string | undefined, t: number) => void;
 }) {
   switch (tile.kind) {
-    case "light":
+    case "light": {
+      const v = tile.entityId ? lightValues[tile.entityId] ?? 0 : 0;
+
       if (variant === "large") {
         return (
-          <LargeLightTile
-            title={tile.title}
-            value={brightness}
-            onChange={setBrightness}
-            onMenuPress={() => console.log("menu")}
-            showBlueBorder
+            <LargeLightTile
+                title={tile.title}
+                entityId={tile.entityId ?? ""}
+                value={v}
+                onChange={(next) => setLightValue(tile.entityId, next)}
+                onMenuPress={() => console.log("menu")}
+                showBlueBorder
+            />
+        );
+      }
+
+      return (
+          <SmallLightTile
+              title={tile.title}
+              onPress={() => console.log("toggle light")}
+              onMenuPress={() => console.log("menu")}
+              showBlueBorder={false}
           />
+      );
+    }
+
+    case "climate": {
+      if (variant !== "large") return <DashboardTile tile={tile} variant={variant} />;
+
+      const entityId = tile.entityId;
+      const setTemp = entityId ? climateTemps[entityId] ?? 23 : 23;
+
+      return (
+          <LargeClimateTile
+              title={tile.title}
+              mode="cool"
+              setTemp={setTemp}
+              onChangeSetTemp={(t) => setClimateTemp(entityId, t)}
+          />
+      );
+    }
+
+    case "fan":
+      if (variant === "small") {
+        return (
+            <SmallFanTile
+                title={tile.title}
+                percentage={33}
+                onChangePercentage={(pct) => console.log("New fan %:", pct)}
+                onMenuPress={() => console.log("fan menu")}
+            />
         );
       }
       return <DashboardTile tile={tile} variant={variant} />;
 
-    case "climate":
-    case "fan":
     case "cover":
+      if (variant === "small") {
+        return (
+            <SmallCoverTile
+                title={tile.title}
+                position={50}
+                onChangePosition={(pct) => console.log("New blind position %:", pct)}
+                onMenuPress={() => console.log("Blinds menu")}
+            />
+        );
+      }
+      return <DashboardTile tile={tile} variant={variant} />;
+
     case "lock":
     case "camera":
     case "media":
+    case "generic":
     default:
       return <DashboardTile tile={tile} variant={variant} />;
   }
@@ -186,73 +259,92 @@ function RenderTile({
 // --------------------------------
 function RenderRow({
   row,
-  brightness,
-  setBrightness,
+  lightValues,
+  setLightValue,
+  climateTemps,
+  setClimateTemp,
 }: {
   row: DashboardRow;
-  brightness: number;
-  setBrightness: (v: number) => void;
+  lightValues: Record<string, number>;
+  setLightValue: (entityId: string | undefined, v: number) => void;
+  climateTemps: Record<string, number>;
+  setClimateTemp: (entityId: string | undefined, t: number) => void;
 }) {
   switch (row.type) {
+    case "header":
+      return <SectionHeader title={row.title} iconPath={row.iconPath} />;
+
     case "full":
       return (
-        <RenderTile
-          tile={row.item}
-          variant={row.variant}
-          brightness={brightness}
-          setBrightness={setBrightness}
-        />
+          <RenderTile
+              tile={row.item}
+              variant={row.variant}
+              lightValues={lightValues}
+              setLightValue={setLightValue}
+              climateTemps={climateTemps}
+              setClimateTemp={setClimateTemp}
+          />
       );
 
     case "two":
       return (
-        <View className="flex-row" style={{ gap: GAP }}>
-          <View className="flex-1">
-            <RenderTile
-              tile={row.items[0]}
-              variant={row.variant}
-              brightness={brightness}
-              setBrightness={setBrightness}
-            />
+          <View className="flex-row" style={{ gap: GAP }}>
+            <View className="flex-1">
+              <RenderTile
+                  tile={row.items[0]}
+                  variant={row.variant}
+                  lightValues={lightValues}
+                  setLightValue={setLightValue}
+                  climateTemps={climateTemps}
+                  setClimateTemp={setClimateTemp}
+              />
+            </View>
+            <View className="flex-1">
+              <RenderTile
+                  tile={row.items[1]}
+                  variant={row.variant}
+                  lightValues={lightValues}
+                  setLightValue={setLightValue}
+                  climateTemps={climateTemps}
+                  setClimateTemp={setClimateTemp}
+              />
+            </View>
           </View>
-          <View className="flex-1">
-            <RenderTile
-              tile={row.items[1]}
-              variant={row.variant}
-              brightness={brightness}
-              setBrightness={setBrightness}
-            />
-          </View>
-        </View>
       );
 
     case "split":
       return (
-        <View className="flex-row" style={{ gap: GAP }}>
-          <View className="flex-1">
-            <RenderTile
-              tile={row.left}
-              variant={row.left.variant}
-              brightness={brightness}
-              setBrightness={setBrightness}
-            />
-          </View>
+          <View className="flex-row" style={{ gap: GAP }}>
+            <View className="flex-1">
+              <RenderTile
+                  tile={row.left}
+                  variant={row.left.variant}
+                  lightValues={lightValues}
+                  setLightValue={setLightValue}
+                  climateTemps={climateTemps}
+                  setClimateTemp={setClimateTemp}
+              />
+            </View>
 
-          <View className="flex-1" style={{ gap: GAP }}>
+            <View className="flex-1" style={{ gap: GAP }}>
+              <RenderTile
+                  tile={row.right[0]}
+                  variant={row.right[0].variant}
+                  lightValues={lightValues}
+                  setLightValue={setLightValue}
+                  climateTemps={climateTemps}
+                  setClimateTemp={setClimateTemp}
+              />
             <RenderTile
-              tile={row.right[0]}
-              variant={row.right[0].variant}
-              brightness={brightness}
-              setBrightness={setBrightness}
+                tile={row.right[1]}
+                variant={row.right[1].variant}
+                lightValues={lightValues}
+                setLightValue={setLightValue}
+                climateTemps={climateTemps}
+                setClimateTemp={setClimateTemp}
             />
-            <RenderTile
-              tile={row.right[1]}
-              variant={row.right[1].variant}
-              brightness={brightness}
-              setBrightness={setBrightness}
-            />
+            </View>
           </View>
-        </View>
       );
   }
 }
@@ -262,25 +354,42 @@ function RenderRow({
 // --------------------------------
 export default function MainDashboard() {
   const layout = useMemo(() => LAYOUT, []);
-  const [brightness, setBrightness] = useState(0.6);
+
+  // per-entity light brightness (0..1)
+  const [lightValues, setLightValues] = useState<Record<string, number>>({});
+
+  const setLightValue = (entityId: string | undefined, v: number) => {
+    if (!entityId) return;
+    setLightValues((prev) => ({ ...prev, [entityId]: v }));
+  };
+
+  // per-entity climate set temps
+  const [climateTemps, setClimateTemps] = useState<Record<string, number>>({});
+
+  const setClimateTemp = (entityId: string | undefined, t: number) => {
+    if (!entityId) return;
+    setClimateTemps((prev) => ({ ...prev, [entityId]: t }));
+  };
 
   return (
-    <SafeAreaView edges={["top"]} className="flex-1">
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 24, paddingTop: 64 }}
-      >
+      <SafeAreaView edges={["top"]} className="flex-1">
+        <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 24, paddingTop: 64 }}
+        >
         <View className="px-4 pt-6" style={{ gap: GAP }}>
           {layout.map((row) => (
-            <RenderRow
-              key={row.id}
-              row={row}
-              brightness={brightness}
-              setBrightness={setBrightness}
-            />
+              <RenderRow
+                  key={row.id}
+                  row={row}
+                  lightValues={lightValues}
+                  setLightValue={setLightValue}
+                  climateTemps={climateTemps}
+                  setClimateTemp={setClimateTemp}
+              />
           ))}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
   );
 }
