@@ -20,7 +20,7 @@ const Card = ({
     const base = "bg-white rounded-2xl shadow-md";
 
     const padding = {
-        small: "p-4 h-[86px]",
+        small: "p-2 h-[86px]",
         large: "p-4 h-[180px]",
     }[variant];
 
