@@ -1,21 +1,26 @@
 import { Text, View, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+
+//Logout function
+import { logout } from "@/lib/auth/session";
+
 // @ts-ignore
-import AccountIcon from "../../assets/logo/svg/Account_Icon.svg";
+import AccountIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientAccountOutline.svg";
 // @ts-ignore
-import SecurityIcon from "../../assets/logo/svg/Security_Icon.svg";
+import SecurityIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientSecurityOutline.svg";
 // @ts-ignore
-import PrivacyIcon from "../../assets/logo/svg/Privacy_Icon.svg";
+import PrivacyIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientPrivacyOutline.svg";
 // @ts-ignore
-import Terms_Conditions_Icon from "../../assets/logo/svg/Terms_Conditions_Icon.svg";
+import Terms_Conditions_Icon from "../../assets/illustrations/customMaterialIcons/outline/gradientTermsConditionsOutline.svg";
 // @ts-ignore
-import ContactIcon from "../../assets/logo/svg/Contact_Icon.svg";
+import ContactIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientContactOutline.svg";
 // @ts-ignore
-import FeedbackIcon from "../../assets/logo/svg/Feedback_Icon.svg";
+import FeedbackIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientFeedbackOutline.svg";
 // @ts-ignore
-import LogoutIcon from "../../assets/logo/svg/Logout_Icon.svg";
+import LogoutIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientLogoutOutline.svg";
 // @ts-ignore
-import AdminIcon from "../../assets/logo/svg/Admin_Icon.svg";
+import AdminIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientAdminOutline.svg";
 import React from "react";
 
 
@@ -34,13 +39,13 @@ export default function UserSettings() {
                 <SettingsItem title="Terms and Conditions" Icon={Terms_Conditions_Icon}/>
                 <SettingsItem title="Contact" Icon={ContactIcon}/>
                 <SettingsItem title="Feedback" Icon={FeedbackIcon}/>
-                <SettingsItem title="Logout" Icon={LogoutIcon}/>
+                <SettingsItem title="Logout" Icon={LogoutIcon} onPress={logout}/>
 
                 <View style={{flex: 1}}></View>
             </ScrollView>
 
             <View style={{borderTopWidth: 1, borderTopColor: "#E5E7EB"}}>
-                <SettingsItem title="Admin" Icon={AdminIcon}/>
+                <SettingsItem title="Admin" Icon={AdminIcon} onPress={() => router.push("/(drawer)/adminPage")}/>
             </View>
         </SafeAreaView>
 

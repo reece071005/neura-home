@@ -32,6 +32,21 @@ import Search from "@/assets/illustrations/customMaterialIcons/gradientSearch.sv
 //Burger Menu
 import BurgerMenu from "@/assets/illustrations/customMaterialIcons/gradientBurgerMenu.svg";
 
+//History
+import HistoryOutline from "@/assets/illustrations/customMaterialIcons/outline/gradientHistoryOutline.svg"
+
+//Automations
+import AutomationsOutline from "@/assets/illustrations/customMaterialIcons/outline/gradientAutomationsOutline.svg"
+
+//Notifications
+import NotificationsOutline from "@/assets/illustrations/customMaterialIcons/outline/gradientNotificationsOutline.svg"
+
+//Devices
+import DevicesOutline from "@/assets/illustrations/customMaterialIcons/outline/gradientDevicesOutline.svg"
+
+//Settings
+import SettingsOutline from "@/assets/illustrations/customMaterialIcons/outline/gradientSettingsOutline.svg"
+
 export const Icons = {
   home: {
     filled: HomeFilled,
@@ -63,6 +78,21 @@ export const Icons = {
   },
 
   // single-variant icons
+  history:{
+    default: HistoryOutline,
+  },
+  automations:{
+    default: AutomationsOutline,
+  },
+  notifications:{
+    default: NotificationsOutline,
+  },
+  devices: {
+    default: DevicesOutline,
+  },
+  settings: {
+    default: SettingsOutline
+  },
   search: {
     default: Search,
   },
