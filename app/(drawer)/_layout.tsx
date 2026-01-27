@@ -1,12 +1,40 @@
 import { Drawer } from "expo-router/drawer";
+
+import { Pressable, Text, View } from "react-native";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
-import { View, Text, Pressable } from "react-native";
+
 import { router } from "expo-router";
 
 import BurgerSearchWidget from "@/components/BurgerSearchWidget";
 import TabIcon from "@/components/TabIcon";
+import PlusIcon from "@/assets/icons/plus.svg";
+
+function DrawerItem({
+                        label,
+                        icon,
+                        onPress,
+                    }: {
+    label: string;
+    icon: string;
+    onPress: () => void;
+}) {
+    return (
+        <Pressable
+            onPress={onPress}
+            className="flex-row items-center px-5 py-4"
+        >
+            <TabIcon name={icon} size={26} />
+            <Text className="ml-4 text-base font-poppins">{label}</Text>
+        </Pressable>
+    );
+}
 
 function CustomDrawerContent(props: any) {
+    const navigate = (path: string) => {
+        props.navigation.closeDrawer();
+        router.push(path);
+    };
+
     return (
         <DrawerContentScrollView
             {...props}
@@ -101,21 +129,54 @@ export default function DrawerLayout() {
     return (
         <Drawer
             drawerContent={(props) => <CustomDrawerContent {...props} />}
-            screenOptions={{
+            screenOptions={({ route }) => ({
                 headerShown: true,
-                drawerType: "front",
-                headerTransparent: true,
-                headerTitle: "",
+                headerTitle:
+                    route.name === "automations"
+                        ? "Automations"
+                        : "",
+                headerTransparent: false,
                 headerShadowVisible: false,
                 headerLeft: () => <BurgerSearchWidget />,
-                headerLeftContainerStyle: { paddingLeft: 10 },
-            }}
+
+                headerRight: () =>
+                    route.name === "automations" ? (
+                        <Pressable
+                            onPress={() =>
+                                router.push({
+                                    pathname: "/automationsEdit",
+                                    params: { mode: "create" },
+                                })
+                            }
+                            style={{ paddingRight: 16 }}
+                        >
+                            <PlusIcon width={22} height={22} />
+                        </Pressable>
+                    ) : null,
+            })}
         >
+            {/* Hidden from drawer list but required for routing */}
             <Drawer.Screen
                 name="(tabs)"
                 options={{ drawerItemStyle: { display: "none" } }}
             />
-
+            <Drawer.Screen
+                name="automations"
+                options={{ drawerItemStyle: { display: "none" } }}
+            />
+            <Drawer.Screen
+                name="automationsEdit"
+                options={{ drawerItemStyle: { display: "none" } }}
+            />
+            <Drawer.Screen
+                name="history"
+                options={{ drawerItemStyle: { display: "none" } }}
+            />
+            <Drawer.Screen
+                name="notifications"
+                options={{ drawerItemStyle: { display: "none" } }}
+            />
+        
             {/* ✅ IMPORTANT: hide Drawer header so Devices Stack controls back correctly */}
             <Drawer.Screen
                 name="devices"
@@ -123,6 +184,7 @@ export default function DrawerLayout() {
                     drawerItemStyle: { display: "none" },
                     headerShown: false,
                 }}
+
             />
         </Drawer>
     );
