@@ -1,6 +1,7 @@
 import { View, Text, ScrollView } from "react-native";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import AutomationRow from "@/components/AutomationRow";
 
@@ -40,187 +41,191 @@ export default function AutomationsScreen() {
     });
 
     return (
-        <ScrollView className="flex-1 bg-white">
-            {/* USER-DEFINED */}
-            <View className="mt-4">
-                <View className="px-4 flex-row items-center gap-x-3">
-                    <UserDefinedIcon width={ICON_SIZE} height={ICON_SIZE} />
-                    <Text className="font-poppins font-bold">
-                        User-Defined Automations
-                    </Text>
+        <SafeAreaView edges={["top"]} className="flex-1 bg-white">
+            <ScrollView
+                className="flex-1 bg-white"
+                contentContainerStyle={{ paddingBottom: 24, paddingTop: 52}}>
+                {/* USER-DEFINED */}
+                <View className="mt-4">
+                    <View className="px-4 flex-row items-center gap-x-3">
+                        <UserDefinedIcon width={ICON_SIZE} height={ICON_SIZE} />
+                        <Text className="font-poppins font-bold">
+                            User-Defined Automations
+                        </Text>
+                    </View>
+                    <View className="h-px bg-black mt-2 w-full" />
                 </View>
-                <View className="h-px bg-black mt-2 w-full" />
-            </View>
 
-            <AutomationRow
-                title="Morning Routine"
-                Icon={MorningRoutineIcon}
-                EditIcon={EditPenIcon}
-                enabled={enabled.morning}
-                showToggle
-                onToggle={() =>
-                    setEnabled({ ...enabled, morning: !enabled.morning })
-                }
-                onEdit={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "edit", id: "morning" },
-                    })
-                }
-            />
+                <AutomationRow
+                    title="Morning Routine"
+                    Icon={MorningRoutineIcon}
+                    EditIcon={EditPenIcon}
+                    enabled={enabled.morning}
+                    showToggle
+                    onToggle={() =>
+                        setEnabled({ ...enabled, morning: !enabled.morning })
+                    }
+                    onEdit={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "edit", id: "morning" },
+                        })
+                    }
+                />
 
-            <AutomationRow
-                title="Bedtime Routine"
-                Icon={BedtimeRoutineIcon}
-                EditIcon={EditPenIcon}
-                enabled={enabled.bedtime}
-                showToggle
-                onToggle={() =>
-                    setEnabled({ ...enabled, bedtime: !enabled.bedtime })
-                }
-                onEdit={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "edit", id: "bedtime" },
-                    })
-                }
-            />
+                <AutomationRow
+                    title="Bedtime Routine"
+                    Icon={BedtimeRoutineIcon}
+                    EditIcon={EditPenIcon}
+                    enabled={enabled.bedtime}
+                    showToggle
+                    onToggle={() =>
+                        setEnabled({ ...enabled, bedtime: !enabled.bedtime })
+                    }
+                    onEdit={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "edit", id: "bedtime" },
+                        })
+                    }
+                />
 
-            <AutomationRow
-                title="Leaving Home"
-                Icon={LeavingHomeIcon}
-                EditIcon={EditPenIcon}
-                enabled={enabled.leaving}
-                showToggle
-                onToggle={() =>
-                    setEnabled({ ...enabled, leaving: !enabled.leaving })
-                }
-                onEdit={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "edit", id: "leavingHome" },
-                    })
-                }
-            />
+                <AutomationRow
+                    title="Leaving Home"
+                    Icon={LeavingHomeIcon}
+                    EditIcon={EditPenIcon}
+                    enabled={enabled.leaving}
+                    showToggle
+                    onToggle={() =>
+                        setEnabled({ ...enabled, leaving: !enabled.leaving })
+                    }
+                    onEdit={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "edit", id: "leavingHome" },
+                        })
+                    }
+                />
 
-            <AutomationRow
-                title="Arriving Home"
-                Icon={ArrivingHomeIcon}
-                EditIcon={EditPenIcon}
-                enabled={enabled.arriving}
-                showToggle
-                onToggle={() =>
-                    setEnabled({ ...enabled, arriving: !enabled.arriving })
-                }
-                onEdit={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "edit", id: "arrivingHome" },
-                    })
-                }
-            />
+                <AutomationRow
+                    title="Arriving Home"
+                    Icon={ArrivingHomeIcon}
+                    EditIcon={EditPenIcon}
+                    enabled={enabled.arriving}
+                    showToggle
+                    onToggle={() =>
+                        setEnabled({ ...enabled, arriving: !enabled.arriving })
+                    }
+                    onEdit={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "edit", id: "arrivingHome" },
+                        })
+                    }
+                />
 
-            <AutomationRow
-                title="Cinema Mode"
-                Icon={CinemaModeIcon}
-                EditIcon={EditPenIcon}
-                enabled={enabled.cinema}
-                showToggle
-                onToggle={() =>
-                    setEnabled({ ...enabled, cinema: !enabled.cinema })
-                }
-                onEdit={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "edit", id: "cinemaMode" },
-                    })
-                }
-            />
+                <AutomationRow
+                    title="Cinema Mode"
+                    Icon={CinemaModeIcon}
+                    EditIcon={EditPenIcon}
+                    enabled={enabled.cinema}
+                    showToggle
+                    onToggle={() =>
+                        setEnabled({ ...enabled, cinema: !enabled.cinema })
+                    }
+                    onEdit={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "edit", id: "cinemaMode" },
+                        })
+                    }
+                />
 
-            <AutomationRow
-                title="Party Mode"
-                Icon={PartyModeIcon}
-                EditIcon={EditPenIcon}
-                enabled={enabled.party}
-                showToggle
-                onToggle={() =>
-                    setEnabled({ ...enabled, party: !enabled.party })
-                }
-                onEdit={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "edit", id: "partyMode" },
-                    })
-                }
-            />
+                <AutomationRow
+                    title="Party Mode"
+                    Icon={PartyModeIcon}
+                    EditIcon={EditPenIcon}
+                    enabled={enabled.party}
+                    showToggle
+                    onToggle={() =>
+                        setEnabled({ ...enabled, party: !enabled.party })
+                    }
+                    onEdit={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "edit", id: "partyMode" },
+                        })
+                    }
+                />
 
-            {/* AI-SUGGESTED */}
-            <View className="mt-8">
-                <View className="px-4 flex-row items-center gap-x-3">
-                    <AiSuggestedIcon width={ICON_SIZE} height={ICON_SIZE} />
-                    <Text className="font-poppins font-bold">
-                        AI-Suggested Automations
-                    </Text>
+                {/* AI-SUGGESTED */}
+                <View className="mt-8">
+                    <View className="px-4 flex-row items-center gap-x-3">
+                        <AiSuggestedIcon width={ICON_SIZE} height={ICON_SIZE} />
+                        <Text className="font-poppins font-bold">
+                            AI-Suggested Automations
+                        </Text>
+                    </View>
+                    <View className="h-px bg-black mt-2 w-full" />
                 </View>
-                <View className="h-px bg-black mt-2 w-full" />
-            </View>
 
-            <AutomationRow
-                title="Bedroom Pre-Cool"
-                Icon={BedroomPreCoolIcon}
-                AddIcon={PlusIcon}
-                EditIcon={EditPenIcon}
-                onAdd={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "create" },
-                    })
-                }
-                onEdit={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "edit", id: "bedroomPreCool" },
-                    })
-                }
-            />
+                <AutomationRow
+                    title="Bedroom Pre-Cool"
+                    Icon={BedroomPreCoolIcon}
+                    AddIcon={PlusIcon}
+                    EditIcon={EditPenIcon}
+                    onAdd={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "create" },
+                        })
+                    }
+                    onEdit={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "edit", id: "bedroomPreCool" },
+                        })
+                    }
+                />
 
-            <AutomationRow
-                title="Wake-Up Light Curve"
-                Icon={WakeupLightCurveIcon}
-                AddIcon={PlusIcon}
-                EditIcon={EditPenIcon}
-                onAdd={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "create" },
-                    })
-                }
-                onEdit={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "edit", id: "wakeUpLightCurve" },
-                    })
-                }
-            />
+                <AutomationRow
+                    title="Wake-Up Light Curve"
+                    Icon={WakeupLightCurveIcon}
+                    AddIcon={PlusIcon}
+                    EditIcon={EditPenIcon}
+                    onAdd={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "create" },
+                        })
+                    }
+                    onEdit={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "edit", id: "wakeUpLightCurve" },
+                        })
+                    }
+                />
 
-            <AutomationRow
-                title="Auto-Lock Front Door"
-                Icon={AutoLockFrontDoorIcon}
-                AddIcon={PlusIcon}
-                EditIcon={EditPenIcon}
-                onAdd={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "create" },
-                    })
-                }
-                onEdit={() =>
-                    router.push({
-                        pathname: "/automationsEdit",
-                        params: { mode: "edit", id: "autoLockFrontDoor" },
-                    })
-                }
-            />
-        </ScrollView>
+                <AutomationRow
+                    title="Auto-Lock Front Door"
+                    Icon={AutoLockFrontDoorIcon}
+                    AddIcon={PlusIcon}
+                    EditIcon={EditPenIcon}
+                    onAdd={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "create" },
+                        })
+                    }
+                    onEdit={() =>
+                        router.push({
+                            pathname: "/automationsEdit",
+                            params: { mode: "edit", id: "autoLockFrontDoor" },
+                        })
+                    }
+                />
+            </ScrollView>
+        </SafeAreaView>
     );
 }
