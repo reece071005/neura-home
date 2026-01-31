@@ -36,7 +36,11 @@ export default function DevicesByCategory() {
     }, []);
 
     const filtered = useMemo(() => {
-        return devices.filter((d) => kindToCategory(d.kind) === category);
+        return devices
+            .filter((d) => kindToCategory(d.kind) === category)
+            .sort((a, b) =>
+                (a.name || a.entity_id).localeCompare(b.name || b.entity_id)
+            );
     }, [devices, category]);
 
     return (
@@ -84,16 +88,11 @@ export default function DevicesByCategory() {
                             <Pressable
                                 key={d.entity_id}
                                 className="flex-row items-center px-4 py-4 border-b border-gray-100"
-                                onPress={() =>
-                                    router.push({
-                                        pathname: "/(drawer)/devices/device/[entity_id]",
-                                        params: { entity_id: d.entity_id },
-                                    })
-                            }
+                                onPress={() => {}} //To be completed
                             >
                                 <View className="flex-1">
-                                    <Text className="text-black font-semibold">{d.name || d.entity_id}</Text>
-                                    {!!d.area && <Text className="text-gray-500 text-xs mt-1">{d.area}</Text>}
+                                    <Text className="text-black text-subtext font-semibold">{d.name || d.entity_id}</Text>
+                                    <Text className="text-gray-500 text-hint mt-1">{d.entity_id}</Text>
                                 </View>
 
                                 <MaterialIcons name="chevron-right" size={22} color="#9CA3AF" />
