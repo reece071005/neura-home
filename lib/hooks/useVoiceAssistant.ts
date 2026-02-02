@@ -85,6 +85,14 @@ export function useVoiceAssistant() {
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
       if (!uri) throw new Error("No recording URI");
+      // ✅ DEBUG: play back what we just recorded
+      const { sound } = await Audio.Sound.createAsync({ uri });
+      await sound.playAsync();
+
+      // optional: unload later so it doesn’t leak memory
+      setTimeout(() => {
+        sound.unloadAsync();
+      }, 4000);
 
       const form = new FormData();
       form.append("file", {

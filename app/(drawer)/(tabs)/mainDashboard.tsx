@@ -1,9 +1,12 @@
 // app/(drawer)/(tabs)/mainDashboard.tsx
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ScrollView, View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import * as mdi from "@mdi/js";
+
+//Getting layout from cache
+import {useDashboardStore} from "@/lib/storage/dashboardStore";
 
 import Card from "@/components/ui/Card";
 
@@ -78,70 +81,6 @@ type DashboardRow = FullRow | TwoRow | SplitRow | HeaderRow;
 
 const GAP = 8;
 
-// --------------------------------
-// Layout
-// --------------------------------
-const LAYOUT: DashboardRow[] = [
-  { id: "hdr_living", type: "header", title: "Living Room", iconPath: mdi.mdiSofa },
-  {
-    id: "row_primary",
-    type: "two",
-    variant: "large",
-    items: [
-        { id: "light_living", title: "Lights", kind: "light", entityId: "light.reece_room" },
-      {id: "climate_living", title: "AC", kind: "climate", entityId: "climate.living_room" },
-    ],
-  },
-
-  { id: "hdr_master", type: "header", title: "Master Bedroom", iconPath: mdi.mdiBedEmpty },
-  {
-    id: "row_primary2",
-    type: "two",
-    variant: "large",
-    items: [
-        { id: "light_master", title: "Lights", kind: "light", entityId: "light.master_bedrom" },
-      { id: "climate_master", title: "AC", kind: "climate", entityId: "climate.master_bedroom" },
-    ],
-  },
-
-  {
-    id: "row_split",
-    type: "split",
-    left: {
-      id: "lights_master_bathroom",
-      title: "Bathroom Lights",
-      kind: "light",
-      entityId: "lights.master_bathroom",
-      variant: "large",
-    },
-    right: [
-        {
-          id: "blind",
-          title: "Primary Bedroom",
-          kind: "cover",
-          entityId: "blind.primary_bedroom",
-          variant: "small",
-        },
-      {
-        id: "fan",
-        title: "Fan",
-        kind: "fan",
-        entityId: "fan.master_bedroom",
-        variant: "small",
-      },
-    ],
-  },
-
-  {
-    id: "row_secondary2",
-    type: "two",
-    variant: "small",
-    items: [
-        { id: "light_living2", title: "Living Room", kind: "light", entityId: "light.living_room" },
-      { id: "fan_living2", title: "Guest Bedroom", kind: "fan", entityId: "fan.living_room" },
-    ],
-  },
-];
 
 // --------------------------------
 // Generic fallback tile
@@ -353,9 +292,8 @@ function RenderRow({
 // Screen
 // --------------------------------
 export default function MainDashboard() {
-  const layout = useMemo(() => LAYOUT, []);
+  const layout = useDashboardStore((s) => s.layout);
 
-  // per-entity light brightness (0..1)
   const [lightValues, setLightValues] = useState<Record<string, number>>({});
 
   const setLightValue = (entityId: string | undefined, v: number) => {
