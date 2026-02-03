@@ -1,30 +1,21 @@
 // app/(drawer)/(tabs)/mainDashboard.tsx
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { ScrollView, View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 
-import * as mdi from "@mdi/js";
-
-//Getting layout from cache
-import {useDashboardStore} from "@/lib/storage/dashboardStore";
-
+import { useDashboardWidgetsStore, buildLayoutFromItems } from "@/lib/storage/dashboardWidgetStore";
 import Card from "@/components/ui/Card";
-
-// Header
 import SectionHeader from "@/components/ui/SectionHeader";
 
-// Lights
 import LargeLightTile from "@/components/ui/LargeLightTile";
 import SmallLightTile from "@/components/ui/SmallLightTile";
-
-// Climate
 import LargeClimateTile from "@/components/ui/LargeClimateTile";
-
-// Fans
 import SmallFanTile from "@/components/ui/SmallFanTile";
-
-// Covers
 import SmallCoverTile from "@/components/ui/SmallCoverTile";
+
+import { getCurrentState, type HAState } from "@/lib/api/state";
+import { setLight } from "@/lib/api/light";
 
 // --------------------------------
 // Types
@@ -32,67 +23,48 @@ import SmallCoverTile from "@/components/ui/SmallCoverTile";
 type Variant = "small" | "large";
 
 type TileKind =
-    | "light"
-    | "climate"
-    | "fan"
-    | "cover"
-    | "lock"
-    | "camera"
-    | "media"
-    | "generic";
+  | "light"
+  | "climate"
+  | "fan"
+  | "cover"
+  | "lock"
+  | "camera"
+  | "media"
+  | "generic";
 
 type Tile = {
-  id: string;              // for layout uniqueness (headers/rows/etc.)
+  id: string;
   title: string;
   kind: TileKind;
-  entityId?: string;       // HA entity_id
+  entityId?: string;
   entityIds?: string[];
 };
 
-type FullRow = {
-  id: string;
-  type: "full";
-  variant: Variant;
-  item: Tile;
-};
-
-type TwoRow = {
-  id: string;
-  type: "two";
-  variant: Variant;
-  items: [Tile, Tile];
-};
-
+type FullRow = { id: string; type: "full"; variant: Variant; item: Tile };
+type TwoRow = { id: string; type: "two"; variant: Variant; items: [Tile, Tile] };
 type SplitRow = {
   id: string;
   type: "split";
   left: Tile & { variant: "large" };
   right: [(Tile & { variant: "small" }), (Tile & { variant: "small" })];
 };
-
-type HeaderRow = {
-  id: string;
-  type: "header";
-  title: string;
-  iconPath?: string;
-};
+type HeaderRow = { id: string; type: "header"; title: string; iconPath?: string };
 
 type DashboardRow = FullRow | TwoRow | SplitRow | HeaderRow;
 
 const GAP = 8;
-
 
 // --------------------------------
 // Generic fallback tile
 // --------------------------------
 function DashboardTile({ tile, variant }: { tile: Tile; variant: Variant }) {
   return (
-      <Card variant={variant}>
-        <View style={{ alignItems: "center", justifyContent: "center", gap: 6 }}>
-          <Text style={{ fontSize: 22 }}>⬛️</Text>
-          <Text className="text-black font-bold text-center">{tile.title}</Text>
-        </View>
-      </Card>
+    <Card variant={variant}>
+      <View style={{ alignItems: "center", justifyContent: "center", gap: 6 }}>
+        <Text style={{ fontSize: 22 }}>⬛️</Text>
+        <Text className="text-black font-bold text-center">{tile.title}</Text>
+      </View>
+    </Card>
   );
 }
 
@@ -101,93 +73,118 @@ function DashboardTile({ tile, variant }: { tile: Tile; variant: Variant }) {
 // (NO HOOKS INSIDE THIS FUNCTION)
 // --------------------------------
 function RenderTile({
-                      tile,
-                      variant,
-                      lightValues,
-                      setLightValue,
-                      climateTemps,
-                      setClimateTemp,
+  tile,
+  variant,
+
+  lightOnMap,
+  lightValues,
+  setLightValue,
+    onToggleLight,
+
+  climateSetTempMap,
+
+  fanPctMap,
+  coverPosMap,
 }: {
   tile: Tile;
   variant: Variant;
+
+  lightOnMap: Record<string, boolean>;
   lightValues: Record<string, number>;
   setLightValue: (entityId: string | undefined, v: number) => void;
-  climateTemps: Record<string, number>;
-  setClimateTemp: (entityId: string | undefined, t: number) => void;
+  onToggleLight: (entityId: string) => void;
+
+  climateSetTempMap: Record<string, number>;
+
+  fanPctMap: Record<string, number>;
+  coverPosMap: Record<string, number>;
 }) {
   switch (tile.kind) {
     case "light": {
-      const v = tile.entityId ? lightValues[tile.entityId] ?? 0 : 0;
+      const entityId = tile.entityId ?? "";
+      const isOn = entityId ? !!lightOnMap[entityId] : false;
+      const v = entityId ? lightValues[entityId] ?? 0 : 0;
 
       if (variant === "large") {
         return (
-            <LargeLightTile
-                title={tile.title}
-                entityId={tile.entityId ?? ""}
-                value={v}
-                onChange={(next) => setLightValue(tile.entityId, next)}
-                onMenuPress={() => console.log("menu")}
-                showBlueBorder
-            />
+          <LargeLightTile
+            title={tile.title}
+            entityId={entityId}
+            value={v}
+            onChange={(next) => {setLightValue(tile.entityId, next)}}
+            onMenuPress={() => console.log("menu")}
+            showBlueBorder
+          />
         );
       }
 
       return (
-          <SmallLightTile
-              title={tile.title}
-              onPress={() => console.log("toggle light")}
-              onMenuPress={() => console.log("menu")}
-              showBlueBorder={false}
-          />
+        <SmallLightTile
+          title={tile.title}
+          entityId={entityId}
+          isOn={isOn}
+          onPress={() => onToggleLight(entityId)}
+          onMenuPress={() => console.log("menu")}
+          showBlueBorder={false}
+        />
       );
     }
 
     case "climate": {
       if (variant !== "large") return <DashboardTile tile={tile} variant={variant} />;
 
-      const entityId = tile.entityId;
-      const setTemp = entityId ? climateTemps[entityId] ?? 23 : 23;
+      const entityId = tile.entityId ?? "";
+      const setTemp = entityId ? climateSetTempMap[entityId] ?? 23 : 23;
 
       return (
-          <LargeClimateTile
-              title={tile.title}
-              mode="cool"
-              setTemp={setTemp}
-              onChangeSetTemp={(t) => setClimateTemp(entityId, t)}
-          />
+        <LargeClimateTile
+          title={tile.title}
+          mode="cool"
+          setTemp={setTemp}
+          onChangeSetTemp={(t) => {
+            // TODO: call your climate control endpoint when you have it
+            console.log("Set climate temp", entityId, t);
+          }}
+        />
       );
     }
 
     case "fan":
       if (variant === "small") {
+        const entityId = tile.entityId ?? "";
+        const pct = entityId ? fanPctMap[entityId] ?? 0 : 0;
         return (
-            <SmallFanTile
-                title={tile.title}
-                percentage={33}
-                onChangePercentage={(pct) => console.log("New fan %:", pct)}
-                onMenuPress={() => console.log("fan menu")}
-            />
+          <SmallFanTile
+            title={tile.title}
+            percentage={pct}
+            onChangePercentage={(nextPct) => {
+              // TODO: call your fan control endpoint when you have it
+              console.log("Set fan %", entityId, nextPct);
+            }}
+            onMenuPress={() => console.log("fan menu")}
+          />
         );
       }
       return <DashboardTile tile={tile} variant={variant} />;
 
     case "cover":
       if (variant === "small") {
+        const entityId = tile.entityId ?? "";
+        const pos = entityId ? coverPosMap[entityId] ?? 0 : 0;
         return (
-            <SmallCoverTile
-                title={tile.title}
-                position={50}
-                onChangePosition={(pct) => console.log("New blind position %:", pct)}
-                onMenuPress={() => console.log("Blinds menu")}
-            />
+          <SmallCoverTile
+            title={tile.title}
+            position={pos}
+            onChangePosition={(nextPos) => {
+              // TODO: call your cover control endpoint when you have it
+              console.log("Set cover position", entityId, nextPos);
+            }}
+            onMenuPress={() => console.log("Blinds menu")}
+          />
         );
       }
       return <DashboardTile tile={tile} variant={variant} />;
 
-    case "lock":
-    case "camera":
-    case "media":
-    case "generic":
     default:
       return <DashboardTile tile={tile} variant={variant} />;
   }
@@ -198,16 +195,28 @@ function RenderTile({
 // --------------------------------
 function RenderRow({
   row,
+
+  lightOnMap,
   lightValues,
   setLightValue,
-  climateTemps,
-  setClimateTemp,
+    onToggleLight,
+
+  climateSetTempMap,
+
+  fanPctMap,
+  coverPosMap,
 }: {
   row: DashboardRow;
+
+  lightOnMap: Record<string, boolean>;
   lightValues: Record<string, number>;
   setLightValue: (entityId: string | undefined, v: number) => void;
-  climateTemps: Record<string, number>;
-  setClimateTemp: (entityId: string | undefined, t: number) => void;
+  onToggleLight: (entityId: string) => void;
+
+  climateSetTempMap: Record<string, number>;
+
+  fanPctMap: Record<string, number>;
+  coverPosMap: Record<string, number>;
 }) {
   switch (row.type) {
     case "header":
@@ -215,75 +224,93 @@ function RenderRow({
 
     case "full":
       return (
-          <RenderTile
-              tile={row.item}
-              variant={row.variant}
-              lightValues={lightValues}
-              setLightValue={setLightValue}
-              climateTemps={climateTemps}
-              setClimateTemp={setClimateTemp}
-          />
+        <RenderTile
+          tile={row.item}
+          variant={row.variant}
+          lightOnMap={lightOnMap}
+          lightValues={lightValues}
+          setLightValue={setLightValue}
+          onToggleLight={onToggleLight}
+          climateSetTempMap={climateSetTempMap}
+          fanPctMap={fanPctMap}
+          coverPosMap={coverPosMap}
+        />
       );
 
     case "two":
       return (
-          <View className="flex-row" style={{ gap: GAP }}>
-            <View className="flex-1">
-              <RenderTile
-                  tile={row.items[0]}
-                  variant={row.variant}
-                  lightValues={lightValues}
-                  setLightValue={setLightValue}
-                  climateTemps={climateTemps}
-                  setClimateTemp={setClimateTemp}
-              />
-            </View>
-            <View className="flex-1">
-              <RenderTile
-                  tile={row.items[1]}
-                  variant={row.variant}
-                  lightValues={lightValues}
-                  setLightValue={setLightValue}
-                  climateTemps={climateTemps}
-                  setClimateTemp={setClimateTemp}
-              />
-            </View>
+        <View className="flex-row" style={{ gap: GAP }}>
+          <View className="flex-1">
+            <RenderTile
+              tile={row.items[0]}
+              variant={row.variant}
+              lightOnMap={lightOnMap}
+              lightValues={lightValues}
+              setLightValue={setLightValue}
+              onToggleLight={onToggleLight}
+              climateSetTempMap={climateSetTempMap}
+              fanPctMap={fanPctMap}
+              coverPosMap={coverPosMap}
+            />
           </View>
+          <View className="flex-1">
+            <RenderTile
+              tile={row.items[1]}
+              variant={row.variant}
+              lightOnMap={lightOnMap}
+              lightValues={lightValues}
+              setLightValue={setLightValue}
+              onToggleLight={onToggleLight}
+              climateSetTempMap={climateSetTempMap}
+              fanPctMap={fanPctMap}
+              coverPosMap={coverPosMap}
+            />
+          </View>
+        </View>
       );
 
     case "split":
       return (
-          <View className="flex-row" style={{ gap: GAP }}>
-            <View className="flex-1">
-              <RenderTile
-                  tile={row.left}
-                  variant={row.left.variant}
-                  lightValues={lightValues}
-                  setLightValue={setLightValue}
-                  climateTemps={climateTemps}
-                  setClimateTemp={setClimateTemp}
-              />
-            </View>
-
-            <View className="flex-1" style={{ gap: GAP }}>
-              <RenderTile
-                  tile={row.right[0]}
-                  variant={row.right[0].variant}
-                  lightValues={lightValues}
-                  setLightValue={setLightValue}
-                  climateTemps={climateTemps}
-                  setClimateTemp={setClimateTemp}
-              />
+        <View className="flex-row" style={{ gap: GAP }}>
+          <View className="flex-1">
             <RenderTile
-                tile={row.right[1]}
-                variant={row.right[1].variant}
-                lightValues={lightValues}
-                setLightValue={setLightValue}
-                climateTemps={climateTemps}
-                setClimateTemp={setClimateTemp}
+              tile={row.left}
+              variant={row.left.variant}
+              lightOnMap={lightOnMap}
+              lightValues={lightValues}
+              setLightValue={setLightValue}
+              onToggleLight={onToggleLight}
+              climateSetTempMap={climateSetTempMap}
+              fanPctMap={fanPctMap}
+              coverPosMap={coverPosMap}
             />
-            </View>
           </View>
+
+          <View className="flex-1" style={{ gap: GAP }}>
+            <RenderTile
+              tile={row.right[0]}
+              variant={row.right[0].variant}
+              lightOnMap={lightOnMap}
+              lightValues={lightValues}
+              setLightValue={setLightValue}
+              onToggleLight={onToggleLight}
+              climateSetTempMap={climateSetTempMap}
+              fanPctMap={fanPctMap}
+              coverPosMap={coverPosMap}
+            />
+            <RenderTile
+              tile={row.right[1]}
+              variant={row.right[1].variant}
+              lightOnMap={lightOnMap}
+              lightValues={lightValues}
+              setLightValue={setLightValue}
+              onToggleLight={onToggleLight}
+              climateSetTempMap={climateSetTempMap}
+              fanPctMap={fanPctMap}
+              coverPosMap={coverPosMap}
+            />
+          </View>
+        </View>
       );
   }
 }
@@ -292,42 +319,219 @@ function RenderRow({
 // Screen
 // --------------------------------
 export default function MainDashboard() {
-  const layout = useDashboardStore((s) => s.layout);
+  const items = useDashboardWidgetsStore((s) => s.items);
+  const layout = useMemo(() => buildLayoutFromItems(items), [items]);
 
   const [lightValues, setLightValues] = useState<Record<string, number>>({});
+  const [pendingLights, setPendingLights] = useState<Set<string>>(new Set());
+
 
   const setLightValue = (entityId: string | undefined, v: number) => {
     if (!entityId) return;
-    setLightValues((prev) => ({ ...prev, [entityId]: v }));
+    setLightValues((prev) => ({...prev, [entityId]: v}));
   };
 
-  // per-entity climate set temps
-  const [climateTemps, setClimateTemps] = useState<Record<string, number>>({});
+  // ---- Extract entity IDs shown on dashboard ----
+  const dashboardEntityIds = useMemo(() => {
+    const ids = new Set<string>();
 
-  const setClimateTemp = (entityId: string | undefined, t: number) => {
-    if (!entityId) return;
-    setClimateTemps((prev) => ({ ...prev, [entityId]: t }));
-  };
+    for (const row of layout) {
+      if (row.type === "full") {
+        if (row.item.entityId) ids.add(row.item.entityId);
+      } else if (row.type === "two") {
+        row.items.forEach((t) => t.entityId && ids.add(t.entityId));
+      } else if (row.type === "split") {
+        if (row.left.entityId) ids.add(row.left.entityId);
+        row.right.forEach((t) => t.entityId && ids.add(t.entityId));
+      }
+    }
 
-  return (
-      <SafeAreaView edges={["top"]} className="flex-1">
-        <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 24, paddingTop: 64 }}
-        >
-        <View className="px-4 pt-6" style={{ gap: GAP }}>
-          {layout.map((row) => (
-              <RenderRow
-                  key={row.id}
-                  row={row}
-                  lightValues={lightValues}
-                  setLightValue={setLightValue}
-                  climateTemps={climateTemps}
-                  setClimateTemp={setClimateTemp}
-              />
-          ))}
-        </View>
-        </ScrollView>
-      </SafeAreaView>
+    return Array.from(ids);
+  }, [layout]);
+
+  // ---- State maps driven by polling ----
+  const [lightOnMap, setLightOnMap] = useState<Record<string, boolean>>({});
+  const [lightBrightnessMap, setLightBrightnessMap] = useState<Record<string, number>>({});
+  const [climateSetTempMap, setClimateSetTempMap] = useState<Record<string, number>>({});
+  const [fanPctMap, setFanPctMap] = useState<Record<string, number>>({});
+  const [coverPosMap, setCoverPosMap] = useState<Record<string, number>>({});
+
+  // ---- Polling loop (every 5s, only while screen is focused) ----
+  useFocusEffect(
+      React.useCallback(() => {
+        if (dashboardEntityIds.length === 0) return;
+
+        const wanted = new Set(dashboardEntityIds);
+        let alive = true;
+        let timer: any = null;
+
+        const poll = async () => {
+          try {
+            const all = await getCurrentState();
+            if (!alive) return;
+
+            // filter to only those on dashboard
+            const states = all.filter((s) => wanted.has(s.entity_id));
+
+            const nextLightOn: Record<string, boolean> = {};
+            const nextLightValues: Record<string, number> = {};
+            const nextClimateTemp: Record<string, number> = {};
+            const nextFanPct: Record<string, number> = {};
+            const nextCoverPos: Record<string, number> = {};
+
+            for (const s of states) {
+              const domain = s.entity_id.split(".")[0];
+              const attrs = s.attributes ?? {};
+
+              if (domain === "light") {
+                nextLightOn[s.entity_id] = s.state === "on";
+
+                if (typeof attrs.brightness === "number") {
+                  nextLightValues[s.entity_id] = Math.max(0, Math.min(1, attrs.brightness / 255)); //Converts to 0-100 scale
+                } else {
+                  // if light is off, HA may omit brightness
+                  // keep previous unless you want to force 0:
+                  // nextLightBri[s.entity_id] = 0;
+                }
+              }
+
+              if (domain === "climate") {
+                if (typeof attrs.temperature === "number") {
+                  nextClimateTemp[s.entity_id] = attrs.temperature;
+                }
+              }
+
+              if (domain === "fan") {
+                // HA often uses attributes.percentage
+                if (typeof attrs.percentage === "number") {
+                  nextFanPct[s.entity_id] = attrs.percentage;
+                } else {
+                  // fallback
+                  nextFanPct[s.entity_id] = s.state === "on" ? 100 : 0;
+                }
+              }
+
+              if (domain === "cover") {
+                // HA commonly uses attributes.current_position
+                if (typeof attrs.current_position === "number") {
+                  nextCoverPos[s.entity_id] = attrs.current_position;
+                }
+              }
+            }
+
+            setLightOnMap((prev) => ({...prev, ...nextLightOn}));
+            setLightBrightnessMap((prev) => ({...prev, ...nextLightValues}));
+            setClimateSetTempMap((prev) => ({...prev, ...nextClimateTemp}));
+            setFanPctMap((prev) => ({...prev, ...nextFanPct}));
+            setCoverPosMap((prev) => ({...prev, ...nextCoverPos}));
+          } catch (e) {
+            // optional log
+            // console.log("poll failed", e);
+          } finally {
+            if (!alive) return;
+            timer = setTimeout(poll, 5000);
+          }
+        };
+
+        poll();
+
+        return () => {
+          alive = false;
+          if (timer) clearTimeout(timer);
+        };
+      }, [dashboardEntityIds])
   );
-}
+  const refreshState = async () => {
+    try {
+      const all = await getCurrentState();
+      const wanted = new Set(dashboardEntityIds);
+      const states = all.filter((s) => wanted.has(s.entity_id));
+
+      const nextLightOn: Record<string, boolean> = {};
+      const nextLightValues: Record<string, number> = {};
+
+      for (const s of states) {
+        const domain = s.entity_id.split(".")[0];
+        const attrs = s.attributes ?? {};
+
+        if (domain === "light") {
+          nextLightOn[s.entity_id] = s.state === "on";
+          if (typeof attrs.brightness === "number") {
+            nextLightValues[s.entity_id] = attrs.brightness / 255;
+          }
+        }
+      }
+      setLightOnMap((prev) => ({...prev, ...nextLightOn}));
+      setLightValues((prev) => ({...prev, ...nextLightValues}));
+    } catch(e) {
+      console.log("refreshState failed", e);
+    }
+  };
+
+  const onToggleLight = async (entityId: string) => {
+    console.log("Running on toggle")
+    const current = !!lightOnMap[entityId];
+    const next: "on" | "off" = current ? "off" : "on";
+
+    setLightOnMap((prev) => ({ ...prev, [entityId]: next === "on" }));
+
+    try {
+      await setLight({ entity_id: entityId, state: next });
+      await refreshState();
+    } catch (e) {
+      setLightOnMap((prev) => ({ ...prev, [entityId]: current }));
+    }
+  };
+
+  const onSetLightBrightness = async (entityId: string, brightness: number) => {
+    const b = Math.max(0, Math.min(255, Math.round(brightness)));
+
+    // optimistic
+    setLightBrightnessMap((prev) => ({ ...prev, [entityId]: b }));
+    setLightOnMap(prev => {
+      const merged = { ...prev };
+      for (const [id, val] of Object.entries(nextLightOn)) {
+        if (!pendingLights.has(id)) {
+          merged[id] = val;
+        }
+      }
+      return merged;
+    });
+
+        try {
+          await setLight({
+            entity_id: entityId,
+            state: b > 0 ? "on" : "off",
+            brightness: b > 0 ? b : undefined,
+          });
+        } catch (e) {
+          // don’t know previous here unless you store it — polling will correct in <=5s
+          // If you want perfect revert, keep a local "previous" snapshot.
+        }
+      };
+
+      return (
+          <SafeAreaView edges={["top"]} className="flex-1">
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 24, paddingTop: 64 }}
+            >
+              <View className="px-4 pt-6" style={{ gap: GAP }}>
+                {layout.map((row) => (
+                    <RenderRow
+                        key={row.id}
+                        row={row}
+                        lightOnMap={lightOnMap}
+                        lightValues={lightValues}
+                        setLightValue={setLightValue}
+                        onToggleLight={onToggleLight}
+                        climateSetTempMap={climateSetTempMap}
+                        fanPctMap={fanPctMap}
+                        coverPosMap={coverPosMap}
+                    />
+                ))}
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+      );
+  }
