@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { View, Text, Pressable } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import Card from "@/components/ui/Card";
+import Card from "@/components/dashboard/Card";
 
 type Props = {
   title: string;

@@ -1,15 +1,16 @@
 import React, { useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, PanResponder, LayoutChangeEvent } from "react-native";
 import Svg, { Path, Circle } from "react-native-svg";
-import Card from "@/components/ui/Card";
+import Card from "@/components/dashboard/Card";
 import { MaterialIcons } from "@expo/vector-icons";
 import { setLight } from "@/lib/api/light";
 
 type Props = {
   title: string;
   entityId: string;
-  value: number;                 // 0..1
-  onChange: (v: number) => void; // called while sliding
+  value: number;
+  isOn: boolean;
+  onChange: (v: number) => void;
   onMenuPress?: () => void;
   showBlueBorder?: boolean;
 };
@@ -42,18 +43,20 @@ export default function LargeLightTile({
   title,
   entityId,
   value,
+    isOn,
   onChange,
   onMenuPress,
   showBlueBorder = true,
 }: Props) {
-  const isOn = value > 0.02;
+
+  const effectiveOn = isOn || value > 0.02;
+  const v = clamp(effectiveOn ? value : 0, 0, 1);
 
   const ACTIVE = "#F4C400";
   const OFF = "#7A7A7A";
-
-  const fgColor = isOn ? ACTIVE : OFF;
-  const iconColor = isOn ? ACTIVE : OFF;
-  const knobColor = isOn ? ACTIVE : OFF;
+  const fgColor = effectiveOn ? ACTIVE : OFF;
+  const iconColor = effectiveOn ? ACTIVE : OFF;
+  const knobColor = effectiveOn ? ACTIVE : OFF;
 
   const [boxW, setBoxW] = useState(0);
   const geomRef = useRef({ cx: 0, cy: 0, r: 0 });
@@ -80,7 +83,6 @@ export default function LargeLightTile({
     return { dialW, dialH, cx, cy, r };
   }, [boxW]);
 
-  const v = clamp(value, 0, 1);
   const angle = START_ANGLE + v * (END_ANGLE - START_ANGLE);
 
   const bgPath = useMemo(

@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { View, Text, Pressable, PanResponder, LayoutChangeEvent } from "react-native";
 import Svg, { Path, Circle } from "react-native-svg";
-import Card from "@/components/ui/Card";
+import Card from "@/components/dashboard/Card";
 import { MaterialIcons } from "@expo/vector-icons";
 
 type HvacMode = "cool" | "heat" | "auto" | "off";

@@ -3,8 +3,8 @@ import { View, Text, Pressable } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { mdiFan } from '@mdi/js';
 
-import Card from "@/components/ui/Card";
-import MdiIcon from "@/components/ui/MdiIcon";
+import Card from "@/components/dashboard/Card";
+import MdiIcon from "@/components/MdiIcon";
 import Slider from "@react-native-community/slider";
 
 const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));

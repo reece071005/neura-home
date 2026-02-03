@@ -8,9 +8,11 @@ export type HAState = {
     last_updated?: string;
 };
 
-export function getCurrentState() {
-    return api<HAState[]>("/homecontrollers/current-state", {
+export async function getCurrentState() {
+    const res = await api<HAState[]>("/homecontrollers/current-state", {
         method: "GET",
         auth: true,
     });
+
+    return res
 }

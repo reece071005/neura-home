@@ -1,7 +1,7 @@
 // components/ui/SmallLightTile.tsx
 import React, { useMemo, useState } from "react";
 import { View, Text, Pressable } from "react-native";
-import Card from "@/components/ui/Card";
+import Card from "@/components/dashboard/Card";
 import { MaterialIcons } from "@expo/vector-icons";
 import { setLight } from "@/lib/api/light";
 

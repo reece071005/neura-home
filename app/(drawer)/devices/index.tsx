@@ -3,7 +3,7 @@ import { Pressable, Text, View, ScrollView } from "react-native";
 import { router, Stack } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 
-import MdiIcon from "@/components/ui/MdiIcon";
+import MdiIcon from "@/components/MdiIcon";
 
 import {
   mdiLightbulb,
