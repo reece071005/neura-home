@@ -58,7 +58,7 @@ function CustomDrawerContent(props: any) {
                     className="flex-row items-center text-center"
                     onPress={() => {
                         props.navigation.closeDrawer();
-                        router.push("/(drawer)/(tabs)/mainDashboard");
+                        router.push("/(drawer)/notifications");
                     }}
                 >
                     <TabIcon name="notifications" size={30} />
