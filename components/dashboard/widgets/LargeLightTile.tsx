@@ -3,7 +3,7 @@ import { View, Text, Pressable, PanResponder, LayoutChangeEvent } from "react-na
 import Svg, { Path, Circle } from "react-native-svg";
 import Card from "@/components/dashboard/Card";
 import { MaterialIcons } from "@expo/vector-icons";
-import { setLight } from "@/lib/api/light";
+import { setLight } from "@/lib/api/deviceControllers/light";
 
 type Props = {
   title: string;

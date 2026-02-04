@@ -32,23 +32,22 @@ import type { DashboardRow, Tile, Variant } from "@/lib/dashboard/dashboardTypes
 //Spacing between tiles in multirows
 const GAP = 8;
 
-
-//Fallback tile for unsported types
+//Fallback tile for unsupported types
 export function DashboardTile({ tile, variant }: { tile: Tile; variant: Variant }) {
   return (
-      <Card variant={variant}>
-        <View style={{ alignItems: "center", justifyContent: "center", gap: 6 }}>
-          <Text style={{ fontSize: 22 }}>⬛️</Text>
-          <Text className="text-black font-bold text-center">{tile.title}</Text>
-        </View>
-      </Card>
+    <Card variant={variant}>
+      <View style={{ alignItems: "center", justifyContent: "center", gap: 6 }}>
+        <Text style={{ fontSize: 22 }}>⬛️</Text>
+        <Text className="text-black font-bold text-center">{tile.title}</Text>
+      </View>
+    </Card>
   );
 }
 
 /*
-*Tile Renderer
-* Chooses which widget component to render based on kind and size.
-*/
+ * Tile Renderer
+ * Chooses which widget component to render based on kind and size.
+ */
 export function RenderTile({
   tile,
   variant,
@@ -61,7 +60,9 @@ export function RenderTile({
   climateSetTempMap,
 
   fanPctMap,
+
   coverPosMap,
+  onChangeCover, // ✅ add
 }: {
   tile: Tile;
   variant: Variant;
@@ -80,6 +81,7 @@ export function RenderTile({
 
   //Cover State
   coverPosMap: Record<string, number>;
+  onChangeCover: (entityId: string, nextPos: number) => void; // ✅ add
 }) {
   switch (tile.kind) {
     case "light": {
@@ -89,27 +91,27 @@ export function RenderTile({
 
       if (variant === "large") {
         return (
-            <LargeLightTile
-                title={tile.title}
-                entityId={entityId}
-                value={v}
-                isOn={isOn}
-                onChange={(next) => onChangeLargeLight(entityId, next)}
-                onMenuPress={() => console.log("menu")}
-                showBlueBorder
-            />
+          <LargeLightTile
+            title={tile.title}
+            entityId={entityId}
+            value={v}
+            isOn={isOn}
+            onChange={(next) => onChangeLargeLight(entityId, next)}
+            onMenuPress={() => console.log("menu")}
+            showBlueBorder
+          />
         );
       }
 
       return (
-          <SmallLightTile
-              title={tile.title}
-              entityId={entityId}
-              isOn={isOn}
-              onPress={() => onPressSmallLight(entityId)}
-              onMenuPress={() => console.log("menu")}
-              showBlueBorder={false}
-          />
+        <SmallLightTile
+          title={tile.title}
+          entityId={entityId}
+          isOn={isOn}
+          onPress={() => onPressSmallLight(entityId)}
+          onMenuPress={() => console.log("menu")}
+          showBlueBorder={false}
+        />
       );
     }
 
@@ -120,15 +122,14 @@ export function RenderTile({
       const setTemp = entityId ? climateSetTempMap[entityId] ?? 23 : 23;
 
       return (
-          <LargeClimateTile
-              title={tile.title}
-              mode="cool"
-              setTemp={setTemp}
-              onChangeSetTemp={(t) => {
-                // TODO: call climate endpoint later
-                console.log("Set climate temp", entityId, t);
-              }}
-          />
+        <LargeClimateTile
+          title={tile.title}
+          mode="cool"
+          setTemp={setTemp}
+          onChangeSetTemp={(t) => {
+            console.log("Set climate temp", entityId, t);
+          }}
+        />
       );
     }
 
@@ -138,15 +139,14 @@ export function RenderTile({
         const pct = entityId ? fanPctMap[entityId] ?? 0 : 0;
 
         return (
-            <SmallFanTile
-                title={tile.title}
-                percentage={pct}
-                onChangePercentage={(nextPct) => {
-                  // TODO: call fan endpoint later
-                  console.log("Set fan %", entityId, nextPct);
-                }}
-                onMenuPress={() => console.log("fan menu")}
-            />
+          <SmallFanTile
+            title={tile.title}
+            percentage={pct}
+            onChangePercentage={(nextPct) => {
+              console.log("Set fan %", entityId, nextPct);
+            }}
+            onMenuPress={() => console.log("fan menu")}
+          />
         );
       }
       return <DashboardTile tile={tile} variant={variant} />;
@@ -158,15 +158,15 @@ export function RenderTile({
         const pos = entityId ? coverPosMap[entityId] ?? 0 : 0;
 
         return (
-            <SmallCoverTile
-                title={tile.title}
-                position={pos}
-                onChangePosition={(nextPos) => {
-                  // TODO: call cover endpoint later
-                  console.log("Set cover position", entityId, nextPos);
-                }}
-                onMenuPress={() => console.log("Blinds menu")}
-            />
+          <SmallCoverTile
+            title={tile.title}
+            position={pos}
+            onChangePosition={(nextPos) => {
+              // ✅ call your handler (which should call setCover in MainDashboard)
+              onChangeCover(entityId, nextPos);
+            }}
+            onMenuPress={() => console.log("Blinds menu")}
+          />
         );
       }
       return <DashboardTile tile={tile} variant={variant} />;
@@ -178,9 +178,9 @@ export function RenderTile({
 }
 
 /*
-* Row renderer
-* Handles layout (full, two, split, header)
-*/
+ * Row renderer
+ * Handles layout (full, two, split, header)
+ */
 export function RenderRow({
   row,
 
@@ -192,7 +192,9 @@ export function RenderRow({
   climateSetTempMap,
 
   fanPctMap,
+
   coverPosMap,
+  onChangeCover, // ✅ add
 }: {
   row: DashboardRow;
 
@@ -208,101 +210,109 @@ export function RenderRow({
   // fan/cover
   fanPctMap: Record<string, number>;
   coverPosMap: Record<string, number>;
+  onChangeCover: (entityId: string, nextPos: number) => void; // ✅ add
 }) {
   switch (row.type) {
     case "header":
       return <SectionHeader title={row.title} iconPath={row.iconPath} />;
 
-      case "full":
-        return (
+    case "full":
+      return (
+        <RenderTile
+          tile={row.item}
+          variant={row.variant}
+          lightOnMap={lightOnMap}
+          lightValues={lightValues}
+          onPressSmallLight={onPressSmallLight}
+          onChangeLargeLight={onChangeLargeLight}
+          climateSetTempMap={climateSetTempMap}
+          fanPctMap={fanPctMap}
+          coverPosMap={coverPosMap}
+          onChangeCover={onChangeCover} // ✅ pass
+        />
+      );
+
+    case "two":
+      return (
+        <View className="flex-row" style={{ gap: GAP }}>
+          <View className="flex-1">
             <RenderTile
-                tile={row.item}
-                variant={row.variant}
-                lightOnMap={lightOnMap}
-                lightValues={lightValues}
-                onPressSmallLight={onPressSmallLight}
-                onChangeLargeLight={onChangeLargeLight}
-                climateSetTempMap={climateSetTempMap}
-                fanPctMap={fanPctMap}
-                coverPosMap={coverPosMap}
+              tile={row.items[0]}
+              variant={row.variant}
+              lightOnMap={lightOnMap}
+              lightValues={lightValues}
+              onPressSmallLight={onPressSmallLight}
+              onChangeLargeLight={onChangeLargeLight}
+              climateSetTempMap={climateSetTempMap}
+              fanPctMap={fanPctMap}
+              coverPosMap={coverPosMap}
+              onChangeCover={onChangeCover} // ✅ pass
             />
-        );
+          </View>
 
-      case "two":
-        return (
-            <View className="flex-row" style={{ gap: GAP }}>
-              <View className="flex-1">
-                <RenderTile
-                    tile={row.items[0]}
-                    variant={row.variant}
-                    lightOnMap={lightOnMap}
-                    lightValues={lightValues}
-                    onPressSmallLight={onPressSmallLight}
-                    onChangeLargeLight={onChangeLargeLight}
-                    climateSetTempMap={climateSetTempMap}
-                    fanPctMap={fanPctMap}
-                    coverPosMap={coverPosMap}
-                />
-              </View>
+          <View className="flex-1">
+            <RenderTile
+              tile={row.items[1]}
+              variant={row.variant}
+              lightOnMap={lightOnMap}
+              lightValues={lightValues}
+              onPressSmallLight={onPressSmallLight}
+              onChangeLargeLight={onChangeLargeLight}
+              climateSetTempMap={climateSetTempMap}
+              fanPctMap={fanPctMap}
+              coverPosMap={coverPosMap}
+              onChangeCover={onChangeCover} // ✅ pass
+            />
+          </View>
+        </View>
+      );
 
-              <View className="flex-1">
-                <RenderTile
-                    tile={row.items[1]}
-                    variant={row.variant}
-                    lightOnMap={lightOnMap}
-                    lightValues={lightValues}
-                    onPressSmallLight={onPressSmallLight}
-                    onChangeLargeLight={onChangeLargeLight}
-                    climateSetTempMap={climateSetTempMap}
-                    fanPctMap={fanPctMap}
-                    coverPosMap={coverPosMap}
-                />
-              </View>
-            </View>
-        );
+    case "split":
+      return (
+        <View className="flex-row" style={{ gap: GAP }}>
+          <View className="flex-1">
+            <RenderTile
+              tile={row.left}
+              variant={row.left.variant}
+              lightOnMap={lightOnMap}
+              lightValues={lightValues}
+              onPressSmallLight={onPressSmallLight}
+              onChangeLargeLight={onChangeLargeLight}
+              climateSetTempMap={climateSetTempMap}
+              fanPctMap={fanPctMap}
+              coverPosMap={coverPosMap}
+              onChangeCover={onChangeCover} // ✅ pass
+            />
+          </View>
 
-      case "split":
-        return (
-            <View className="flex-row" style={{ gap: GAP }}>
-              <View className="flex-1">
-                <RenderTile
-                    tile={row.left}
-                    variant={row.left.variant}
-                    lightOnMap={lightOnMap}
-                    lightValues={lightValues}
-                    onPressSmallLight={onPressSmallLight}
-                    onChangeLargeLight={onChangeLargeLight}
-                    climateSetTempMap={climateSetTempMap}
-                    fanPctMap={fanPctMap}
-                    coverPosMap={coverPosMap}
-                />
-              </View>
-
-              <View className="flex-1" style={{ gap: GAP }}>
-                <RenderTile
-                    tile={row.right[0]}
-                    variant={row.right[0].variant}
-                    lightOnMap={lightOnMap}
-                    lightValues={lightValues}
-                    onPressSmallLight={onPressSmallLight}
-                    onChangeLargeLight={onChangeLargeLight}
-                    climateSetTempMap={climateSetTempMap}
-                    fanPctMap={fanPctMap}
-                    coverPosMap={coverPosMap}
-                />
-                <RenderTile
-                    tile={row.right[1]}
-                    variant={row.right[1].variant}
-                    lightOnMap={lightOnMap}
-                    lightValues={lightValues}
-                    onPressSmallLight={onPressSmallLight}
-                    onChangeLargeLight={onChangeLargeLight}
-                    climateSetTempMap={climateSetTempMap}
-                    fanPctMap={fanPctMap}
-                    coverPosMap={coverPosMap}
-                />
-              </View>
-            </View>
-        );
+          <View className="flex-1" style={{ gap: GAP }}>
+            <RenderTile
+              tile={row.right[0]}
+              variant={row.right[0].variant}
+              lightOnMap={lightOnMap}
+              lightValues={lightValues}
+              onPressSmallLight={onPressSmallLight}
+              onChangeLargeLight={onChangeLargeLight}
+              climateSetTempMap={climateSetTempMap}
+              fanPctMap={fanPctMap}
+              coverPosMap={coverPosMap}
+              onChangeCover={onChangeCover} // ✅ pass
+            />
+            <RenderTile
+              tile={row.right[1]}
+              variant={row.right[1].variant}
+              lightOnMap={lightOnMap}
+              lightValues={lightValues}
+              onPressSmallLight={onPressSmallLight}
+              onChangeLargeLight={onChangeLargeLight}
+              climateSetTempMap={climateSetTempMap}
+              fanPctMap={fanPctMap}
+              coverPosMap={coverPosMap}
+              onChangeCover={onChangeCover} // ✅ pass
+            />
+          </View>
+        </View>
+      );
   }
 }
+

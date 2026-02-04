@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import Card from "@/components/dashboard/Card";
 import { MaterialIcons } from "@expo/vector-icons";
-import { setLight } from "@/lib/api/light";
+import { setLight } from "@/lib/api/deviceControllers/light";
 
 type Props = {
   entityId: string;

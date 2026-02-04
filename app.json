@@ -41,7 +41,14 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-audio",
+        {
+          "recordAudioAndroid": "true",
+          "microphonePermission": "Allow Neura Home to access your microphone."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

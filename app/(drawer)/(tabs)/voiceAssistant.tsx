@@ -1,3 +1,4 @@
+// VoiceAssistant.tsx
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -11,7 +12,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-
 import { MaterialIcons } from "@expo/vector-icons";
 import { useVoiceAssistant } from "@/lib/hooks/useVoiceAssistant";
 
@@ -24,11 +24,17 @@ const Chip = ({ label }: { label: string }) => {
 };
 
 const VoiceAssistant = () => {
-  // ✅ Hook
-  const { isRecording, lastText, lastResult, startRecording, stopAndSend } =
-    useVoiceAssistant();
+  const {
+    isRecording,
+    isPlayingBack,
+    lastText,
+    lastResult,
+    startRecording,
+    stopAndSend,
+    stopPlayback,
+    sendTextCommand
+  } = useVoiceAssistant();
 
-  // Optional: show errors / loading UI
   const [errorMsg, setErrorMsg] = useState<string>("");
 
   /* ---------------- Mic pulse animation ---------------- */
@@ -116,30 +122,29 @@ const VoiceAssistant = () => {
     });
   }, [sheetOpen, backdrop, sheetY]);
 
-  const onSend = () => {
+  const onSend = async () => {
     if (!text.trim()) return;
-    // TODO: send text to /voice/command (separate)
-    closeSheet();
+
+    try {
+      setErrorMsg("");
+      await sendTextCommand(text);  // ✅ calls /voice/command
+      closeSheet();                 // clears input too in your closeSheet()
+    } catch (e: any) {
+      setErrorMsg(e?.message ?? "Failed to send command");
+    }
   };
 
-  const assistantMessage =
-    lastResult?.command_result?.message ||
-    lastResult?.message ||
-    "";
+  const assistantMessage = lastResult?.command_result?.response|| lastResult?.response || "";
 
   return (
     <View className="flex-1">
-      {/* Main white panel */}
       <View className="flex-1 px-5 pt-36 pb-6">
         <View className="flex-1 bg-white rounded-3xl px-6 pt-6">
-          <Text className="text-h3 font-bold text-black">
-            Good Morning, User!
-          </Text>
+          <Text className="text-h3 font-bold text-black">Good Morning, User!</Text>
           <Text className="text-body font-medium text-black mt-2">
             What can I help you with?
           </Text>
 
-          {/* Suggestion chips */}
           <View className="mt-6 flex-row flex-wrap gap-3">
             <Chip label="Turn on the lights" />
             <Chip label="Close the blinds" />
@@ -148,35 +153,27 @@ const VoiceAssistant = () => {
             <Chip label="Show me the camera feeds" />
           </View>
 
-          {/* ✅ Display transcript + result */}
           <View className="mt-6">
-            <Text className="text-textSecondary font-medium text-subtext">
-              Heard:
-            </Text>
-            <Text className="text-black font-semibold mt-1">
-              {lastText ? lastText : "—"}
-            </Text>
+            <Text className="text-textSecondary font-medium text-subtext">Heard:</Text>
+            <Text className="text-black font-semibold mt-1">{lastText || "—"}</Text>
 
             <Text className="text-textSecondary font-medium text-subtext mt-4">
               Assistant:
             </Text>
-            <Text className="text-black font-semibold mt-1">
-              {assistantMessage ? assistantMessage : "—"}
-            </Text>
+            <Text className="text-black font-semibold mt-1">{assistantMessage || "—"}</Text>
 
             {!!errorMsg && (
-              <Text className="text-red-500 font-medium text-subtext mt-3">
-                {errorMsg}
-              </Text>
+              <Text className="text-red-500 font-medium text-subtext mt-3">{errorMsg}</Text>
             )}
           </View>
 
-          {/* ✅ Mic button: press & hold */}
+          {/* Mic button: press & hold */}
           <View className="mt-auto pb-10 items-center">
             <Pressable
               onPressIn={async () => {
                 try {
                   setErrorMsg("");
+                  await stopPlayback(); // stop any playback before recording
                   await startRecording();
                 } catch (e: any) {
                   setErrorMsg(e?.message ?? "Failed to start recording");
@@ -185,7 +182,7 @@ const VoiceAssistant = () => {
               onPressOut={async () => {
                 try {
                   setErrorMsg("");
-                  await stopAndSend({ executeCommand: true });
+                  await stopAndSend({ executeCommand: true, playback: true }); // playback ON
                 } catch (e: any) {
                   setErrorMsg(e?.message ?? "Failed to process audio");
                 }
@@ -211,8 +208,14 @@ const VoiceAssistant = () => {
             </Pressable>
 
             <Text className="mt-3 text-textSecondary font-medium text-subtext">
-              {isRecording ? "Listening..." : "Hold to talk"}
+              {isRecording ? "Listening..." : isPlayingBack ? "Playing back..." : "Hold to talk"}
             </Text>
+
+            {isPlayingBack && (
+              <Pressable onPress={stopPlayback} className="mt-3 px-4 py-2 rounded-full bg-gray-100">
+                <Text className="text-black font-semibold">Stop playback</Text>
+              </Pressable>
+            )}
           </View>
 
           {/* Keyboard button */}
@@ -234,7 +237,6 @@ const VoiceAssistant = () => {
 
       {/* Bottom sheet */}
       <Modal visible={sheetOpen} transparent animationType="none">
-        {/* Backdrop */}
         <Pressable onPress={closeSheet} style={{ flex: 1 }}>
           <Animated.View
             style={{
@@ -245,7 +247,6 @@ const VoiceAssistant = () => {
           />
         </Pressable>
 
-        {/* Sheet */}
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
@@ -257,9 +258,7 @@ const VoiceAssistant = () => {
                 <View className="w-12 h-1.5 rounded-full bg-gray-300" />
               </View>
 
-              <Text className="text-black font-bold text-body">
-                Type your request
-              </Text>
+              <Text className="text-black font-bold text-body">Type your request</Text>
               <Text className="text-textSecondary font-medium text-subtext mt-1">
                 Example: “Turn off the living room lights”
               </Text>
@@ -299,3 +298,4 @@ const VoiceAssistant = () => {
 };
 
 export default VoiceAssistant;
+

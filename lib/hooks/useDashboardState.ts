@@ -140,5 +140,7 @@ export function useDashboardState(dashboardEntityIds: string[]) {
     // Expose setters only if you want optimistic UI from the screen layer:
     setLightOnMap,
     setLightValues,
+
+    setCoverPosMap,
   };
 }

@@ -4,7 +4,8 @@ import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useDashboardWidgetsStore, buildLayoutFromItems } from "@/lib/storage/dashboardWidgetStore";
-import { setLight } from "@/lib/api/light";
+import { setLight } from "@/lib/api/deviceControllers/light";
+import { setCover } from "@/lib/api/deviceControllers/cover"; // ✅ add
 import { useDashboardState } from "@/lib/hooks/useDashboardState";
 import { getDashboardEntityIds } from "@/lib/dashboard/getDashboardEntityIds";
 
@@ -32,6 +33,7 @@ export default function MainDashboard() {
     refreshNow,
     setLightOnMap,
     setLightValues,
+      setCoverPosMap,
   } = useDashboardState(dashboardEntityIds);
 
   const onToggleLight = async (entityId: string) => {
@@ -49,7 +51,19 @@ export default function MainDashboard() {
       setLightOnMap((prev) => ({ ...prev, [entityId]: current }));
     }
   };
+  const onChangeCover = async (entityId: string, nextPos: number) => {
+    const prev = coverPosMap[entityId] ?? 0;
 
+    // optimistic UI
+    setCoverPosMap((m) => ({ ...m, [entityId]: nextPos }));
+
+    try {
+      await setCover({ entity_id: entityId, position: nextPos });
+    } catch {
+      // revert on failure
+      setCoverPosMap((m) => ({ ...m, [entityId]: prev }));
+    }
+  };
   return (
     <SafeAreaView edges={["top"]} className="flex-1">
       <ScrollView
@@ -69,7 +83,9 @@ export default function MainDashboard() {
               }}
               climateSetTempMap={climateSetTempMap}
               fanPctMap={fanPctMap}
+
               coverPosMap={coverPosMap}
+              onChangeCover={onChangeCover}
             />
           ))}
         </View>
