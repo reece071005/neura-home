@@ -1,38 +1,51 @@
 import { getToken } from "@/lib/storage/token";
-import {string} from "postcss-selector-parser";
 
+//Neura Hub URL
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://10.0.2.2:8000";
 
-//Defining type request options. All the fields are optional.
+// Types
 type RequestOptions = {
-    method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; //API request type
-    headers?: Record<string, string>; //
-    body?: any; //
-    auth?: boolean; //Takes token for authenitcate users.
-    form?: boolean; //
+    method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+    headers?: Record<string, string>;
+    body?: any;
+    auth?: boolean; // Bearer token
+    form?: boolean;
+};
+
+// Session-expiry handling
+export class SessionExpiredError extends Error {
+    constructor() {
+        super("SESSION_EXPIRED");
+        this.name = "SessionExpiredError";
+    }
 }
 
-//API request function.
+
+//Global handler that runs when the user session has expired.
+
+let onSessionExpired: null | (() => void | Promise<void>) = null;
+
+//Prevent multiple requests
+let sessionExpiredFired = false;
+
+export function setOnSessionExpired(handler: () => void | Promise<void>) {
+    onSessionExpired = handler;
+}
+
+// API request function
 export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T> {
-    //Default values
-    const {
-        method = "GET",
-        headers = {},
-        body,
-        auth = false,
-        form = false,
-    } = opts;
+    const { method = "GET", headers = {}, body, auth = false, form = false } = opts;
 
-    const finalHeaders: Record<string, string> = {...(headers ?? {})};
+    const finalHeaders: Record<string, string> = { ...(headers ?? {}) };
 
-    //Gets token using token.ts module (if user is authenticated).
+    // Attach token if required
     if (auth) {
         const token = await getToken();
         if (token) finalHeaders.Authorization = `Bearer ${token}`;
     }
 
+    // Body encoding
     let finalBody: any = undefined;
-
     if (body !== undefined) {
         if (form) {
             finalHeaders["Content-Type"] = "application/x-www-form-urlencoded";
@@ -43,27 +56,56 @@ export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T
         }
     }
 
-    const res = await fetch(`${BASE_URL}${path}`, {
+    const url = `${BASE_URL}${path}`;
+    const res = await fetch(url, {
         method,
         headers: finalHeaders,
         body: finalBody,
     });
 
-    const data = await res.json().catch(() => ({}));
+    // Safer parsing: works even if backend returns non-JSON
+    const rawText = await res.text();
+    let data: any = {};
+    try {
+        data = rawText ? JSON.parse(rawText) : {};
+    } catch {
+        data = { detail: rawText };
+    }
+
+    // If token is invalid / expired, trigger global logout + redirect
+    if (res.status === 401 && auth) {
+        const detail = String(data?.detail ?? "");
+        const msg = detail.toLowerCase();
+
+        const looksLikeExpired =
+            msg.includes("could not validate credentials") ||
+            msg.includes("not authenticated") ||
+            msg.includes("unauthorized");
+
+        if (looksLikeExpired) {
+            if (!sessionExpiredFired) {
+                sessionExpiredFired = true;
+                try {
+                    await onSessionExpired?.();
+                } finally {
+                    setTimeout(() => {
+                        sessionExpiredFired = false;
+                        }, 1500);
+                }
+            }
+            throw new SessionExpiredError();
+        }
+    }
 
     if (!res.ok) {
-      console.log("API ERROR", {
-        url: `${BASE_URL}${path}`,
-        status: res.status,
-        detail: data?.detail,
-        raw: JSON.stringify(data, null, 2),
-      });
+        console.log("API ERROR", {
+            url,
+            status: res.status,
+            detail: data?.detail,
+            raw: rawText,
+        });
 
-      throw new Error(
-        typeof data?.detail === "string"
-          ? data.detail
-          : `Request failed (${res.status})`
-      );
+        throw new Error(typeof data?.detail === "string" ? data.detail : `Request failed (${res.status})`);
     }
 
     return data as T;

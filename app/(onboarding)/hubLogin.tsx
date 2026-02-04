@@ -68,13 +68,13 @@ const HubSetup = () => {
                     </Text>
                 </View>
                 <View className="flex-1 items-center gap-10">
-                    <View className="w-full gap-6">
+                    <View className="w-full gap-1">
                         <GradientTextInput
                             label="Username"
                             value={username}
                             onChangeText={setUsername}
                             placeholder="Username"
-                            keyboardType="numeric"
+                            keyboardType="default"
                             error={!!(loginError || userNameError)}
                             errorText={userNameError}
                         />
@@ -83,7 +83,7 @@ const HubSetup = () => {
                             value={password}
                             onChangeText={setPassword}
                             placeholder="Password"
-                            keyboardType="numeric"
+                            keyboardType="default"
                             secureTextEntry
                             showPasswordToggle
                             error={!!(loginError || passwordError)}

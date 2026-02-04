@@ -3,7 +3,7 @@ import React from "react";
 import { View, Text } from "react-native";
 
 //Icons
-import MdiIcon from "@/components/ui/MdiIcon"; // your custom SVG wrapper
+import MdiIcon from "@/components/MdiIcon"; // your custom SVG wrapper
 import * as mdi from "@mdi/js";
 
 type Props = {
