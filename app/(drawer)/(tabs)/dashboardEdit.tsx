@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, Pressable, Modal, TextInput } from "react-native";
+import { View, Text, Pressable, Modal, TextInput, InteractionManager } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { useDashboardStateSync } from "@/lib/hooks/useDashboardStateSync";
+
 
 import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
 import * as mdi from "@mdi/js";
@@ -64,6 +66,41 @@ const TILEKIND_TO_DEVICEKINDS: Record<TileKind, ApiDevice["kind"][]> = {
   ],
 };
 
+function SyncPill({ status, error }: { status: string; error: string | null }) {
+  let text = "Saved";
+  let bg = "bg-gray-100";
+  let border = "border-gray-300";
+  let color = "text-gray-700";
+
+  if (status === "loading") {
+    text = "Loading…";
+  } else if (status === "saving") {
+    text = "Saving…";
+  } else if (status === "error") {
+    text = "Error";
+    bg = "bg-red-50";
+    border = "border-red-300";
+    color = "text-red-700";
+  } else if (status === "saved") {
+    text = "Saved";
+    bg = "bg-green-50";
+    border = "border-green-300";
+    color = "text-green-700";
+  }
+
+  return (
+    <View className="mt-1">
+      <View className={`px-3 py-[2px] rounded-full border ${bg} ${border}`}>
+        <Text className={`text-[11px] font-semibold ${color}`}>
+          {text}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+
+
 export default function EditDashboard() {
   // --------------------
   // Store
@@ -80,6 +117,8 @@ export default function EditDashboard() {
   // --------------------
   const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
+
+  const { status, error } = useDashboardStateSync({ debounceMs: 800 });
 
   useEffect(() => {
     let mounted = true;
@@ -341,23 +380,32 @@ export default function EditDashboard() {
   return (
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white">
       {/* Header */}
-      <View className="px-4 pt-4 pb-3 flex-row items-center justify-between">
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text className="text-black font-semibold">Back</Text>
-        </Pressable>
+        <View className="px-4 pt-4 pb-3 flex-row items-center justify-between">
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Text className="text-black font-semibold">Back</Text>
+          </Pressable>
 
-        <Text className="text-black text-lg font-bold">Edit dashboard</Text>
+          <View className="items-center">
+            <Text className="text-black text-lg font-bold">Edit dashboard</Text>
+            <SyncPill status={status} error={error} />
+          </View>
 
-        <Pressable onPress={openAdd} hitSlop={12}>
-          <Text className="text-black font-semibold">Add</Text>
-        </Pressable>
-      </View>
-
+          <Pressable onPress={openAdd} hitSlop={12}>
+            <Text className="text-black font-semibold">Add</Text>
+          </Pressable>
+        </View>
       {/* Draggable list */}
       <DraggableFlatList
         data={items}
         keyExtractor={(item) => item.id}
-        onDragEnd={({ data }) => setItems(data)}
+        onDragEnd={({ data }) => {
+          // Schedule the update for the next frame after interactions
+          requestAnimationFrame(() => {
+            InteractionManager.runAfterInteractions(() => {
+              setItems(data);
+            });
+          });
+        }}
         renderItem={renderItem}
         contentContainerStyle={{
           paddingHorizontal: 16,
