@@ -1,18 +1,43 @@
-import React, { useState } from "react";
-import { View, Text, Pressable, Modal, TextInput, InteractionManager } from "react-native";
+import React, { useMemo, useState } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  Modal,
+  TextInput,
+  InteractionManager,
+  Alert,
+} from "react-native";
 import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { mdiPencil } from "@mdi/js";
 
 import { useDashboardStateSync } from "@/lib/hooks/useDashboardStateSync";
-import {useDashboardWidgetsStore, type DashboardItem, type TileKind, type WidgetSize,} from "@/lib/storage/dashboardWidgetStore";
-import {AddMode, kindOptions, sizeOptions, headerIconOptions, TILEKIND_TO_DEVICEKINDS,} from "@/lib/editDashboard/dashboardTypes";
+
+import {
+  useDashboardWidgetsStore,
+  type DashboardItem,
+  type TileKind,
+  type WidgetSize,
+} from "@/lib/storage/dashboardWidgetStore";
+
+import {
+  AddMode,
+  kindOptions,
+  sizeOptions,
+  TILEKIND_TO_DEVICEKINDS,
+} from "@/lib/editDashboard/dashboardTypes";
+
 import { useDeviceAutocomplete } from "@/lib/editDashboard/useDeviceAutocomplete";
 
 import SyncPill from "@/components/editDashboard/SyncPill";
+import IconPickerModal from "@/components/editDashboard/IconPickerModal";
+import MdiIcon from "@/components/MdiIcon";
 
 
 export default function EditDashboard() {
+  // ----- store -----
   const items = useDashboardWidgetsStore((s) => s.items);
   const setItems = useDashboardWidgetsStore((s) => s.setItems);
   const removeItem = useDashboardWidgetsStore((s) => s.removeItem);
@@ -20,17 +45,19 @@ export default function EditDashboard() {
   const addHeader = useDashboardWidgetsStore((s) => s.addHeader);
   const addTile = useDashboardWidgetsStore((s) => s.addTile);
 
-  // --------------------
-  // Devices for autocomplete
-  // --------------------
+  const dashboards = useDashboardWidgetsStore((s) => s.dashboards);
+  const activeDashboardId = useDashboardWidgetsStore((s) => s.activeDashboardId);
+  const setActiveDashboard = useDashboardWidgetsStore((s) => s.setActiveDashboard);
+  const addDashboard = useDashboardWidgetsStore((s) => s.addDashboard);
+  const renameDashboard = useDashboardWidgetsStore((s) => s.renameDashboard);
+  const setDashboardIcon = useDashboardWidgetsStore((s) => s.setDashboardIcon);
+  const removeDashboard = useDashboardWidgetsStore((s) => s.removeDashboard);
+
+  // ----- sync pill -----
   const { status, error } = useDashboardStateSync({ debounceMs: 800 });
 
-  // --------------------
-  // Editing state
-  // --------------------
+  // ----- state: widget add/edit modal -----
   const [editingItem, setEditingItem] = useState<DashboardItem | null>(null);
-
-  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [addMode, setAddMode] = useState<AddMode>("tile");
 
@@ -50,6 +77,28 @@ export default function EditDashboard() {
     undefined
   );
 
+  // Header icon picker (for header items)
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+
+  // ----- state: dashboard settings modal (rename + icon + delete) -----
+  const [dashSettingsOpen, setDashSettingsOpen] = useState(false);
+  const [dashNameDraft, setDashNameDraft] = useState("");
+  const [dashIconDraft, setDashIconDraft] = useState<string | undefined>(undefined);
+  const [dashIconPickerOpen, setDashIconPickerOpen] = useState(false);
+
+  const activeDashboard = useMemo(
+    () => dashboards.find((d) => d.id === activeDashboardId),
+    [dashboards, activeDashboardId]
+  );
+
+  const { devicesLoading, suggestions: entitySuggestions } = useDeviceAutocomplete({
+    kind: newKind,
+    query: entityQuery,
+  });
+
+  // --------------------
+  // Openers
+  // --------------------
   const openAdd = () => {
     setEditingItem(null);
 
@@ -69,11 +118,16 @@ export default function EditDashboard() {
     setModalOpen(true);
   };
 
-  const { devicesLoading, suggestions: entitySuggestions } = useDeviceAutocomplete({
-    kind: newKind,
-    query: entityQuery,
-  });
+  const openDashboardSettings = () => {
+    const current = activeDashboard;
+    setDashNameDraft(current?.name ?? "");
+    setDashIconDraft(current?.iconPath);
+    setDashSettingsOpen(true);
+  };
 
+  // --------------------
+  // Add / Save widget or header
+  // --------------------
   const onAdd = () => {
     // Optional validation: if entity is set, ensure it matches selected kind
     const trimmedEntity = newEntityId.trim();
@@ -83,9 +137,8 @@ export default function EditDashboard() {
         newKind === "generic" ||
         allowed.some((k) => trimmedEntity.startsWith(k + "."));
 
-      // if lock has no allowed kinds, treat as invalid if they typed something
       if (!matchesType) {
-        // You can replace this with a nicer inline error state if you want
+        // (You can add inline error state later; for now, just do nothing)
         return;
       }
     }
@@ -120,6 +173,9 @@ export default function EditDashboard() {
     setModalOpen(false);
   };
 
+  // --------------------
+  // List item renderer
+  // --------------------
   const renderItem = ({ item, drag, isActive }: RenderItemParams<DashboardItem>) => {
     // HEADER ITEM
     if (item.type === "header") {
@@ -134,9 +190,7 @@ export default function EditDashboard() {
         >
           <View className="flex-row items-start justify-between" style={{ gap: 12 }}>
             <View className="flex-1">
-              <Text className="text-black font-bold text-base">
-                Header: {item.title}
-              </Text>
+              <Text className="text-black font-bold text-base">Header: {item.title}</Text>
               <Text className="text-gray-500 text-xs mt-1">
                 {item.iconPath ? "icon set" : "no icon"}
               </Text>
@@ -160,9 +214,7 @@ export default function EditDashboard() {
                 setNewHeaderTitle(item.title);
                 setNewHeaderIconPath(item.iconPath);
 
-                // close entity picker if it was open
                 setEntityPickerOpen(false);
-
                 setModalOpen(true);
               }}
               className="px-3 py-2 rounded-2xl bg-gray-100 self-start"
@@ -251,26 +303,89 @@ export default function EditDashboard() {
   return (
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white pb-6">
       {/* Header */}
-        <View className="px-4 pt-4 pb-3 flex-row items-center justify-between">
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Text className="text-black font-semibold">Back</Text>
-          </Pressable>
+      <View className="px-4 pt-4 pb-3 flex-row items-center justify-between">
+        <Pressable onPress={() => router.back()} hitSlop={12}>
+          <Text className="text-black font-semibold">Back</Text>
+        </Pressable>
 
-          <View className="items-center">
-            <Text className="text-black text-lg font-bold">Edit dashboard</Text>
-            <SyncPill status={status} error={error} />
+        <View className="items-center">
+          <Pressable
+            onPress={openDashboardSettings}
+            hitSlop={12}
+            className="items-center"
+          >
+          <View className="flex-row items-center" style={{ gap: 1 }}>
+            {/* Dashboard icon (if any) */}
+            {activeDashboard?.iconPath ? (
+              <View
+                style={{
+                  width: 34,
+                  height: 34,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <MdiIcon path={activeDashboard.iconPath} size={20} color="#111827" />
+              </View>
+            ) : null}
+
+            {/* Dashboard name */}
+            <Text className="text-textPrimary text-body font-bold">
+              {activeDashboard?.name ?? "Dashboard"}
+            </Text>
+
+            {/* Pencil button */}
+            <View pointerEvents="none" className="px-3">
+              <MdiIcon path={mdiPencil} size={20} color="#000000"/>
+            </View>
           </View>
-
-          <Pressable onPress={openAdd} hitSlop={12}>
-            <Text className="text-black font-semibold">Add</Text>
           </Pressable>
+
+      <SyncPill status={status} error={error} />
+  </View>
+
+        <Pressable onPress={openAdd} hitSlop={12}>
+          <Text className="text-black font-semibold">Add</Text>
+        </Pressable>
+      </View>
+
+      {/* Dashboard Picker */}
+      <View className="px-4 mt-2 pb-2">
+        <View className="flex-row items-center" style={{ gap: 8, flexWrap: "wrap" }}>
+          {dashboards.map((d) => {
+            const active = d.id === activeDashboardId;
+            return (
+              <Pressable
+                key={d.id}
+                onPress={() => setActiveDashboard(d.id)}
+                className={`px-3 py-2 rounded-full border ${
+                  active ? "bg-black border-black" : "bg-white border-gray-300"
+                }`}
+              >
+                <Text className={active ? "text-white font-semibold" : "text-black font-semibold"}>
+                  {d.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+
+          {dashboards.length < 3 && (
+            <Pressable
+              onPress={() => addDashboard("New dashboard")}
+              className="px-3 py-2 rounded-full border bg-white border-gray-300"
+            >
+              <Text className="text-black font-semibold">+ Add</Text>
+            </Pressable>
+          )}
+
         </View>
+      </View>
+
       {/* Draggable list */}
       <DraggableFlatList
         data={items}
         keyExtractor={(item) => item.id}
         onDragEnd={({ data }) => {
-          // Schedule the update for the next frame after interactions
           requestAnimationFrame(() => {
             InteractionManager.runAfterInteractions(() => {
               setItems(data);
@@ -280,12 +395,12 @@ export default function EditDashboard() {
         renderItem={renderItem}
         contentContainerStyle={{
           paddingHorizontal: 16,
-          paddingBottom: 28,
+          paddingBottom: 95,
           paddingTop: 16,
         }}
       />
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Widget Modal */}
       <Modal
         visible={modalOpen}
         transparent
@@ -295,7 +410,7 @@ export default function EditDashboard() {
         <Pressable
           className="flex-1 justify-end bg-black/40"
           onPress={() => {
-            // tap outside to close dropdown, but keep modal open
+            // tap outside closes dropdown only
             setEntityPickerOpen(false);
           }}
         >
@@ -315,9 +430,7 @@ export default function EditDashboard() {
             {/* Mode */}
             {!editingItem && (
               <>
-                <Text className="text-gray-600 mt-4 mb-2">
-                  What do you want to add?
-                </Text>
+                <Text className="text-gray-600 mt-4 mb-2">What do you want to add?</Text>
                 <View className="flex-row" style={{ gap: 8 }}>
                   {(["tile", "header"] as AddMode[]).map((m) => {
                     const active = addMode === m;
@@ -329,9 +442,7 @@ export default function EditDashboard() {
                           setEntityPickerOpen(false);
                         }}
                         className={`px-3 py-2 rounded-full border ${
-                          active
-                            ? "bg-black border-black"
-                            : "bg-white border-gray-300"
+                          active ? "bg-black border-black" : "bg-white border-gray-300"
                         }`}
                       >
                         <Text className={active ? "text-white" : "text-black"}>
@@ -357,25 +468,47 @@ export default function EditDashboard() {
                 />
 
                 <Text className="text-gray-600 mt-4 mb-2">Icon</Text>
-                <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-                  {headerIconOptions.map((opt) => {
-                    const active = newHeaderIconPath === opt.iconPath;
-                    return (
-                      <Pressable
-                        key={opt.label}
-                        onPress={() => setNewHeaderIconPath(opt.iconPath)}
-                        className={`px-3 py-2 rounded-full border ${
-                          active
-                            ? "bg-black border-black"
-                            : "bg-white border-gray-300"
-                        }`}
+
+                <View className="flex-row items-center" style={{ gap: 10 }}>
+                  <Pressable
+                    onPress={() => {
+                      setEntityPickerOpen(false);
+                      setIconPickerOpen(true);
+                    }}
+                    className="px-4 py-3 rounded-2xl bg-gray-100"
+                  >
+                    <Text className="text-black font-semibold">
+                      {newHeaderIconPath ? "Change icon" : "Choose icon"}
+                    </Text>
+                  </Pressable>
+
+                  {/* Preview + clear */}
+                  {newHeaderIconPath ? (
+                    <View className="flex-row items-center" style={{ gap: 10 }}>
+                      <View
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          borderColor: "#E5E7EB",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
                       >
-                        <Text className={active ? "text-white" : "text-black"}>
-                          {opt.label}
-                        </Text>
+                        <MdiIcon path={newHeaderIconPath} size={22} color="#111827" />
+                      </View>
+
+                      <Pressable
+                        onPress={() => setNewHeaderIconPath(undefined)}
+                        className="px-3 py-2 rounded-2xl bg-red-50"
+                      >
+                        <Text className="text-red-600 font-semibold">Clear</Text>
                       </Pressable>
-                    );
-                  })}
+                    </View>
+                  ) : (
+                    <Text className="text-gray-500 text-sm">No icon selected</Text>
+                  )}
                 </View>
               </>
             )}
@@ -402,20 +535,15 @@ export default function EditDashboard() {
                         key={k}
                         onPress={() => {
                           setNewKind(k);
-                          // reset entity when type changes
                           setNewEntityId("");
                           setEntityQuery("");
                           setEntityPickerOpen(false);
                         }}
                         className={`px-3 py-2 rounded-full border ${
-                          active
-                            ? "bg-black border-black"
-                            : "bg-white border-gray-300"
+                          active ? "bg-black border-black" : "bg-white border-gray-300"
                         }`}
                       >
-                        <Text className={active ? "text-white" : "text-black"}>
-                          {k}
-                        </Text>
+                        <Text className={active ? "text-white" : "text-black"}>{k}</Text>
                       </Pressable>
                     );
                   })}
@@ -430,14 +558,10 @@ export default function EditDashboard() {
                         key={s}
                         onPress={() => setNewSize(s)}
                         className={`px-3 py-2 rounded-full border ${
-                          active
-                            ? "bg-black border-black"
-                            : "bg-white border-gray-300"
+                          active ? "bg-black border-black" : "bg-white border-gray-300"
                         }`}
                       >
-                        <Text className={active ? "text-white" : "text-black"}>
-                          {s}
-                        </Text>
+                        <Text className={active ? "text-white" : "text-black"}>{s}</Text>
                       </Pressable>
                     );
                   })}
@@ -468,7 +592,10 @@ export default function EditDashboard() {
 
                 {/* Suggestions dropdown */}
                 {entityPickerOpen && entitySuggestions.length > 0 && (
-                  <View style={{ maxHeight: 260 }} className="mt-2 border border-gray-200 rounded-2xl overflow-hidden">
+                  <View
+                    style={{ maxHeight: 260 }}
+                    className="mt-2 border border-gray-200 rounded-2xl overflow-hidden"
+                  >
                     {entitySuggestions.map((d) => (
                       <Pressable
                         key={d.entity_id}
@@ -490,13 +617,11 @@ export default function EditDashboard() {
                 )}
 
                 {/* Empty state */}
-                {entityPickerOpen &&
-                  entityQuery.length > 0 &&
-                  entitySuggestions.length === 0 && (
-                    <Text className="text-gray-500 text-xs mt-2">
-                      No matching {newKind} devices found.
-                    </Text>
-                  )}
+                {entityPickerOpen && entityQuery.length > 0 && entitySuggestions.length === 0 && (
+                  <Text className="text-gray-500 text-xs mt-2">
+                    No matching {newKind} devices found.
+                  </Text>
+                )}
 
                 {/* Lock note */}
                 {newKind === "lock" && (
@@ -529,6 +654,172 @@ export default function EditDashboard() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Dashboard Settings Modal (separate from widget modal) */}
+      <Modal
+        visible={dashSettingsOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDashSettingsOpen(false)}
+      >
+        <Pressable
+          className="flex-1 justify-end bg-black/40"
+          onPress={() => setDashSettingsOpen(false)}
+        >
+          <Pressable
+            className="bg-white rounded-t-3xl p-4"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View className="flex-row items-center justify-between">
+              <Text className="text-black text-lg font-bold">Dashboard settings</Text>
+              <Pressable onPress={() => setDashSettingsOpen(false)} hitSlop={12}>
+                <Text className="text-black font-semibold">Close</Text>
+              </Pressable>
+            </View>
+
+            {/* Name */}
+            <Text className="text-gray-600 mt-4 mb-2">Name</Text>
+            <TextInput
+              value={dashNameDraft}
+              onChangeText={setDashNameDraft}
+              placeholder="e.g. Upstairs"
+              placeholderTextColor="#9CA3AF"
+              className="border border-gray-300 rounded-2xl px-4 py-3 text-black"
+            />
+
+            {/* Icon */}
+            <Text className="text-gray-600 mt-4 mb-2">Icon</Text>
+            <View className="flex-row items-center" style={{ gap: 10 }}>
+              <Pressable
+                onPress={() => setDashIconPickerOpen(true)}
+                className="px-4 py-3 rounded-2xl bg-gray-100"
+              >
+                <Text className="text-black font-semibold">
+                  {dashIconDraft ? "Change icon" : "Choose icon"}
+                </Text>
+              </Pressable>
+
+              {dashIconDraft ? (
+                <View className="flex-row items-center" style={{ gap: 10 }}>
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: "#E5E7EB",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <MdiIcon path={dashIconDraft} size={22} color="#111827" />
+                  </View>
+
+                  <Pressable
+                    onPress={() => setDashIconDraft(undefined)}
+                    className="px-3 py-2 rounded-2xl bg-red-50"
+                  >
+                    <Text className="text-red-600 font-semibold">Clear</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Text className="text-gray-500 text-sm">No icon selected</Text>
+              )}
+            </View>
+
+            {/* Save/Cancel */}
+            <View className="flex-row justify-end mt-5" style={{ gap: 10 }}>
+              <Pressable
+                onPress={() => {
+                  // reset drafts back to current
+                  setDashNameDraft(activeDashboard?.name ?? "");
+                  setDashIconDraft(activeDashboard?.iconPath);
+                  setDashSettingsOpen(false);
+                }}
+                className="px-4 py-3 rounded-2xl bg-gray-100"
+              >
+                <Text className="text-black font-semibold">Cancel</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  const nextName = dashNameDraft.trim();
+                  if (nextName) renameDashboard(activeDashboardId, nextName);
+                  setDashboardIcon(activeDashboardId, dashIconDraft);
+                  setDashSettingsOpen(false);
+                }}
+                className="px-4 py-3 rounded-2xl bg-black"
+              >
+                <Text className="text-white font-semibold">Save</Text>
+              </Pressable>
+            </View>
+
+            {/* Delete */}
+            <View className="mt-5 pt-4 border-t border-gray-200">
+              <Pressable
+                disabled={dashboards.length <= 1}
+                onPress={() => {
+                  if (dashboards.length <= 1) return;
+
+                  Alert.alert(
+                    "Delete dashboard?",
+                    "This cannot be undone.",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Delete",
+                        style: "destructive",
+                        onPress: () => {
+                          removeDashboard(activeDashboardId);
+                          setDashSettingsOpen(false);
+                        },
+                      },
+                    ]
+                  );
+                }}
+                className={`px-4 py-3 rounded-2xl ${
+                  dashboards.length <= 1 ? "bg-gray-100" : "bg-red-50"
+                }`}
+              >
+                <Text
+                  className={`font-semibold ${
+                    dashboards.length <= 1 ? "text-gray-400" : "text-red-600"
+                  }`}
+                >
+                  Delete dashboard
+                </Text>
+                {dashboards.length <= 1 && (
+                  <Text className="text-gray-400 text-xs mt-1">
+                    You must keep at least one dashboard.
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Header Icon Picker (for header items) */}
+      <IconPickerModal
+        visible={iconPickerOpen}
+        onClose={() => setIconPickerOpen(false)}
+        selectedPath={newHeaderIconPath}
+        onSelect={(path) => {
+          setNewHeaderIconPath(path);
+          setIconPickerOpen(false);
+        }}
+      />
+
+      {/* Dashboard Icon Picker (for dashboard itself) */}
+      <IconPickerModal
+        visible={dashIconPickerOpen}
+        onClose={() => setDashIconPickerOpen(false)}
+        selectedPath={dashIconDraft}
+        onSelect={(path) => {
+          setDashIconDraft(path);
+          setDashIconPickerOpen(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
