@@ -14,6 +14,7 @@ export type TileKind =
     | "climate"
     | "fan"
     | "cover"
+    | "camera"
     | "lock"
     | "media"
     | "generic";

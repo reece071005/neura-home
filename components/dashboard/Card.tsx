@@ -8,6 +8,8 @@ type CardProps = {
     variant?: "small" | "large";
     disabled?: boolean;
     className?: string;
+    noPadding?: boolean;
+    transparent?: boolean;
 }
 
 const Card = ({
@@ -16,13 +18,19 @@ const Card = ({
     variant = "small",
     disabled = false,
     className,
+    noPadding = false,
+    transparent = false,
 }: CardProps) => {
-    const base = "bg-white rounded-2xl shadow-md";
+    const base = clsx (
+       "rounded-2xl shadow-md overflow-hidden",
+        !transparent && "bg-white"
+    )
 
-    const padding = {
+    const padding = noPadding ? "":
+        {
         small: "p-2 h-[86px]",
         large: "p-4 h-[180px]",
-    }[variant];
+        }[variant];
 
     const content = (
         <View
@@ -48,6 +56,5 @@ const Card = ({
         </Pressable>
     );
 }
-
 
 export default Card;

@@ -27,7 +27,13 @@ import SmallFanTile from "@/components/dashboard/widgets/SmallFanTile";
 //Cover Widgets
 import SmallCoverTile from "@/components/dashboard/widgets/SmallCoverTile";
 
+//Camera Widgets
+import LargeCameraTile from "@/components/dashboard/widgets/LargeCameraTile"
+
 import type { DashboardRow, Tile, Variant } from "@/lib/dashboard/dashboardTypes";
+
+
+
 
 //Spacing between tiles in multirows
 const GAP = 8;
@@ -171,6 +177,19 @@ export function RenderTile({
       }
       return <DashboardTile tile={tile} variant={variant} />;
     }
+
+    case "camera":
+      if (variant === "large") {
+        const entityId = tile.entityId ?? "";
+
+        return (
+            <LargeCameraTile
+            title = {tile.title}
+            cameraEntity = {tile.entityId}
+            >
+            </LargeCameraTile>
+        )
+      }
 
     default:
       return <DashboardTile tile={tile} variant={variant} />;
