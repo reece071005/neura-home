@@ -14,7 +14,7 @@ import { RenderRow } from "@/components/dashboard/DashboardRenderer";
 
 const GAP = 8;
 
-export default function MainDashboard() {
+export default function DashboardScreen() {
   const items = useDashboardWidgetsStore((s) => s.items);
   const layout = useMemo(() => buildLayoutFromItems(items), [items]);
 

@@ -199,60 +199,183 @@ export function buildLayoutFromItems(items: DashboardItem[]): DashboardRow[] {
 // --------------------
 // Store
 // --------------------
+type DashboardMeta = {
+  id: string;
+  name: string;
+  iconPath?: string;
+};
+
 type DashboardState = {
+  // Registry (max 3)
+  dashboards: DashboardMeta[];
+  activeDashboardId: string;
+
+  // Layouts
+  layoutsById: Record<string, DashboardItem[]>;
+
+  // Convenience: active items (so existing screens barely change)
   items: DashboardItem[];
+
+  // ----- actions -----
+  setActiveDashboard: (id: string) => void;
+
+  // dashboard ops
+  addDashboard: (name?: string) => void;     // max 3
+  renameDashboard: (id: string, name: string) => void;
+  setDashboardIcon: (id: string, iconPath?: string) => void;
+  removeDashboard: (id: string) => void;
+
+  // layout ops (operate on active dashboard)
   setItems: (next: DashboardItem[]) => void;
 
   addHeader: (title: string, iconPath?: string) => void;
   addTile: (tile: Omit<Extract<DashboardItem, { type: "tile" }>, "id" | "type">) => void;
 
   removeItem: (id: string) => void;
-  updateItem: (
-      id: string,
-      patch: Partial<Omit<DashboardItem, "id" | "type">>
-  ) => void;
+  updateItem: (id: string, patch: Partial<Omit<DashboardItem, "id" | "type">>) => void;
 
   resetToStarter: () => void;
 };
 
+const dashId = () => `dash_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+const DEFAULT_DASHBOARD_ID = "dash_default";
+
 export const useDashboardWidgetsStore = create<DashboardState>()(
   persist(
-    (set) => ({
-      items: STARTER_ITEMS,
+    (set, get) => {
+      // helper: get active items
+      const activeItems = () => {
+        const { layoutsById, activeDashboardId } = get();
+        return layoutsById[activeDashboardId] ?? [];
+      };
 
-      setItems: (next) => set({ items: next }),
+      // helper: write active items and keep `items` in sync
+      const setActiveItems = (next: DashboardItem[]) => {
+        const { activeDashboardId, layoutsById } = get();
+        const nextLayouts = { ...layoutsById, [activeDashboardId]: next };
+        set({ layoutsById: nextLayouts, items: next });
+      };
 
-      addHeader: (title, iconPath) =>
-        set((s) => ({
-          items: [
-            ...s.items,
+      return {
+        dashboards: [
+          { id: DEFAULT_DASHBOARD_ID, name: "Dashboard", iconPath: mdi.mdiViewDashboard },
+        ],
+        activeDashboardId: DEFAULT_DASHBOARD_ID,
+
+        layoutsById: {
+          [DEFAULT_DASHBOARD_ID]: STARTER_ITEMS,
+        },
+
+        // keep compatibility with existing code that reads `items`
+        items: STARTER_ITEMS,
+
+        setActiveDashboard: (id) => {
+          const s = get();
+          if (!s.dashboards.some((d) => d.id === id)) return;
+
+          const nextItems = s.layoutsById[id] ?? [];
+          set({ activeDashboardId: id, items: nextItems });
+        },
+
+        addDashboard: (name = "New dashboard") => {
+          const s = get();
+          if (s.dashboards.length >= 3) return;
+
+          const id = dashId();
+          const meta: DashboardMeta = { id, name, iconPath: mdi.mdiViewDashboard };
+
+          const nextDashboards = [...s.dashboards, meta];
+          const nextLayouts = { ...s.layoutsById, [id]: [] };
+
+          set({
+            dashboards: nextDashboards,
+            layoutsById: nextLayouts,
+            activeDashboardId: id,
+            items: [],
+          });
+        },
+
+        renameDashboard: (id, name) => {
+          const n = name.trim() || "Dashboard";
+          set((s) => ({
+            dashboards: s.dashboards.map((d) => (d.id === id ? { ...d, name: n } : d)),
+          }));
+        },
+
+        setDashboardIcon: (id, iconPath) => {
+          set((s) => ({
+            dashboards: s.dashboards.map((d) => (d.id === id ? { ...d, iconPath } : d)),
+          }));
+        },
+
+        removeDashboard: (id) => {
+          const s = get();
+          if (s.dashboards.length <= 1) return; // keep at least one
+
+          const nextDashboards = s.dashboards.filter((d) => d.id !== id);
+          const nextLayouts = { ...s.layoutsById };
+          delete nextLayouts[id];
+
+          const nextActive =
+            s.activeDashboardId === id ? nextDashboards[0].id : s.activeDashboardId;
+
+          set({
+            dashboards: nextDashboards,
+            layoutsById: nextLayouts,
+            activeDashboardId: nextActive,
+            items: nextLayouts[nextActive] ?? [],
+          });
+        },
+
+        setItems: (next) => setActiveItems(next),
+
+        addHeader: (title, iconPath) =>
+          setActiveItems([
+            ...activeItems(),
             { type: "header", id: uid("hdr"), title, iconPath },
-          ],
-        })),
+          ]),
 
-      addTile: (tile) =>
-        set((s) => ({
-          items: [
-            ...s.items,
+        addTile: (tile) =>
+          setActiveItems([
+            ...activeItems(),
             { ...tile, id: uid("t"), type: "tile" },
-          ],
-        })),
+          ]),
 
-      removeItem: (id) =>
-        set((s) => ({ items: s.items.filter((x) => x.id !== id) })),
+        removeItem: (id) =>
+          setActiveItems(activeItems().filter((x) => x.id !== id)),
 
-      updateItem: (id, patch) =>
-        set((s) => ({
-          items: s.items.map((x) =>
-            x.id === id ? { ...x, ...patch } : x
+        updateItem: (id, patch) =>
+          setActiveItems(
+            activeItems().map((x) => (x.id === id ? ({ ...x, ...patch } as any) : x))
           ),
-        })),
 
-      resetToStarter: () => set({ items: STARTER_ITEMS }),
-    }),
+        resetToStarter: () => setActiveItems(STARTER_ITEMS),
+      };
+    },
     {
-      name: "dashboard-items-v1",
+      name: "dashboard-items-v2",
       storage: createJSONStorage(() => AsyncStorage),
+
+      // ✅ migrate from v1 -> v2 if old data exists
+      migrate: (persisted: any, version) => {
+        // if it already looks like v2, keep it
+        if (persisted?.dashboards && persisted?.layoutsById && persisted?.activeDashboardId) {
+          return persisted as any;
+        }
+
+        // v1 shape: { items: [...] }
+        const oldItems: DashboardItem[] = persisted?.items ?? STARTER_ITEMS;
+
+        return {
+          dashboards: [{ id: DEFAULT_DASHBOARD_ID, name: "Dashboard", iconPath: mdi.mdiViewDashboard }],
+          activeDashboardId: DEFAULT_DASHBOARD_ID,
+          layoutsById: { [DEFAULT_DASHBOARD_ID]: oldItems },
+          items: oldItems,
+        } as any;
+      },
+
+      version: 2,
     }
   )
 );
