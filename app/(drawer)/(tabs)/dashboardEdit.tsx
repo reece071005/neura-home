@@ -1,110 +1,18 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, Pressable, Modal, TextInput, InteractionManager } from "react-native";
+import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+
 import { useDashboardStateSync } from "@/lib/hooks/useDashboardStateSync";
+import {useDashboardWidgetsStore, type DashboardItem, type TileKind, type WidgetSize,} from "@/lib/storage/dashboardWidgetStore";
+import {AddMode, kindOptions, sizeOptions, headerIconOptions, TILEKIND_TO_DEVICEKINDS,} from "@/lib/editDashboard/dashboardTypes";
+import { useDeviceAutocomplete } from "@/lib/editDashboard/useDeviceAutocomplete";
 
-
-import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
-import * as mdi from "@mdi/js";
-
-import {
-  useDashboardWidgetsStore,
-  type DashboardItem,
-  type TileKind,
-  type WidgetSize,
-} from "@/lib/storage/dashboardWidgetStore";
-
-import { listDevices, type ApiDevice } from "@/lib/api/devices";
-
-// --------------------
-// Options
-// --------------------
-const kindOptions: TileKind[] = [
-  "light",
-  "climate",
-  "fan",
-  "cover",
-  "lock",
-  "camera",
-  "media",
-  "generic",
-];
-
-const sizeOptions: WidgetSize[] = ["small", "large"];
-
-// super simple icon picker (expand later)
-const headerIconOptions: { label: string; iconPath?: string }[] = [
-  { label: "None", iconPath: undefined },
-  { label: "Sofa", iconPath: mdi.mdiSofa },
-  { label: "Bed", iconPath: mdi.mdiBedEmpty },
-  { label: "Kitchen", iconPath: mdi.mdiSilverwareForkKnife },
-  { label: "Bath", iconPath: mdi.mdiShower },
-];
-
-type AddMode = "tile" | "header";
-
-// Map dashboard TileKind -> devices API kinds
-const TILEKIND_TO_DEVICEKINDS: Record<TileKind, ApiDevice["kind"][]> = {
-  light: ["light"],
-  climate: ["climate"],
-  fan: ["fan"],
-  cover: ["cover"],
-  lock: [], // backend doesn't return lock in ApiDevice.kind yet
-  camera: ["camera"],
-  media: ["media_player"],
-  generic: [
-    "light",
-    "fan",
-    "switch",
-    "cover",
-    "climate",
-    "media_player",
-    "camera",
-    "sensor",
-    "binary_sensor",
-  ],
-};
-
-function SyncPill({ status, error }: { status: string; error: string | null }) {
-  let text = "Saved";
-  let bg = "bg-gray-100";
-  let border = "border-gray-300";
-  let color = "text-gray-700";
-
-  if (status === "loading") {
-    text = "Loading…";
-  } else if (status === "saving") {
-    text = "Saving…";
-  } else if (status === "error") {
-    text = "Error";
-    bg = "bg-red-50";
-    border = "border-red-300";
-    color = "text-red-700";
-  } else if (status === "saved") {
-    text = "Saved";
-    bg = "bg-green-50";
-    border = "border-green-300";
-    color = "text-green-700";
-  }
-
-  return (
-    <View className="mt-1">
-      <View className={`px-3 py-[2px] rounded-full border ${bg} ${border}`}>
-        <Text className={`text-[11px] font-semibold ${color}`}>
-          {text}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
+import SyncPill from "@/components/editDashboard/SyncPill";
 
 
 export default function EditDashboard() {
-  // --------------------
-  // Store
-  // --------------------
   const items = useDashboardWidgetsStore((s) => s.items);
   const setItems = useDashboardWidgetsStore((s) => s.setItems);
   const removeItem = useDashboardWidgetsStore((s) => s.removeItem);
@@ -115,30 +23,7 @@ export default function EditDashboard() {
   // --------------------
   // Devices for autocomplete
   // --------------------
-  const [devices, setDevices] = useState<ApiDevice[]>([]);
-  const [devicesLoading, setDevicesLoading] = useState(false);
-
   const { status, error } = useDashboardStateSync({ debounceMs: 800 });
-
-  useEffect(() => {
-    let mounted = true;
-    setDevicesLoading(true);
-
-    listDevices()
-      .then((res) => {
-        if (mounted) setDevices(res);
-      })
-      .catch(() => {
-        if (mounted) setDevices([]);
-      })
-      .finally(() => {
-        if (mounted) setDevicesLoading(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   // --------------------
   // Editing state
@@ -184,24 +69,10 @@ export default function EditDashboard() {
     setModalOpen(true);
   };
 
-  const entitySuggestions = useMemo(() => {
-    const q = entityQuery.trim().toLowerCase();
-    const allowed = TILEKIND_TO_DEVICEKINDS[newKind];
-
-    if (!allowed || allowed.length === 0) return [];
-
-    return devices
-      .filter((d) => allowed.includes(d.kind))
-      .filter((d) => {
-        if (!q) return true;
-        return (
-          d.entity_id.toLowerCase().includes(q) ||
-          d.name.toLowerCase().includes(q) ||
-          (d.area?.toLowerCase().includes(q) ?? false)
-        );
-      })
-      .slice(0, 10);
-  }, [devices, entityQuery, newKind]);
+  const { devicesLoading, suggestions: entitySuggestions } = useDeviceAutocomplete({
+    kind: newKind,
+    query: entityQuery,
+  });
 
   const onAdd = () => {
     // Optional validation: if entity is set, ensure it matches selected kind
@@ -378,7 +249,7 @@ export default function EditDashboard() {
   };
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white pb-6">
       {/* Header */}
         <View className="px-4 pt-4 pb-3 flex-row items-center justify-between">
           <Pressable onPress={() => router.back()} hitSlop={12}>
