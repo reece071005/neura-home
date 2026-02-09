@@ -10,6 +10,8 @@ import {AddMode, kindOptions, sizeOptions, headerIconOptions, TILEKIND_TO_DEVICE
 import { useDeviceAutocomplete } from "@/lib/editDashboard/useDeviceAutocomplete";
 
 import SyncPill from "@/components/editDashboard/SyncPill";
+import IconPickerModal from "@/components/editDashboard/IconPickerModal";
+import MdiIcon from "@/components/MdiIcon";
 
 
 export default function EditDashboard() {
@@ -39,6 +41,8 @@ export default function EditDashboard() {
   const [newKind, setNewKind] = useState<TileKind>("light");
   const [newSize, setNewSize] = useState<WidgetSize>("large");
   const [newEntityId, setNewEntityId] = useState("");
+
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
 
   // Entity picker state (typeahead)
   const [entityQuery, setEntityQuery] = useState("");
@@ -357,26 +361,46 @@ export default function EditDashboard() {
                 />
 
                 <Text className="text-gray-600 mt-4 mb-2">Icon</Text>
-                <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-                  {headerIconOptions.map((opt) => {
-                    const active = newHeaderIconPath === opt.iconPath;
-                    return (
-                      <Pressable
-                        key={opt.label}
-                        onPress={() => setNewHeaderIconPath(opt.iconPath)}
-                        className={`px-3 py-2 rounded-full border ${
-                          active
-                            ? "bg-black border-black"
-                            : "bg-white border-gray-300"
-                        }`}
+
+                <View className="flex-row items-center" style={{ gap: 10 }}>
+                  <Pressable
+                    onPress={() => setIconPickerOpen(true)}
+                    className="px-4 py-3 rounded-2xl bg-gray-100"
+                  >
+                    <Text className="text-black font-semibold">
+                      {newHeaderIconPath ? "Change icon" : "Choose icon"}
+                    </Text>
+                  </Pressable>
+
+                  {/* Preview + clear */}
+                  {newHeaderIconPath ? (
+                    <View className="flex-row items-center" style={{ gap: 10 }}>
+                      <View
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          borderColor: "#E5E7EB",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
                       >
-                        <Text className={active ? "text-white" : "text-black"}>
-                          {opt.label}
-                        </Text>
+                        <MdiIcon path={newHeaderIconPath} size={22} color="#111827" />
+                      </View>
+
+                      <Pressable
+                        onPress={() => setNewHeaderIconPath(undefined)}
+                        className="px-3 py-2 rounded-2xl bg-red-50"
+                      >
+                        <Text className="text-red-600 font-semibold">Clear</Text>
                       </Pressable>
-                    );
-                  })}
+                    </View>
+                  ) : (
+                    <Text className="text-gray-500 text-sm">No icon selected</Text>
+                  )}
                 </View>
+
               </>
             )}
 
@@ -529,6 +553,15 @@ export default function EditDashboard() {
           </Pressable>
         </Pressable>
       </Modal>
+      <IconPickerModal
+        visible={iconPickerOpen}
+        onClose={() => setIconPickerOpen(false)}
+        selectedPath={newHeaderIconPath}
+        onSelect={(path) => {
+          setNewHeaderIconPath(path);
+          setIconPickerOpen(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
