@@ -31,7 +31,6 @@ export default function LargeCameraTile({ title, cameraEntity, onMenuPress }: Pr
             setUri(next);
             setLastUpdated(new Date());
         } catch (e) {
-            console.log("Snapshot error:", String(e));
             setHadError(true);
         } finally {
             setLoading(false);
