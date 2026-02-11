@@ -10,6 +10,7 @@ type CardProps = {
     className?: string;
     noPadding?: boolean;
     transparent?: boolean;
+    allowOverflow?: boolean;
 }
 
 const Card = ({
@@ -20,10 +21,12 @@ const Card = ({
     className,
     noPadding = false,
     transparent = false,
+    allowOverflow = false,
 }: CardProps) => {
     const base = clsx (
-       "rounded-2xl shadow-md overflow-hidden",
-        !transparent && "bg-white"
+       "rounded-2xl shadow-md",
+        !transparent && "bg-white",
+        !allowOverflow && "overflow-hidden"
     )
 
     const padding = noPadding ? "":

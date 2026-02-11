@@ -1,14 +1,6 @@
-import React, { useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  Modal,
-  TextInput,
-  InteractionManager,
-  Alert,
-} from "react-native";
-import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
+import React, { useState } from "react";
+import {View, Text, Pressable, Modal, TextInput, InteractionManager} from "react-native";
+import DraggableFlatList from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { mdiPencil } from "@mdi/js";
@@ -34,6 +26,8 @@ import { useDeviceAutocomplete } from "@/lib/editDashboard/useDeviceAutocomplete
 import SyncPill from "@/components/editDashboard/SyncPill";
 import IconPickerModal from "@/components/editDashboard/IconPickerModal";
 import MdiIcon from "@/components/MdiIcon";
+import DashboardItemRow from "@/components/editDashboard/DashboardItemRow";
+import DashboardSettingsSheet from "@/components/editDashboard/DashboardSettingsSheet";
 
 
 export default function EditDashboard() {
@@ -86,10 +80,12 @@ export default function EditDashboard() {
   const [dashIconDraft, setDashIconDraft] = useState<string | undefined>(undefined);
   const [dashIconPickerOpen, setDashIconPickerOpen] = useState(false);
 
-  const activeDashboard = useMemo(
-    () => dashboards.find((d) => d.id === activeDashboardId),
-    [dashboards, activeDashboardId]
-  );
+  //Delete dashboards
+  const pinnedDashboardId = dashboards[0]?.id;
+  const isPinnedDashboard = activeDashboardId === pinnedDashboardId;
+  const cannotDelete = isPinnedDashboard;
+
+  const activeDashboard = dashboards.find((d) => d.id === activeDashboardId);
 
   const { devicesLoading, suggestions: entitySuggestions } = useDeviceAutocomplete({
     kind: newKind,
@@ -177,126 +173,40 @@ export default function EditDashboard() {
   // List item renderer
   // --------------------
   const renderItem = ({ item, drag, isActive }: RenderItemParams<DashboardItem>) => {
-    // HEADER ITEM
-    if (item.type === "header") {
-      return (
-        <Pressable
-          onLongPress={drag}
-          delayLongPress={150}
-          className={`border rounded-3xl p-4 mb-3 ${
-            isActive ? "border-black" : "border-gray-200"
-          }`}
-          style={{ opacity: isActive ? 0.85 : 1 }}
-        >
-          <View className="flex-row items-start justify-between" style={{ gap: 12 }}>
-            <View className="flex-1">
-              <Text className="text-black font-bold text-base">Header: {item.title}</Text>
-              <Text className="text-gray-500 text-xs mt-1">
-                {item.iconPath ? "icon set" : "no icon"}
-              </Text>
-            </View>
-
-            <Pressable
-              onPress={() => removeItem(item.id)}
-              className="px-3 py-2 rounded-2xl bg-red-50"
-            >
-              <Text className="text-red-600 font-semibold">Remove</Text>
-            </Pressable>
-          </View>
-
-          {/* Quick edit */}
-          <View className="mt-3">
-            <Pressable
-              onPress={() => {
-                setEditingItem(item);
-                setAddMode("header");
-
-                setNewHeaderTitle(item.title);
-                setNewHeaderIconPath(item.iconPath);
-
-                setEntityPickerOpen(false);
-                setModalOpen(true);
-              }}
-              className="px-3 py-2 rounded-2xl bg-gray-100 self-start"
-            >
-              <Text className="text-black font-semibold">Edit</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      );
-    }
-
-    // TILE ITEM
     return (
-      <Pressable
-        onLongPress={drag}
-        delayLongPress={150}
-        className={`border rounded-3xl p-4 mb-3 ${
-          isActive ? "border-black" : "border-gray-200"
-        }`}
-        style={{ opacity: isActive ? 0.85 : 1 }}
-      >
-        {/* Top line */}
-        <View className="flex-row items-start justify-between" style={{ gap: 12 }}>
-          <View className="flex-1">
-            <Text className="text-black font-bold text-base">{item.title}</Text>
-            <Text className="text-gray-500 text-xs mt-1">
-              {item.kind} • {item.size}
-              {item.entityId ? ` • ${item.entityId}` : ""}
-            </Text>
-          </View>
+      <DashboardItemRow
+        item={item}
+        drag={drag}
+        isActive={isActive}
+        sizeOptions={sizeOptions}
+        onRemove={removeItem}
+        onUpdate={updateItem}
+        onEditHeader={(hdr) => {
+          setEditingItem(hdr);
+          setAddMode("header");
 
-          <Pressable
-            onPress={() => removeItem(item.id)}
-            className="px-3 py-2 rounded-2xl bg-red-50"
-          >
-            <Text className="text-red-600 font-semibold">Remove</Text>
-          </Pressable>
-        </View>
+          setNewHeaderTitle(hdr.title);
+          setNewHeaderIconPath(hdr.iconPath);
 
-        {/* Actions */}
-        <View className="flex-row items-center justify-between mt-3">
-          {/* Size toggle */}
-          <View className="flex-row" style={{ gap: 8 }}>
-            {sizeOptions.map((s) => {
-              const active = item.size === s;
-              return (
-                <Pressable
-                  key={s}
-                  onPress={() => updateItem(item.id, { size: s })}
-                  className={`px-3 py-2 rounded-full border ${
-                    active ? "bg-black border-black" : "bg-white border-gray-300"
-                  }`}
-                >
-                  <Text className={active ? "text-white" : "text-black"}>{s}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          setEntityPickerOpen(false);
+          setModalOpen(true);
+        }}
+        onEditTile={(tile) => {
+          setEditingItem(tile);
+          setAddMode("tile");
 
-          {/* Edit */}
-          <Pressable
-            onPress={() => {
-              setEditingItem(item);
-              setAddMode("tile");
+          setNewTitle(tile.title);
+          setNewKind(tile.kind);
+          setNewSize(tile.size);
 
-              setNewTitle(item.title);
-              setNewKind(item.kind);
-              setNewSize(item.size);
+          const eid = tile.entityId ?? "";
+          setNewEntityId(eid);
+          setEntityQuery(eid);
+          setEntityPickerOpen(false);
 
-              const eid = item.entityId ?? "";
-              setNewEntityId(eid);
-              setEntityQuery(eid);
-              setEntityPickerOpen(false);
-
-              setModalOpen(true);
-            }}
-            className="px-3 py-2 rounded-2xl bg-gray-100"
-          >
-            <Text className="text-black font-semibold">Edit</Text>
-          </Pressable>
-        </View>
-      </Pressable>
+          setModalOpen(true);
+        }}
+      />
     );
   };
 
@@ -656,148 +566,29 @@ export default function EditDashboard() {
       </Modal>
 
       {/* Dashboard Settings Modal (separate from widget modal) */}
-      <Modal
+      <DashboardSettingsSheet
         visible={dashSettingsOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setDashSettingsOpen(false)}
-      >
-        <Pressable
-          className="flex-1 justify-end bg-black/40"
-          onPress={() => setDashSettingsOpen(false)}
-        >
-          <Pressable
-            className="bg-white rounded-t-3xl p-4"
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View className="flex-row items-center justify-between">
-              <Text className="text-black text-lg font-bold">Dashboard settings</Text>
-              <Pressable onPress={() => setDashSettingsOpen(false)} hitSlop={12}>
-                <Text className="text-black font-semibold">Close</Text>
-              </Pressable>
-            </View>
-
-            {/* Name */}
-            <Text className="text-gray-600 mt-4 mb-2">Name</Text>
-            <TextInput
-              value={dashNameDraft}
-              onChangeText={setDashNameDraft}
-              placeholder="e.g. Upstairs"
-              placeholderTextColor="#9CA3AF"
-              className="border border-gray-300 rounded-2xl px-4 py-3 text-black"
-            />
-
-            {/* Icon */}
-            <Text className="text-gray-600 mt-4 mb-2">Icon</Text>
-            <View className="flex-row items-center" style={{ gap: 10 }}>
-              <Pressable
-                onPress={() => setDashIconPickerOpen(true)}
-                className="px-4 py-3 rounded-2xl bg-gray-100"
-              >
-                <Text className="text-black font-semibold">
-                  {dashIconDraft ? "Change icon" : "Choose icon"}
-                </Text>
-              </Pressable>
-
-              {dashIconDraft ? (
-                <View className="flex-row items-center" style={{ gap: 10 }}>
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 16,
-                      borderWidth: 1,
-                      borderColor: "#E5E7EB",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <MdiIcon path={dashIconDraft} size={22} color="#111827" />
-                  </View>
-
-                  <Pressable
-                    onPress={() => setDashIconDraft(undefined)}
-                    className="px-3 py-2 rounded-2xl bg-red-50"
-                  >
-                    <Text className="text-red-600 font-semibold">Clear</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <Text className="text-gray-500 text-sm">No icon selected</Text>
-              )}
-            </View>
-
-            {/* Save/Cancel */}
-            <View className="flex-row justify-end mt-5" style={{ gap: 10 }}>
-              <Pressable
-                onPress={() => {
-                  // reset drafts back to current
-                  setDashNameDraft(activeDashboard?.name ?? "");
-                  setDashIconDraft(activeDashboard?.iconPath);
-                  setDashSettingsOpen(false);
-                }}
-                className="px-4 py-3 rounded-2xl bg-gray-100"
-              >
-                <Text className="text-black font-semibold">Cancel</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  const nextName = dashNameDraft.trim();
-                  if (nextName) renameDashboard(activeDashboardId, nextName);
-                  setDashboardIcon(activeDashboardId, dashIconDraft);
-                  setDashSettingsOpen(false);
-                }}
-                className="px-4 py-3 rounded-2xl bg-black"
-              >
-                <Text className="text-white font-semibold">Save</Text>
-              </Pressable>
-            </View>
-
-            {/* Delete */}
-            <View className="mt-5 pt-4 border-t border-gray-200">
-              <Pressable
-                disabled={dashboards.length <= 1}
-                onPress={() => {
-                  if (dashboards.length <= 1) return;
-
-                  Alert.alert(
-                    "Delete dashboard?",
-                    "This cannot be undone.",
-                    [
-                      { text: "Cancel", style: "cancel" },
-                      {
-                        text: "Delete",
-                        style: "destructive",
-                        onPress: () => {
-                          removeDashboard(activeDashboardId);
-                          setDashSettingsOpen(false);
-                        },
-                      },
-                    ]
-                  );
-                }}
-                className={`px-4 py-3 rounded-2xl ${
-                  dashboards.length <= 1 ? "bg-gray-100" : "bg-red-50"
-                }`}
-              >
-                <Text
-                  className={`font-semibold ${
-                    dashboards.length <= 1 ? "text-gray-400" : "text-red-600"
-                  }`}
-                >
-                  Delete dashboard
-                </Text>
-                {dashboards.length <= 1 && (
-                  <Text className="text-gray-400 text-xs mt-1">
-                    You must keep at least one dashboard.
-                  </Text>
-                )}
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        onClose={() => setDashSettingsOpen(false)}
+        dashNameDraft={dashNameDraft}
+        setDashNameDraft={setDashNameDraft}
+        dashIconDraft={dashIconDraft}
+        onPickIcon={() => setDashIconPickerOpen(true)}
+        onClearIcon={() => setDashIconDraft(undefined)}
+        onCancel={() => {
+          setDashNameDraft(activeDashboard?.name ?? "");
+          setDashIconDraft(activeDashboard?.iconPath);
+          setDashSettingsOpen(false);
+        }}
+        onSave={() => {
+          const nextName = dashNameDraft.trim();
+          if (nextName) renameDashboard(activeDashboardId, nextName);
+          setDashboardIcon(activeDashboardId, dashIconDraft);
+          setDashSettingsOpen(false);
+        }}
+        cannotDelete={cannotDelete}
+        isPinnedDashboard={isPinnedDashboard}
+        onConfirmDelete={() => removeDashboard(activeDashboardId)}
+      />
 
       {/* Header Icon Picker (for header items) */}
       <IconPickerModal

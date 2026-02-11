@@ -40,7 +40,7 @@ const HubSetup = () => {
 
         try{
             await login(username, password);
-            router.replace("/(drawer)/(tabs)/mainDashboard");
+            router.replace("/(drawer)/(tabs)/dash0");
         } catch (err: any) {
             console.log(err);
             if (err?.message) {

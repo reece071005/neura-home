@@ -19,7 +19,7 @@ function CustomDrawerContent(props: any) {
                     className="flex-row items-center text-center"
                     onPress={() => {
                         props.navigation.closeDrawer();
-                        router.push("/(drawer)/(tabs)/mainDashboard");
+                        router.push("/(drawer)/(tabs)/dash0");
                     }}
                 >
                     <TabIcon name="home" size={30} />
@@ -134,7 +134,6 @@ export default function DrawerLayout() {
                   }}
 />
 
-            {/* ✅ IMPORTANT: hide Drawer header so Devices Stack controls back correctly */}
             <Drawer.Screen
                 name="devices"
                 options={{

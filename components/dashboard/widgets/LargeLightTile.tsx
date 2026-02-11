@@ -11,6 +11,7 @@ type Props = {
   value: number;
   isOn: boolean;
   onChange: (v: number) => void;
+  onCommit?: (v: number) => void;
   onMenuPress?: () => void;
   showBlueBorder?: boolean;
 };
@@ -43,8 +44,9 @@ export default function LargeLightTile({
   title,
   entityId,
   value,
-    isOn,
+  isOn,
   onChange,
+  onCommit,
   onMenuPress,
   showBlueBorder = true,
 }: Props) {
@@ -123,7 +125,10 @@ export default function LargeLightTile({
       if (ang < 0) ang += 360;
 
       const a = clamp(ang, START_ANGLE, END_ANGLE);
+      const nextRaw = (a - START_ANGLE) / (END_ANGLE - START_ANGLE);
       const next = (a - START_ANGLE) / (END_ANGLE - START_ANGLE);
+
+      latestValueRef.current = next;
 
       onChange(clamp(next, 0, 1));
     }
@@ -135,8 +140,14 @@ export default function LargeLightTile({
         updateFromTouch(evt.nativeEvent.locationX, evt.nativeEvent.locationY),
       onPanResponderMove: (evt) =>
         updateFromTouch(evt.nativeEvent.locationX, evt.nativeEvent.locationY),
-      onPanResponderRelease: () => sendToBackend(latestValueRef.current),
-      onPanResponderTerminate: () => sendToBackend(latestValueRef.current),
+      onPanResponderRelease: () => {
+        sendToBackend(latestValueRef.current)
+        onCommit?.(latestValueRef.current);
+      },
+      onPanResponderTerminate: () => {
+        sendToBackend(latestValueRef.current)
+        onCommit?.(latestValueRef.current)
+      },
     });
   }, [onChange, entityId]);
 

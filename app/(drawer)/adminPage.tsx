@@ -12,33 +12,16 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import Account_Box from "@/assets/icons/Account_Box.svg";
-import Cancel from "@/assets/icons/Cancel.svg";
-import Arrow_Left from "@/assets/icons/Arrow_Left.svg";
-import Plus_Icon from "@/assets/icons/Plus_Icon.svg";
-import Device_Hub from "@/assets/icons/Device_Hub.svg";
-import Automation from "@/assets/icons/Automation.svg";
-import Routine from "@/assets/icons/Routine.svg";
-import History from "@/assets/icons/History.svg";
+import * as mdi from "@mdi/js";
+import MdiIcon from "@/components/MdiIcon";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
-import {
-    useFonts,
-    Poppins_400Regular,
-    Poppins_700Bold,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-} from "@expo-google-fonts/poppins";
+import Plus_Icon from "@/assets/icons/Plus_Icon.svg";
 
 import { adminAddUser, adminDeleteUser, fetchAdminUsers, UserResponse } from "@/lib/api/admin";
+import { getSystemOverview } from "@/lib/api/devices";
 
 const AdminPage = () => {
-    const [fontsLoaded] = useFonts({
-        Poppins: Poppins_400Regular,
-        "Poppins-Medium": Poppins_500Medium,
-        "Poppins-SemiBold": Poppins_600SemiBold,
-        "Poppins-Bold": Poppins_700Bold,
-    });
-
     const [users, setUsers] = useState<UserResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -51,9 +34,14 @@ const AdminPage = () => {
     const [newPassword, setNewPassword] = useState("");
     const [newRole, setNewRole] = useState<"admin" | "user">("user");
 
-    const totalDevices = 32; // keep your existing static metrics for now
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<UserResponse | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    const [totalDevices, setTotalDevices] = useState(0);
+    const [totalSensors, setTotalSensors] = useState(0);
+    const controllableDevices = totalDevices - totalSensors;
     const totalAutomations = 27;
-    const totalRoutines = 17;
 
     const resetAddForm = () => {
         setNewEmail("");
@@ -65,7 +53,6 @@ const AdminPage = () => {
     const loadUsers = useCallback(async () => {
         try {
             const data = await fetchAdminUsers();
-            // newest first (optional)
             data.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
             setUsers(data);
         } catch (e: any) {
@@ -73,10 +60,20 @@ const AdminPage = () => {
         }
     }, []);
 
+    const loadOverview = useCallback(async () => {
+        try {
+            const data = await getSystemOverview();
+            setTotalDevices(data.totalDevices);
+            setTotalSensors(data.totalSensors);
+          } catch (e) {
+            console.log("overview load failed", e);
+          }
+        }, []);
+
     useEffect(() => {
         (async () => {
             setLoading(true);
-            await loadUsers();
+            await Promise.all([loadUsers(), loadOverview()]);
             setLoading(false);
         })();
     }, [loadUsers]);
@@ -125,29 +122,30 @@ const AdminPage = () => {
         }
     };
 
-    const confirmDelete = (u: UserResponse) => {
-        Alert.alert(
-            "Remove user?",
-            `This will delete ${u.username} (${u.email}).`,
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await adminDeleteUser(u.id);
-                            setUsers((prev) => prev.filter((x) => x.id !== u.id));
-                        } catch (e: any) {
-                            Alert.alert("Delete failed", e?.message ?? "Failed to delete user");
-                        }
-                    },
-                },
-            ]
-        );
+    const openDelete = (u: UserResponse) => {
+        setDeleteTarget(u);
+        setDeleteOpen(true);
     };
 
-    if (!fontsLoaded) return null;
+    const closeDelete = () => {
+        setDeleteOpen(false);
+        setDeleteTarget(null);
+    };
+
+    const onConfirmDelete = async () => {
+        if (!deleteTarget) return;
+
+        try {
+            setDeleting(true);
+            await adminDeleteUser(deleteTarget.id);
+            setUsers((prev) => prev.filter((x) => x.id !== deleteTarget.id));
+         closeDelete();
+        } catch (e: any) {
+            Alert.alert("Delete failed", e?.message ?? "Failed to delete user");
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     return (
         <SafeAreaView className="flex-1 bg-white" edges={["top", "bottom"]}>
@@ -231,18 +229,17 @@ const AdminPage = () => {
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             >
                 {/* Header */}
-                <View className="w-full flex-row items-center justify-between py-4 mt-2">
-                    <View className="w-12 items-start justify-center">
-                        <Arrow_Left width={30} height={30} />
-                    </View>
+                <View className="w-full py-4 mt-2 justify-center">
+                    <Text className="absolute left-0 right-0 text-center text-2xl font-semibold text-black-900">
+                        Admin Page
+                    </Text>
 
-                    <View className="flex-1 items-center justify-center">
-                        <Text className="text-2xl font-semibold text-black-900">Admin Page</Text>
+                    {/* RIGHT BUTTON */}
+                    <View className="flex-row justify-end">
+                        <Pressable className="w-12 items-end justify-center mt-1" onPress={openAdd}>
+                            <Plus_Icon width={32} height={32} />
+                        </Pressable>
                     </View>
-
-                    <Pressable className="w-12 items-end justify-center mt-1" onPress={openAdd}>
-                        <Plus_Icon width={32} height={32} />
-                    </Pressable>
                 </View>
 
                 {/* Accounts Connected */}
@@ -263,11 +260,10 @@ const AdminPage = () => {
                 ) : (
                     users.map((u) => (
                         <View key={u.id}>
-                            <View className="flex-row items-start">
-                                <View className="w-10 h-10 items-center">
-                                    <Account_Box width={30} height={30} />
+                            <View className="flex-row items-center">
+                                <View className="pr-2 justify-center items-center">
+                                    <MdiIcon path={mdi.mdiAccountBoxOutline} size={30} />
                                 </View>
-
                                 <View className="flex-1 ml-1">
                                     <Text className="text-base font-regular text-black-900">
                                         {u.username}{" "}
@@ -283,8 +279,8 @@ const AdminPage = () => {
                                     </Text>
                                 </View>
 
-                                <Pressable className="w-10 h-10 items-end" onPress={() => confirmDelete(u)}>
-                                    <Cancel width={28} height={28} />
+                                <Pressable className="w-10 h-10 items-end" onPress={() => openDelete(u)}>
+                                    <MdiIcon path={mdi.mdiAccountOffOutline} size={28} />
                                 </Pressable>
                             </View>
 
@@ -293,16 +289,16 @@ const AdminPage = () => {
                     ))
                 )}
 
-                {/* Total Overview */}
+                {/* System Overview */}
                 <View className="w-full items-start mt-4">
-                    <Text className="text-lg font-semibold text-black-800">Total Overview</Text>
+                    <Text className="text-lg font-semibold text-black-800">System Overview</Text>
                 </View>
 
                 <View className="w-full border-b bg-black-300 mt-2 mb-4" />
 
                 <View className="flex-row items-start">
                     <View className="w-10 h-10 items-center">
-                        <Device_Hub width={30} height={30} />
+                        <MdiIcon path={mdi.mdiDevices} size={30}></MdiIcon>
                     </View>
                     <View className="flex-1 ml-2 py-2">
                         <Text className="text-base font-regular text-black-900">Total Devices: {totalDevices}</Text>
@@ -313,10 +309,10 @@ const AdminPage = () => {
 
                 <View className="flex-row items-start">
                     <View className="w-10 h-10 items-center">
-                        <Automation width={30} height={30} />
+                        <MdiIcon path={mdi.mdiLightbulbGroupOutline} size={30}></MdiIcon>
                     </View>
                     <View className="flex-1 ml-2 py-2">
-                        <Text className="text-base font-regular text-black-900">Total Automation: {totalAutomations}</Text>
+                        <Text className="text-base font-regular text-black-900">Controllable Devices: {controllableDevices}</Text>
                     </View>
                 </View>
 
@@ -324,10 +320,10 @@ const AdminPage = () => {
 
                 <View className="flex-row items-start">
                     <View className="w-10 h-10 items-center">
-                        <Routine width={30} height={30} />
+                        <MdiIcon path={mdi.mdiMotionSensor} size={30}></MdiIcon>
                     </View>
                     <View className="flex-1 ml-2 py-2">
-                        <Text className="text-base font-regular text-black-900">Total Routines: {totalRoutines}</Text>
+                        <Text className="text-base font-regular text-black-900">Sensors: {totalSensors}</Text>
                     </View>
                 </View>
 
@@ -335,15 +331,31 @@ const AdminPage = () => {
 
                 <View className="flex-row items-start">
                     <View className="w-10 h-10 items-center">
-                        <History width={30} height={30} />
+                        <MdiIcon path={mdi.mdiHomeAutomation} size={30}></MdiIcon>
                     </View>
                     <View className="flex-1 ml-2 py-2">
-                        <Text className="text-base font-regular text-black-900">System History</Text>
+                        <Text className="text-base font-regular text-black-900">Total Automations: {totalAutomations}</Text>
                     </View>
                 </View>
 
+                <View className="w-full border-[0.5px] bg-gray-200 mt-2 mb-4" />
                 <View className="h-10" />
             </ScrollView>
+            <ConfirmDialog
+                visible={deleteOpen}
+                title="Remove user?"
+                message={
+                deleteTarget
+                    ? `This will delete ${deleteTarget.username} (${deleteTarget.email}).`
+                    : undefined
+            }
+                confirmText="Delete"
+                cancelText="Cancel"
+                destructive
+                confirmDisabled={!deleteTarget || deleting}
+                onCancel={closeDelete}
+                onConfirm={onConfirmDelete}
+            />
         </SafeAreaView>
     );
 };

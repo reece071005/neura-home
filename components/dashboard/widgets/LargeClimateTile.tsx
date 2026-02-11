@@ -1,5 +1,13 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
-import { View, Text, Pressable, PanResponder, LayoutChangeEvent } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  PanResponder,
+  LayoutChangeEvent,
+} from "react-native";
+
+import clsx from "clsx";
 import Svg, { Path, Circle } from "react-native-svg";
 import Card from "@/components/dashboard/Card";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -9,12 +17,17 @@ type HvacMode = "cool" | "heat" | "auto" | "off";
 type Props = {
   title: string;
   mode: HvacMode;
-  setTemp: number;                 // e.g. 23
-  currentTemp?: number;            // e.g. 22.7
-  minTemp?: number;                // default 16
-  maxTemp?: number;                // default 30
-  step?: number;                   // default 0.5
-  onChangeSetTemp: (t: number) => void; // called while sliding
+
+  setTemp: number;
+  currentTemp?: number;
+
+  minTemp?: number;
+  maxTemp?: number;
+  step?: number;
+
+  onChangeSetTemp: (t: number) => void; // commit once on release
+  onChangeMode: (m: HvacMode) => void;
+
   onMenuPress?: () => void;
   showBlueBorder?: boolean;
 };
@@ -30,7 +43,13 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
 }
 
-function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
+function describeArc(
+  cx: number,
+  cy: number,
+  r: number,
+  startAngle: number,
+  endAngle: number
+) {
   const start = polarToCartesian(cx, cy, r, startAngle);
   const end = polarToCartesian(cx, cy, r, endAngle);
   const largeArcFlag = Math.abs(endAngle - startAngle) <= 180 ? "0" : "1";
@@ -77,6 +96,7 @@ export default function LargeClimateTile({
   maxTemp = 30,
   step = 0.5,
   onChangeSetTemp,
+  onChangeMode,
   onMenuPress,
   showBlueBorder = false,
 }: Props) {
@@ -85,8 +105,8 @@ export default function LargeClimateTile({
   const TRACK = "#DDDDDD";
 
   const isOn = mode !== "off";
-  const fgColor = isOn ? ACTIVE : OFF;
-  const knobColor = isOn ? ACTIVE : OFF;
+  const fgColor = modeColor(mode);
+  const knobColor = modeColor(mode);
 
   const [boxW, setBoxW] = useState(0);
   const geomRef = useRef({ cx: 0, cy: 0, r: 0 });
@@ -94,19 +114,27 @@ export default function LargeClimateTile({
   const [draftTemp, setDraftTemp] = useState(setTemp);
   const draftRef = useRef(setTemp);
 
+  // dropdown state
+  const [modeOpen, setModeOpen] = useState(false);
+  const [modeAnchor, setModeAnchor] = useState({ x: 0, y: 0, w: 0, h: 0 });
+
+  // block dial drag when user is interacting with the mode button/dropdown
+  const blockDialDragRef = useRef(false);
+
   useEffect(() => {
     setDraftTemp(setTemp);
     draftRef.current = setTemp;
   }, [setTemp]);
 
-  const onLayout = (e: LayoutChangeEvent) => setBoxW(e.nativeEvent.layout.width);
+  const onLayout = (e: LayoutChangeEvent) =>
+    setBoxW(e.nativeEvent.layout.width);
 
   const dial = useMemo(() => {
     const dialW = Math.min(Math.max(boxW || 320, 240), 280);
 
     const pad = Math.max(THICKNESS / 2, KNOB_R) + 2;
     const cx = dialW / 2;
-    const r = 56;         // slightly larger than your light tile for AC feel
+    const r = 56;
     const cy = r + pad;
     const dialH = cy + r + pad;
 
@@ -114,7 +142,6 @@ export default function LargeClimateTile({
     return { dialW, dialH, cx, cy, r };
   }, [boxW]);
 
-  // map temperature -> 0..1
   const clampedTemp = clamp(draftTemp, minTemp, maxTemp);
   const v = (clampedTemp - minTemp) / (maxTemp - minTemp);
   const angle = START_ANGLE + v * (END_ANGLE - START_ANGLE);
@@ -136,8 +163,7 @@ export default function LargeClimateTile({
 
   const subtitle = useMemo(() => {
     const m = modeLabel(mode);
-    const cur =
-      typeof currentTemp === "number" ? ` • ${currentTemp.toFixed(1)}°` : "";
+    const cur = typeof currentTemp === "number" ? ` • ${currentTemp.toFixed(1)}°` : "";
     return `${m}${cur}`;
   }, [mode, currentTemp]);
 
@@ -160,28 +186,50 @@ export default function LargeClimateTile({
     }
 
     return PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => mode!=="off" && !blockDialDragRef.current,
+      onMoveShouldSetPanResponder: () => mode!=="off" && !blockDialDragRef.current,
 
-      onPanResponderGrant: (evt) =>
-        updateFromTouch(evt.nativeEvent.locationX, evt.nativeEvent.locationY),
+      onPanResponderGrant: (evt) => {
+        if (blockDialDragRef.current) return;
+        updateFromTouch(evt.nativeEvent.locationX, evt.nativeEvent.locationY);
+      },
 
-      onPanResponderMove: (evt) =>
-        updateFromTouch(evt.nativeEvent.locationX, evt.nativeEvent.locationY),
+      onPanResponderMove: (evt) => {
+        if (blockDialDragRef.current) return;
+        updateFromTouch(evt.nativeEvent.locationX, evt.nativeEvent.locationY);
+      },
 
       onPanResponderRelease: () => {
-        onChangeSetTemp(draftRef.current); // ✅ commit once
-    },
-      onPanResponderTerminate: () => {
+        if (blockDialDragRef.current) return;
         onChangeSetTemp(draftRef.current);
-    },
+      },
+
+      onPanResponderTerminate: () => {
+        if (blockDialDragRef.current) return;
+        onChangeSetTemp(draftRef.current);
+      },
     });
-  }, [minTemp, maxTemp, step, onChangeSetTemp]);
+  }, [minTemp, maxTemp, step, onChangeSetTemp, mode]);
+
+  const options = useMemo(
+    () =>
+      [
+        { key: "cool", label: "Cool", icon: "ac-unit" },
+        { key: "heat", label: "Heat", icon: "whatshot" },
+        { key: "auto", label: "Auto", icon: "autorenew" },
+        { key: "off", label: "Off", icon: "power-settings-new" },
+      ] as const,
+    []
+  );
 
   return (
     <Card
       variant="large"
-      className={[showBlueBorder ? "border border-blue-500" : ""].join(" ")}
+      allowOverflow
+      className={clsx(
+          showBlueBorder && "border border-blue-500",
+          modeOpen && "z-50"
+      )}
     >
       <View onLayout={onLayout} className="flex-1 pt-1.5 items-center">
         {/* menu */}
@@ -193,12 +241,34 @@ export default function LargeClimateTile({
 
         {/* dial */}
         <View
-          style={{ alignItems: "center", justifyContent: "center", height: dial.dialH }}
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            height: dial.dialH,
+             zIndex: 10,
+          }}
           {...panResponder.panHandlers}
         >
-          {/* center content (Option B) */}
+          {/* tap-catcher: when dropdown is open, tap anywhere to close (and block dial drag) */}
+          {modeOpen && (
+            <Pressable
+              onPress={() => {
+                setModeOpen(false);
+                blockDialDragRef.current = false;
+              }}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 20,
+              }}
+            />
+          )}
+
+          {/* center content */}
           <View
-            pointerEvents="none"
             style={{
               position: "absolute",
               alignItems: "center",
@@ -206,42 +276,147 @@ export default function LargeClimateTile({
               height: dial.dialH,
               width: dial.dialW,
               transform: [{ translateY: 10 }],
+              zIndex: 30, // above svg so presses work
             }}
+            pointerEvents="box-none"
           >
-            <Text className="font-semibold text-h2"
-              style={{
-                color: "#111",
-                lineHeight: 38,
-              }}
+            <Text
+              className="font-semibold text-h2"
+              style={{ color: "#111", lineHeight: 38 }}
+              pointerEvents="none"
             >
               {(Math.round(clampedTemp * 2) / 2).toFixed(1)}°C
             </Text>
 
-            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 6 }}>
-              <MaterialIcons
-                name={modeIcon(mode) as any}
-                size={18}
-                color={isOn ? ACTIVE : OFF}
-              />
-              <Text className="font-semibold text-body ml-2"
+            {/* Mode button + dropdown */}
+            <View style={{ position: "relative", marginTop: 6, alignItems: "center" }}>
+              <Pressable
+                onLayout={(e) => setModeAnchor(e.nativeEvent.layout)}
+                onPress={() => {
+                  const next = !modeOpen;
+                  setModeOpen(next);
+                  blockDialDragRef.current = next; // block dial drag while open
+                }}
+                onPressIn={() => {
+                  blockDialDragRef.current = true; // block immediately on touch
+                }}
+                onPressOut={() => {
+                  // keep blocking if still open; otherwise release
+                  if (!modeOpen) blockDialDragRef.current = false;
+                }}
                 style={{
-                  color: isOn ? ACTIVE : OFF,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: 4,
+                  paddingHorizontal: 6,
+                  borderRadius: 10,
                 }}
               >
-                {subtitle}
-              </Text>
+                <MaterialIcons
+                  name={modeIcon(mode) as any}
+                  size={18}
+                  color={isOn ? ACTIVE : OFF}
+                />
+                <Text
+                  className="font-semibold text-body ml-2"
+                  style={{ color: isOn ? ACTIVE : OFF }}
+                >
+                  {subtitle}
+                </Text>
+                <MaterialIcons
+                  name={modeOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"}
+                  size={18}
+                  color={isOn ? ACTIVE : OFF}
+                  style={{ marginLeft: 2 }}
+                />
+              </Pressable>
+
+              {modeOpen && (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: modeAnchor.y + modeAnchor.h + 6,
+                    left: modeAnchor.x,
+                    width: 110,
+                    backgroundColor: "white",
+                    borderRadius: 14,
+                    paddingVertical: 6,
+                    shadowOpacity: 0.15,
+                    shadowRadius: 10,
+                    shadowOffset: { width: 0, height: 6 },
+                    elevation: 6,
+                    zIndex: 1000,
+                  }}
+                >
+                  {options.map((opt) => {
+                    const selected = opt.key === mode;
+                    return (
+                      <Pressable
+                        key={opt.key}
+                        onPress={() => {
+                          setModeOpen(false);
+                          blockDialDragRef.current = false;
+                          onChangeMode(opt.key);
+                        }}
+                        onPressIn={() => {
+                          blockDialDragRef.current = true;
+                        }}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          paddingVertical: 10,
+                          paddingHorizontal: 12,
+                          opacity: selected ? 1 : 0.9,
+                        }}
+                      >
+                        <MaterialIcons
+                          name={opt.icon as any}
+                          size={18}
+                          color={selected ? modeColor(opt.key) : "#333"}
+                        />
+                        <Text
+                          style={{
+                            marginLeft: 10,
+                            fontWeight: selected ? "700" : "600",
+                            color: "#111",
+                          }}
+                        >
+                          {opt.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
             </View>
           </View>
 
           <Svg width={dial.dialW} height={dial.dialH}>
-            <Path d={bgPath} stroke={TRACK} strokeWidth={THICKNESS} strokeLinecap="round" fill="none" />
-            <Path d={fgPath} stroke={fgColor} strokeWidth={THICKNESS} strokeLinecap="round" fill="none" />
+            {mode !== "off" && (
+              <Path
+                d={bgPath}
+                stroke={TRACK}
+                strokeWidth={THICKNESS}
+                strokeLinecap="round"
+                fill="none"
+              />
+            )}
+            <Path
+              d={fgPath}
+              stroke={fgColor}
+              strokeWidth={THICKNESS}
+              strokeLinecap="round"
+              fill="none"
+            />
             <Circle cx={knob.x} cy={knob.y} r={KNOB_R} fill={knobColor} />
           </Svg>
         </View>
 
         {/* title */}
-        <Text numberOfLines={1} className="text-black font-medium text-body text-center">
+        <Text
+          numberOfLines={1}
+          className="text-black font-medium text-body text-center"
+        >
           {title}
         </Text>
       </View>

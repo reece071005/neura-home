@@ -87,25 +87,6 @@ const uid = (prefix: string) =>
   `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
 // --------------------
-// Starter Items
-// --------------------
-const STARTER_ITEMS: DashboardItem[] = [
-  { type: "header", id: "hdr_living", title: "Living Room", iconPath: mdi.mdiSofa },
-
-  { type: "tile", id: "t_light_living", title: "Lights", kind: "light", entityId: "light.reece_room", size: "large" },
-  { type: "tile", id: "t_climate_living", title: "AC", kind: "climate", entityId: "climate.living_room", size: "large" },
-
-  { type: "header", id: "hdr_master", title: "Master Bedroom", iconPath: mdi.mdiBedEmpty },
-
-  { type: "tile", id: "t_light_master", title: "Lights", kind: "light", entityId: "light.master_bedrom", size: "large" },
-  { type: "tile", id: "t_climate_master", title: "AC", kind: "climate", entityId: "climate.master_bedroom", size: "large" },
-
-  { type: "tile", id: "t_bath", title: "Bathroom Lights", kind: "light", entityId: "lights.master_bathroom", size: "large" },
-  { type: "tile", id: "t_blind", title: "Primary Bedroom", kind: "cover", entityId: "blind.primary_bedroom", size: "small" },
-  { type: "tile", id: "t_fan", title: "Fan", kind: "fan", entityId: "fan.master_bedroom", size: "small" },
-];
-
-// --------------------
 // Packing: items → rows
 // --------------------
 export function buildLayoutFromItems(items: DashboardItem[]): DashboardRow[] {
@@ -233,8 +214,6 @@ type DashboardState = {
 
   removeItem: (id: string) => void;
   updateItem: (id: string, patch: Partial<Omit<DashboardItem, "id" | "type">>) => void;
-
-  resetToStarter: () => void;
 };
 
 const dashId = () => `dash_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -264,11 +243,11 @@ export const useDashboardWidgetsStore = create<DashboardState>()(
         activeDashboardId: DEFAULT_DASHBOARD_ID,
 
         layoutsById: {
-          [DEFAULT_DASHBOARD_ID]: STARTER_ITEMS,
+          [DEFAULT_DASHBOARD_ID]:  [],
         },
 
         // keep compatibility with existing code that reads `items`
-        items: STARTER_ITEMS,
+        items: [],
 
         setActiveDashboard: (id) => {
           const s = get();
@@ -313,6 +292,9 @@ export const useDashboardWidgetsStore = create<DashboardState>()(
           const s = get();
           if (s.dashboards.length <= 1) return; // keep at least one
 
+          const pinnedID = s.dashboards[0]?.id;
+          if (id === pinnedID) return;
+
           const nextDashboards = s.dashboards.filter((d) => d.id !== id);
           const nextLayouts = { ...s.layoutsById };
           delete nextLayouts[id];
@@ -349,33 +331,11 @@ export const useDashboardWidgetsStore = create<DashboardState>()(
           setActiveItems(
             activeItems().map((x) => (x.id === id ? ({ ...x, ...patch } as any) : x))
           ),
-
-        resetToStarter: () => setActiveItems(STARTER_ITEMS),
       };
     },
     {
-      name: "dashboard-items-v2",
+      name: "dashboard-items-v3",
       storage: createJSONStorage(() => AsyncStorage),
-
-      // ✅ migrate from v1 -> v2 if old data exists
-      migrate: (persisted: any, version) => {
-        // if it already looks like v2, keep it
-        if (persisted?.dashboards && persisted?.layoutsById && persisted?.activeDashboardId) {
-          return persisted as any;
-        }
-
-        // v1 shape: { items: [...] }
-        const oldItems: DashboardItem[] = persisted?.items ?? STARTER_ITEMS;
-
-        return {
-          dashboards: [{ id: DEFAULT_DASHBOARD_ID, name: "Dashboard", iconPath: mdi.mdiViewDashboard }],
-          activeDashboardId: DEFAULT_DASHBOARD_ID,
-          layoutsById: { [DEFAULT_DASHBOARD_ID]: oldItems },
-          items: oldItems,
-        } as any;
-      },
-
-      version: 2,
     }
   )
 );
