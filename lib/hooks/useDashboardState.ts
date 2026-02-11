@@ -1,34 +1,49 @@
 /**
  * Dashboard device state hook
  *
- * This hook is responsible for:
- * - Fetching current Home Assistant state
- * - Converting raw HA data into UI-friendly maps
- * - Keeping the dashboard in sync via polling
+ * - Fetches current Home Assistant state
+ * - Converts raw HA data into UI-friendly maps
+ * - Keeps the dashboard in sync via polling
  */
 
 import React from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { getCurrentState } from "@/lib/api/state";
 
-//Internal structure used while reducing raw state into domain maps.
+export type UiHvacMode = "cool" | "heat" | "auto" | "off";
+
 type Maps = {
   lightOnMap: Record<string, boolean>;
   lightValues: Record<string, number>;
   climateSetTempMap: Record<string, number>;
+  climateModeMap: Record<string, UiHvacMode>;
   fanPctMap: Record<string, number>;
   coverPosMap: Record<string, number>;
 };
 
+function normalizeHvacMode(raw: unknown): UiHvacMode | null {
+  if (typeof raw !== "string") return null;
+
+  // HA commonly uses heat_cool for Auto
+  if (raw === "heat_cool") return "auto";
+
+  if (raw === "auto") return "auto";
+  if (raw === "cool") return "cool";
+  if (raw === "heat") return "heat";
+  if (raw === "off") return "off";
+
+  // sometimes state can be "on"/"idle"/etc. ignore those
+  return null;
+}
+
 export function useDashboardState(dashboardEntityIds: string[]) {
-  //Sate maps keyed using entity_id
   const [lightOnMap, setLightOnMap] = React.useState<Record<string, boolean>>({});
   const [lightValues, setLightValues] = React.useState<Record<string, number>>({});
   const [climateSetTempMap, setClimateSetTempMap] = React.useState<Record<string, number>>({});
+  const [climateModeMap, setClimateModeMap] = React.useState<Record<string, UiHvacMode>>({});
   const [fanPctMap, setFanPctMap] = React.useState<Record<string, number>>({});
   const [coverPosMap, setCoverPosMap] = React.useState<Record<string, number>>({});
 
-  //Fetches state and coverts to domain specific map.
   const fetchAndApply = React.useCallback(async () => {
     if (dashboardEntityIds.length === 0) return;
 
@@ -40,6 +55,7 @@ export function useDashboardState(dashboardEntityIds: string[]) {
       lightOnMap: {},
       lightValues: {},
       climateSetTempMap: {},
+      climateModeMap: {},
       fanPctMap: {},
       coverPosMap: {},
     };
@@ -48,10 +64,10 @@ export function useDashboardState(dashboardEntityIds: string[]) {
       const domain = s.entity_id.split(".")[0];
       const attrs = s.attributes ?? {};
 
-      //Light state
+      // LIGHT
       if (domain === "light") {
         const on = s.state === "on";
-        next.lightOnMap[s.entity_id] = s.state === "on";
+        next.lightOnMap[s.entity_id] = on;
 
         if (!on) {
           next.lightValues[s.entity_id] = 0;
@@ -60,14 +76,25 @@ export function useDashboardState(dashboardEntityIds: string[]) {
         }
       }
 
-      //Climate state
+      // CLIMATE
       if (domain === "climate") {
+        // set temperature
         if (typeof attrs.temperature === "number") {
           next.climateSetTempMap[s.entity_id] = attrs.temperature;
         }
+
+        // hvac mode: most HA climate entities put current hvac mode in state
+        const mode =
+          normalizeHvacMode(s.state) ??
+          normalizeHvacMode(attrs.hvac_mode) ?? // fallback
+          null;
+
+        if (mode) {
+          next.climateModeMap[s.entity_id] = mode;
+        }
       }
 
-      //Fan state
+      // FAN
       if (domain === "fan") {
         if (typeof attrs.percentage === "number") {
           next.fanPctMap[s.entity_id] = attrs.percentage;
@@ -76,7 +103,7 @@ export function useDashboardState(dashboardEntityIds: string[]) {
         }
       }
 
-      //Cover/Blind State
+      // COVER
       if (domain === "cover") {
         if (typeof attrs.current_position === "number") {
           next.coverPosMap[s.entity_id] = attrs.current_position;
@@ -88,11 +115,11 @@ export function useDashboardState(dashboardEntityIds: string[]) {
     setLightOnMap((prev) => ({ ...prev, ...next.lightOnMap }));
     setLightValues((prev) => ({ ...prev, ...next.lightValues }));
     setClimateSetTempMap((prev) => ({ ...prev, ...next.climateSetTempMap }));
+    setClimateModeMap((prev) => ({ ...prev, ...next.climateModeMap }));
     setFanPctMap((prev) => ({ ...prev, ...next.fanPctMap }));
     setCoverPosMap((prev) => ({ ...prev, ...next.coverPosMap }));
   }, [dashboardEntityIds]);
 
-  // Poll every 5s while focused
   useFocusEffect(
     React.useCallback(() => {
       if (dashboardEntityIds.length === 0) return;
@@ -120,7 +147,6 @@ export function useDashboardState(dashboardEntityIds: string[]) {
     }, [dashboardEntityIds, fetchAndApply])
   );
 
-  // Public manual refresh (call after actions)
   const refreshNow = React.useCallback(async () => {
     try {
       await fetchAndApply();
@@ -133,14 +159,13 @@ export function useDashboardState(dashboardEntityIds: string[]) {
     lightOnMap,
     lightValues,
     climateSetTempMap,
+    climateModeMap,
     fanPctMap,
     coverPosMap,
     refreshNow,
-
-    // Expose setters only if you want optimistic UI from the screen layer:
     setLightOnMap,
     setLightValues,
-
+    setClimateModeMap,
     setCoverPosMap,
   };
 }

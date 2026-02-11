@@ -1,7 +1,6 @@
 /**
  * Dashboard layout and widget type definitions
  */
-
 import React from "react";
 import { View, Text } from "react-native";
 
@@ -24,7 +23,6 @@ type HvacMode = "cool" | "heat" | "auto" | "off";
 const GAP = 8;
 
 /* ----------------------------- Fallback Tile ----------------------------- */
-
 export function DashboardTile({
   tile,
   variant,
@@ -59,6 +57,7 @@ export function RenderTile({
   climateSetTempMap,
   climateModeMap,
   onChangeClimateMode,
+  onCommitClimateTemp,
 
   fanPctMap,
   onChangeFanPct,
@@ -78,6 +77,7 @@ export function RenderTile({
   climateSetTempMap: Record<string, number>;
   climateModeMap: Record<string, HvacMode>;
   onChangeClimateMode: (entityId: string, mode: HvacMode) => void;
+  onCommitClimateTemp: (entityId: string, temp: number) => void;
 
   fanPctMap: Record<string, number>;
   onChangeFanPct: (entityId: string, pct: number) => void;
@@ -134,9 +134,7 @@ export function RenderTile({
           title={tile.title}
           mode={mode}
           setTemp={setTemp}
-          onChangeSetTemp={(t) =>
-            console.log("Set climate temp", entityId, t)
-          }
+          onChangeSetTemp={(t) => onCommitClimateTemp(entityId, t)}
           onChangeMode={(m) => onChangeClimateMode(entityId, m)}
         />
       );
@@ -217,6 +215,7 @@ export function RenderRow({
   climateSetTempMap,
   climateModeMap,
   onChangeClimateMode,
+    onCommitClimateTemp,
 
   fanPctMap,
   onChangeFanPct,
@@ -235,6 +234,7 @@ export function RenderRow({
   climateSetTempMap: Record<string, number>;
   climateModeMap: Record<string, HvacMode>;
   onChangeClimateMode: (entityId: string, mode: HvacMode) => void;
+  onCommitClimateTemp: (entityId: string, temp: number) => void;
 
   fanPctMap: Record<string, number>;
   onChangeFanPct: (entityId: string, pct: number) => void;
@@ -254,6 +254,7 @@ export function RenderRow({
       climateSetTempMap={climateSetTempMap}
       climateModeMap={climateModeMap}
       onChangeClimateMode={onChangeClimateMode}
+      onCommitClimateTemp={onCommitClimateTemp}
       fanPctMap={fanPctMap}
       onChangeFanPct={onChangeFanPct}
       coverPosMap={coverPosMap}

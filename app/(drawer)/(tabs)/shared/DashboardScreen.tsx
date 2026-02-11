@@ -1,12 +1,19 @@
 // app/(drawer)/(tabs)/shared/DashboardScreen.tsx
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { router } from "expo-router";
 import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useDashboardWidgetsStore, buildLayoutFromItems } from "@/lib/storage/dashboardWidgetStore";
+import {
+  useDashboardWidgetsStore,
+  buildLayoutFromItems,
+} from "@/lib/storage/dashboardWidgetStore";
+
 import { setLight } from "@/lib/api/deviceControllers/light";
 import { setCover } from "@/lib/api/deviceControllers/cover";
+import { setClimate } from "@/lib/api/deviceControllers/climate";
+import type { ClimateHvacMode } from "@/lib/api/deviceControllers/climate";
+
 import { useDashboardState } from "@/lib/hooks/useDashboardState";
 import { getDashboardEntityIds } from "@/lib/dashboard/getDashboardEntityIds";
 
@@ -16,59 +23,51 @@ import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
 const GAP = 8;
 
 export default function DashboardScreen() {
-  //Compute Layout
+  // -------------------------
+  // Layout
+  // -------------------------
   const items = useDashboardWidgetsStore((s) => s.items);
   const layout = useMemo(() => buildLayoutFromItems(items), [items]);
-
-  //Check if layout is empty
   const isEmpty = layout.length === 0;
 
-  // Extract entity IDs shown on dashboard
-  const dashboardEntityIds = useMemo(
-      () => getDashboardEntityIds(layout),
-      [layout]
-  );
+  const dashboardEntityIds = useMemo(() => getDashboardEntityIds(layout), [layout]);
 
+  // -------------------------
+  // Live state from backend polling
+  // -------------------------
   const {
     lightOnMap,
     lightValues,
     climateSetTempMap,
+    climateModeMap,
     fanPctMap,
     coverPosMap,
     refreshNow,
     setLightOnMap,
-    setLightValues,
-      setCoverPosMap,
+    setCoverPosMap,
   } = useDashboardState(dashboardEntityIds);
 
-  //Fan Stuff
+  // -------------------------
+  // Fan (UI-only overrides for slider)
+  // -------------------------
   const [fanPctOverrides, setFanPctOverrides] = useState<Record<string, number>>({});
-
   const mergedFanPctMap = useMemo(
-      () => ({ ...fanPctMap, ...fanPctOverrides }),
-      [fanPctMap, fanPctOverrides]
+    () => ({ ...fanPctMap, ...fanPctOverrides }),
+    [fanPctMap, fanPctOverrides]
   );
 
   const onChangeFanPct = (entityId: string, pct: number) => {
-    setFanPctOverrides((prev) => ({
-      ...prev,
-      [entityId]: pct,
-    }));
+    setFanPctOverrides((prev) => ({ ...prev, [entityId]: pct }));
   };
 
-  //Light Stuff
+  // -------------------------
+  // Light (UI-only overrides for large slider)
+  // -------------------------
   const [lightValueOverrides, setLightValueOverrides] = useState<Record<string, number>>({});
   const mergedLightValues = useMemo(
-      () => ({ ...lightValues, ...lightValueOverrides }),
-      [lightValues, lightValueOverrides]
+    () => ({ ...lightValues, ...lightValueOverrides }),
+    [lightValues, lightValueOverrides]
   );
-  const commitLargeLight = (entityId: string) => {
-  setLightValueOverrides((prev) => {
-    const next = { ...prev };
-    delete next[entityId];
-    return next;
-  });
-};
 
   const onToggleLight = async (entityId: string) => {
     const current = !!lightOnMap[entityId];
@@ -79,37 +78,101 @@ export default function DashboardScreen() {
 
     try {
       await setLight({ entity_id: entityId, state: next });
-      // Immediately pull fresh state so UI doesn’t bounce until next poll
-    } catch (e) {
+      refreshNow?.();
+    } catch {
       // revert
       setLightOnMap((prev) => ({ ...prev, [entityId]: current }));
     }
   };
 
-  //Cover Stuff
+  const onChangeLargeLight = (entityId: string, v01: number) => {
+    setLightValueOverrides((prev) => ({ ...prev, [entityId]: v01 }));
+  };
+
+  const onCommitLargeLight = (entityId: string) => {
+    // remove override so the polled state becomes source of truth again
+    setLightValueOverrides((prev) => {
+      const next = { ...prev };
+      delete next[entityId];
+      return next;
+    });
+  };
+
+  // -------------------------
+  // Cover
+  // -------------------------
   const onChangeCover = async (entityId: string, nextPos: number) => {
     const prev = coverPosMap[entityId] ?? 0;
 
-    // optimistic UI
+    // optimistic
     setCoverPosMap((m) => ({ ...m, [entityId]: nextPos }));
 
     try {
       await setCover({ entity_id: entityId, position: nextPos });
+      refreshNow?.();
     } catch {
-      // revert on failure
       setCoverPosMap((m) => ({ ...m, [entityId]: prev }));
     }
   };
 
-  //Climate stuff
-  type HvacMode = "cool" | "heat" | "auto" | "off";
-  const [climateModeMap, setClimateModeMap] = useState<Record<string, HvacMode>>({});
+  // -------------------------
+  // Climate
+  // -------------------------
+  const [climateModeOverrides, setClimateModeOverrides] = useState<
+    Record<string, ClimateHvacMode>
+  >({});
 
-  const onChangeClimateMode = (entityId: string, mode: HvacMode) => {
-    setClimateModeMap((prev) => ({ ...prev, [entityId]: mode }));
+  const mergedClimateModeMap = useMemo(
+    () => ({ ...climateModeMap, ...climateModeOverrides }),
+    [climateModeMap, climateModeOverrides]
+  );
+
+  const onChangeClimateMode = async (entityId: string, mode: ClimateHvacMode) => {
+    const prev = mergedClimateModeMap[entityId] ?? "cool";
+
+    // optimistic
+    setClimateModeOverrides((m) => ({ ...m, [entityId]: mode }));
+
+    try {
+      await setClimate({
+        entity_id: entityId,
+        hvac_mode: mode,
+        state: mode === "off" ? "off" : "on",
+      });
+
+      refreshNow?.();
+
+      // optional: clear override so HA polling becomes source of truth
+      setClimateModeOverrides((m) => {
+        const next = { ...m };
+        delete next[entityId];
+        return next;
+      });
+    } catch {
+      setClimateModeOverrides((m) => ({ ...m, [entityId]: prev }));
+    }
   };
 
+  const onCommitClimateTemp = async (entityId: string, temp: number) => {
+    const mode = mergedClimateModeMap[entityId] ?? "cool";
 
+    try {
+      await setClimate({
+        entity_id: entityId,
+        temperature: temp,
+        hvac_mode: mode, // keep current mode (prevents HA defaulting)
+        state: mode === "off" ? "off" : "on",
+      });
+
+      refreshNow?.();
+    } catch {
+      // no optimistic temp map here yet; we just rely on polling
+    }
+  };
+
+  // -------------------------
+  // Render
+  // -------------------------
   return (
     <SafeAreaView edges={["top"]} className="flex-1">
       <ScrollView
@@ -117,43 +180,33 @@ export default function DashboardScreen() {
         contentContainerStyle={{ paddingBottom: 24, paddingTop: 64 }}
       >
         <View className="px-4 pt-6" style={{ gap: GAP }}>
-          {isEmpty? (
-              <DashboardEmptyState
-                  onPressEdit={() => router.push("/(drawer)/(tabs)/dashboardEdit")}
-              />
+          {isEmpty ? (
+            <DashboardEmptyState
+              onPressEdit={() => router.push("/(drawer)/(tabs)/dashboardEdit")}
+            />
           ) : (
-              layout.map((row) => (
-                  <RenderRow
-                      key={row.id}
-                      row={row}
-                      lightOnMap={lightOnMap}
-                      lightValues={mergedLightValues}
-                      onPressSmallLight={onToggleLight}
-                      onChangeLargeLight={(entityId, v01) => {
-                        setLightValueOverrides((prev) => ({ ...prev, [entityId]: v01 }));
-                      }}
-                      onCommitLargeLight={(entityId) => {
-                        setLightValueOverrides((prev) => {
-                          const next = {...prev};
-                          delete next[entityId];
-                          return next;
-                        });
-                      }}
-                      climateSetTempMap={climateSetTempMap}
-                      climateModeMap={climateModeMap}
-                      onChangeClimateMode={onChangeClimateMode}
-
-                      fanPctMap={mergedFanPctMap}
-
-                      coverPosMap={coverPosMap}
-                      onChangeCover={onChangeCover}
-                      onChangeFanPct={onChangeFanPct}
-                  />
-              ))
+            layout.map((row) => (
+              <RenderRow
+                key={row.id}
+                row={row}
+                lightOnMap={lightOnMap}
+                lightValues={mergedLightValues}
+                onPressSmallLight={onToggleLight}
+                onChangeLargeLight={onChangeLargeLight}
+                onCommitLargeLight={onCommitLargeLight}
+                climateSetTempMap={climateSetTempMap}
+                climateModeMap={mergedClimateModeMap}
+                onChangeClimateMode={onChangeClimateMode}
+                onCommitClimateTemp={onCommitClimateTemp}
+                fanPctMap={mergedFanPctMap}
+                onChangeFanPct={onChangeFanPct}
+                coverPosMap={coverPosMap}
+                onChangeCover={onChangeCover}
+              />
+            ))
           )}
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
