@@ -9,10 +9,12 @@ export type UserStateRow = {
   updated_at: string;
 };
 
-export type DashboardStateV1 = {
+export type DashboardStateV2 = {
   dashboard: {
-    version: 1;
-    items: DashboardItem[];
+    version: 2;
+    dashboards: { id: string; name: string; iconPath?: string }[];
+    activeDashboardId: string;
+    layoutsById: Record<string, DashboardItem[]>;
   };
 };
 

@@ -3,6 +3,7 @@ import { Modal, Pressable, Text, View } from "react-native";
 
 type Props = {
   visible: boolean;
+  error?: boolean;
   title: string;
   message?: string;
 
@@ -18,10 +19,11 @@ type Props = {
 
 export default function ConfirmDialog({
   visible,
+  error,
   title,
   message,
   confirmText = "Confirm",
-  cancelText = "Cancel",
+  cancelText,
   destructive = false,
   confirmDisabled = false,
   onConfirm,
@@ -36,19 +38,22 @@ export default function ConfirmDialog({
           onPress={(e) => e.stopPropagation()}
           className="bg-white rounded-t-3xl px-5 pt-5 pb-4"
         >
-          <Text className="text-black text-lg font-bold">{title}</Text>
-
+          <Text className={` text-lg font-bold ${
+            error ? "text-red-600": "text-black"
+          }`}>{title}</Text>
           {!!message && (
             <Text className="text-gray-600 text-sm mt-2 leading-5">{message}</Text>
           )}
 
           <View className="flex-row justify-end mt-5" style={{ gap: 10 }}>
-            <Pressable
-              onPress={onCancel}
-              className="px-4 py-3 rounded-2xl bg-gray-100"
-            >
-              <Text className="text-black font-semibold">{cancelText}</Text>
-            </Pressable>
+            { cancelText ? (
+              <Pressable
+                onPress={onCancel}
+                className="px-4 py-3 rounded-2xl bg-gray-100"
+              >
+                <Text className="text-black font-semibold">{cancelText}</Text>
+              </Pressable>
+            ) : null}
 
             <Pressable
               disabled={confirmDisabled}
@@ -56,7 +61,7 @@ export default function ConfirmDialog({
               className={`px-4 py-3 rounded-2xl ${
                 confirmDisabled
                   ? "bg-gray-200"
-                  : destructive
+                  : destructive || error
                   ? "bg-red-600"
                   : "bg-black"
               }`}

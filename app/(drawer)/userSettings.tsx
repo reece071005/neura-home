@@ -1,9 +1,10 @@
+import React, {useEffect, useState} from "react";
 import { Text, View, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
-//Logout function
 import { logout } from "@/lib/auth/session";
+import { getUserProfile, UserProfile } from "@/lib/api/auth/getUserProfile"
 
 // @ts-ignore
 import AccountIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientAccountOutline.svg";
@@ -21,42 +22,12 @@ import FeedbackIcon from "../../assets/illustrations/customMaterialIcons/outline
 import LogoutIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientLogoutOutline.svg";
 // @ts-ignore
 import AdminIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientAdminOutline.svg";
-import React from "react";
-
-
-export default function UserSettings() {
-    return (
-        <SafeAreaView style={{flex: 1, backgroundColor: "white"}}>
-            <ScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1}}>
-                <View style={{alignItems: "center", paddingTop: 16, paddingBottom: 16}}>
-                    <Text style={{fontSize: 22, fontWeight: "700"}}>Settings</Text>
-                </View>
-
-                <View style={{height: 1, backgroundColor: "#E5E7EB"}}></View>
-                <SettingsItem title="Account" Icon={AccountIcon}/>
-                <SettingsItem title="Security" Icon={SecurityIcon}/>
-                <SettingsItem title="Privacy" Icon={PrivacyIcon}/>
-                <SettingsItem title="Terms and Conditions" Icon={Terms_Conditions_Icon}/>
-                <SettingsItem title="Contact" Icon={ContactIcon}/>
-                <SettingsItem title="Feedback" Icon={FeedbackIcon}/>
-                <SettingsItem title="Logout" Icon={LogoutIcon} onPress={logout}/>
-
-                <View style={{flex: 1}}></View>
-            </ScrollView>
-
-            <View style={{borderTopWidth: 1, borderTopColor: "#E5E7EB"}}>
-                <SettingsItem title="Admin" Icon={AdminIcon} onPress={() => router.push("/(drawer)/adminPage")}/>
-            </View>
-        </SafeAreaView>
-
-    );
-}
 
 function SettingsItem({
-                          title,
-                          onPress,
-                          Icon,
-                      }: {
+      title,
+      onPress,
+      Icon,
+      }: {
     title: string;
     onPress?: () => void;
     Icon?: React.ComponentType<{ width?: number; height?: number }>;
@@ -89,3 +60,48 @@ function SettingsItem({
             <View style={{ height: 1, backgroundColor: "#E5E7EB" }} />
         </TouchableOpacity>
     )}
+
+export default function UserSettings() {
+    const [me, setMe] = useState<UserProfile | null>(null);
+    useEffect(() => {
+        let mounted = true;
+
+        getUserProfile()
+            .then((p) => {
+                if (mounted) setMe(p);
+            })
+            .catch(console.error);
+
+        return () => {
+            mounted = false;
+        };
+        },[]
+    );
+
+    return (
+        <SafeAreaView style={{flex: 1, backgroundColor: "white"}}>
+            <ScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1}}>
+                <View style={{alignItems: "center", paddingTop: 16, paddingBottom: 16}}>
+                    <Text style={{fontSize: 22, fontWeight: "700"}}>Settings</Text>
+                </View>
+
+                <View style={{height: 1, backgroundColor: "#E5E7EB"}}></View>
+                <SettingsItem title="Account" Icon={AccountIcon}/>
+                <SettingsItem title="Security" Icon={SecurityIcon}/>
+                <SettingsItem title="Privacy" Icon={PrivacyIcon}/>
+                <SettingsItem title="Terms and Conditions" Icon={Terms_Conditions_Icon}/>
+                <SettingsItem title="Contact" Icon={ContactIcon}/>
+                <SettingsItem title="Feedback" Icon={FeedbackIcon}/>
+                <SettingsItem title="Logout" Icon={LogoutIcon} onPress={logout}/>
+
+                <View style={{flex: 1}}></View>
+            </ScrollView>
+                  {me?.role ==="admin" && (
+                      <View style={{borderTopWidth: 1, borderTopColor: "#E5E7EB"}}>
+                          <SettingsItem title="Admin" Icon={AdminIcon} onPress={() => router.push("/(drawer)/adminPage")}/>
+                      </View>
+                  )}
+        </SafeAreaView>
+    );
+}
+

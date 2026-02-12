@@ -1,13 +1,10 @@
 // app/(drawer)/(tabs)/shared/DashboardScreen.tsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { router } from "expo-router";
 import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import {
-  useDashboardWidgetsStore,
-  buildLayoutFromItems,
-} from "@/lib/storage/dashboardWidgetStore";
+import { useDashboardWidgetsStore, buildLayoutFromItems } from "@/lib/storage/dashboardWidgetStore";
 
 import { setLight } from "@/lib/api/deviceControllers/light";
 import { setCover } from "@/lib/api/deviceControllers/cover";
@@ -16,6 +13,8 @@ import type { ClimateHvacMode } from "@/lib/api/deviceControllers/climate";
 
 import { useDashboardState } from "@/lib/hooks/useDashboardState";
 import { getDashboardEntityIds } from "@/lib/dashboard/getDashboardEntityIds";
+
+import { getDashboardState, type DashboardStateV2 } from "@/lib/api/userState";
 
 import { RenderRow } from "@/components/dashboard/DashboardRenderer";
 import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
@@ -27,6 +26,7 @@ export default function DashboardScreen() {
   // Layout
   // -------------------------
   const items = useDashboardWidgetsStore((s) => s.items);
+
   const layout = useMemo(() => buildLayoutFromItems(items), [items]);
   const isEmpty = layout.length === 0;
 

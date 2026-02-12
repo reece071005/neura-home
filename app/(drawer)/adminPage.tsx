@@ -19,12 +19,15 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import Plus_Icon from "@/assets/icons/Plus_Icon.svg";
 
 import { adminAddUser, adminDeleteUser, fetchAdminUsers, UserResponse } from "@/lib/api/admin";
+import { getUserProfile, UserProfile, UserRole } from "@/lib/api/auth/getUserProfile";
 import { getSystemOverview } from "@/lib/api/devices";
 
 const AdminPage = () => {
     const [users, setUsers] = useState<UserResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+
+    const [me, setMe] = useState<UserProfile | null>(null);
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [creating, setCreating] = useState(false);
@@ -33,6 +36,15 @@ const AdminPage = () => {
     const [newUsername, setNewUsername] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [newRole, setNewRole] = useState<"admin" | "user">("user");
+
+    const [emailError, setEmailError] = useState<string | null>(null);
+    const [usernameError, setUsernameError] = useState<string | null>(null);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+
+    const [alertOpen, setAlertOpen] = useState(false);
+    const [alertTitle, setAlertTitle] = useState("Error");
+    const [alertMessage, setAlertMessage] = useState<string | undefined>(undefined);
+    const [alertIsError, setAlertIsError] = useState(false);
 
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<UserResponse | null>(null);
@@ -48,12 +60,12 @@ const AdminPage = () => {
         setNewUsername("");
         setNewPassword("");
         setNewRole("user");
+        clearFieldErrors();
     };
 
     const loadUsers = useCallback(async () => {
         try {
             const data = await fetchAdminUsers();
-            data.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
             setUsers(data);
         } catch (e: any) {
             Alert.alert("Error", e?.message ?? "Failed to load users");
@@ -78,6 +90,34 @@ const AdminPage = () => {
         })();
     }, [loadUsers]);
 
+    useEffect(() => {
+        let mounted = true;
+        getUserProfile()
+            .then((p) => mounted && setMe(p))
+            .catch(console.error);
+
+        return () => {
+            mounted = false;
+        };
+        }, []);
+
+    const sortedUsers = useMemo(() => {
+        const copy = [...users];
+
+        copy.sort((a, b) => {
+            const aIsMe = me && a.id === me.id ? 1 : 0;
+            const bIsMe = me && b.id === me.id ? 1 : 0;
+
+            // 1) Me first
+            if (aIsMe !== bIsMe) return bIsMe - aIsMe;
+
+            // 2) Then newest first
+            return a.created_at < b.created_at ? 1 : -1;
+        });
+
+        return copy;
+        }, [users, me]);
+
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
         await loadUsers();
@@ -97,11 +137,64 @@ const AdminPage = () => {
         setIsAddOpen(true);
     };
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const clearFieldErrors = () => {
+      setEmailError(null);
+      setUsernameError(null);
+      setPasswordError(null);
+    };
+
+    const validateCreateUserForm = () => {
+      const email = newEmail.trim();
+      const username = newUsername.trim();
+      const password = newPassword;
+
+      let ok = true;
+
+      setEmailError(null);
+      setUsernameError(null);
+      setPasswordError(null);
+
+      if (!email) {
+        setEmailError("Email is required.");
+        ok = false;
+      } else if (!emailRegex.test(email)) {
+        setEmailError("Please enter a valid email address.");
+        ok = false;
+      }
+
+      if (!username) {
+        setUsernameError("Username is required.");
+        ok = false;
+      }
+
+      if (!password) {
+        setPasswordError("Password is required.");
+        ok = false;
+      } else if (password.length < 8) {
+        setPasswordError("Password must be at least 8 characters.");
+        ok = false;
+      }
+
+      return ok;
+    };
+
+    const showAlert = (title: string, message?: string, isError=false) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertIsError(isError);
+        setAlertOpen(true);
+    };
+
+    const closeAlert = () => {
+        setAlertTitle("");
+        setAlertMessage("");
+        setAlertOpen(false);
+    }
+
     const createUser = async () => {
-        if (!newEmail.trim() || !newUsername.trim() || !newPassword.trim()) {
-            Alert.alert("Missing info", "Email, username, and password are required.");
-            return;
-        }
+        if (!validateCreateUserForm()) return;
 
         try {
             setCreating(true);
@@ -114,9 +207,9 @@ const AdminPage = () => {
 
             setIsAddOpen(false);
             await loadUsers();
-            Alert.alert("Success", "User created.");
+            showAlert("Success", "User created.", false);
         } catch (e: any) {
-            Alert.alert("Create failed", e?.message ?? "Failed to create user");
+            showAlert("Error", e?.message ?? "Failed to load users", true);
         } finally {
             setCreating(false);
         }
@@ -141,7 +234,7 @@ const AdminPage = () => {
             setUsers((prev) => prev.filter((x) => x.id !== deleteTarget.id));
          closeDelete();
         } catch (e: any) {
-            Alert.alert("Delete failed", e?.message ?? "Failed to delete user");
+            showAlert("Success", "User created.");
         } finally {
             setDeleting(false);
         }
@@ -164,6 +257,7 @@ const AdminPage = () => {
                             placeholder="user@example.com"
                             className="border border-gray-200 rounded-xl px-3 py-2 mb-3"
                         />
+                        {emailError ? <Text className="text-xs text-red-500 mb-2">{emailError}</Text> : <View className="mb-3" />}
 
                         <Text className="text-xs text-gray-500 mb-1">Username</Text>
                         <TextInput
@@ -173,6 +267,7 @@ const AdminPage = () => {
                             placeholder="username"
                             className="border border-gray-200 rounded-xl px-3 py-2 mb-3"
                         />
+                        {usernameError ? <Text className="text-xs text-red-500 mb-2">{usernameError}</Text> : <View className="mb-3" />}
 
                         <Text className="text-xs text-gray-500 mb-1">Password</Text>
                         <TextInput
@@ -182,6 +277,7 @@ const AdminPage = () => {
                             placeholder="password"
                             className="border border-gray-200 rounded-xl px-3 py-2 mb-3"
                         />
+                        {passwordError ? <Text className="text-xs text-red-500 mb-2">{passwordError}</Text> : <View className="mb-3" />}
 
                         <Text className="text-xs text-gray-500 mb-2">Role</Text>
                         <View className="flex-row gap-2 mb-4">
@@ -258,35 +354,46 @@ const AdminPage = () => {
                         <Text className="text-gray-500">No users found.</Text>
                     </View>
                 ) : (
-                    users.map((u) => (
-                        <View key={u.id}>
-                            <View className="flex-row items-center">
-                                <View className="pr-2 justify-center items-center">
-                                    <MdiIcon path={mdi.mdiAccountBoxOutline} size={30} />
-                                </View>
-                                <View className="flex-1 ml-1">
-                                    <Text className="text-base font-regular text-black-900">
-                                        {u.username}{" "}
-                                        <Text className="text-xs text-gray-500">
-                                            ({u.role})
+                    sortedUsers.map((u) => {
+                        const isMe = !!me && u.id === me.id;
+
+                        return(
+                            <View key={u.id}>
+                                <View className="flex-row items-center">
+                                    <View className="pr-2 justify-center items-center">
+                                        <MdiIcon path={mdi.mdiAccountBoxOutline} size={30} />
+                                    </View>
+                                    <View className="flex-1 ml-1">
+                                        <Text className="text-base font-regular text-black-900">
+                                            {u.username}{" "}
+                                            {isMe && (
+                                                <Text >• You </Text>
+                                              )}
+                                            <Text className="text-xs text-gray-500">({u.role})</Text>
+
                                         </Text>
-                                    </Text>
-                                    <Text className="text-xs font-regular text-gray-500">
-                                        {u.email}
-                                    </Text>
-                                    <Text className="text-xs font-regular text-gray-500">
-                                        Created: {formatCreatedAt(u.created_at)}
-                                    </Text>
+                                        <Text className="text-xs font-regular text-gray-500">
+                                            {u.email}
+                                        </Text>
+                                        <Text className="text-xs font-regular text-gray-500">
+                                            Created: {formatCreatedAt(u.created_at)}
+                                        </Text>
+                                    </View>
+                                    {!isMe && (
+                                        <Pressable
+                                            className="w-10 h-10 items-end"
+                                            onPress={() => openDelete(u)}
+                                            disabled={isMe}
+                                        >
+                                            <MdiIcon path={mdi.mdiAccountOffOutline} size={28} />
+                                        </Pressable>
+                                    )}
                                 </View>
 
-                                <Pressable className="w-10 h-10 items-end" onPress={() => openDelete(u)}>
-                                    <MdiIcon path={mdi.mdiAccountOffOutline} size={28} />
-                                </Pressable>
+                                <View className="w-full border-[0.5px] bg-gray-200 mt-2 mb-4" />
                             </View>
-
-                            <View className="w-full border-[0.5px] bg-gray-200 mt-2 mb-4" />
-                        </View>
-                    ))
+                    );
+                })
                 )}
 
                 {/* System Overview */}
@@ -355,6 +462,17 @@ const AdminPage = () => {
                 confirmDisabled={!deleteTarget || deleting}
                 onCancel={closeDelete}
                 onConfirm={onConfirmDelete}
+            />
+            <ConfirmDialog
+              visible={alertOpen}
+              error={alertIsError}
+              title={alertTitle}
+              message={alertMessage}
+              confirmText="Ok"
+              cancelText=""
+              destructive={false}
+              confirmDisabled={false}
+              onConfirm={closeAlert}
             />
         </SafeAreaView>
     );

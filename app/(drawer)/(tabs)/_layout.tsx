@@ -1,7 +1,10 @@
 import { Tabs } from "expo-router";
+import { View, ActivityIndicator } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import MdiIcon from "@/components/MdiIcon";
 import { useDashboardWidgetsStore } from "@/lib/storage/dashboardWidgetStore";
+import { useHydrateDashboardsFromDb } from "@/lib/hooks/useHydrateDashboardsFromDb";
+
 
 import {
     mdiMicrophone,
@@ -10,6 +13,20 @@ import {
 } from "@mdi/js";
 
 export default function TabsLayout() {
+    useHydrateDashboardsFromDb();
+    const hasHydrated = useDashboardWidgetsStore((s) => s.hasHydrated);
+
+    if (!hasHydrated) {
+        return (
+            <LinearGradient colors={["#3DC4E0", "#4985EE"]} locations={[0, 0.44]} style={{ flex: 1 }}>
+                <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                    <ActivityIndicator size="large" color="#111827" />
+                </View>
+            </LinearGradient>
+        );
+
+    }
+
     const dashboards = useDashboardWidgetsStore((s) => s.dashboards);
 
     const d0 = dashboards[0];
@@ -18,7 +35,7 @@ export default function TabsLayout() {
 
     const dashTabOptions = (d?: { name: string; iconPath?: string }) => ({
 
-        href: d ? undefined : null,
+        href: hasHydrated && !d ? null : undefined,
         tabBarIcon: ({ focused }: { focused: boolean }) => (
             <MdiIcon
                 path={d?.iconPath ?? mdiViewDashboard}

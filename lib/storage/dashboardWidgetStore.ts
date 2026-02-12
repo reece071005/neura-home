@@ -86,6 +86,10 @@ export type DashboardRow = FullRow | TwoRow | SplitRow | HeaderRow;
 const uid = (prefix: string) =>
   `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
+const dashId = () => `dash_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+const DEFAULT_DASHBOARD_ID = "dash_default";
+
 // --------------------
 // Packing: items → rows
 // --------------------
@@ -180,13 +184,17 @@ export function buildLayoutFromItems(items: DashboardItem[]): DashboardRow[] {
 // --------------------
 // Store
 // --------------------
-type DashboardMeta = {
+export type DashboardMeta = {
   id: string;
   name: string;
   iconPath?: string;
 };
 
-type DashboardState = {
+export type DashboardState = {
+  // hydration flag (AsyncStorage → Zustand)
+  hasHydrated: boolean;
+  setHasHydrated: (v: boolean) => void;
+
   // Registry (max 3)
   dashboards: DashboardMeta[];
   activeDashboardId: string;
@@ -194,41 +202,38 @@ type DashboardState = {
   // Layouts
   layoutsById: Record<string, DashboardItem[]>;
 
-  // Convenience: active items (so existing screens barely change)
+  // Convenience: active items
   items: DashboardItem[];
 
   // ----- actions -----
   setActiveDashboard: (id: string) => void;
 
-  // dashboard ops
-  addDashboard: (name?: string) => void;     // max 3
+  addDashboard: (name?: string) => void; // max 3
   renameDashboard: (id: string, name: string) => void;
   setDashboardIcon: (id: string, iconPath?: string) => void;
   removeDashboard: (id: string) => void;
 
-  // layout ops (operate on active dashboard)
   setItems: (next: DashboardItem[]) => void;
 
   addHeader: (title: string, iconPath?: string) => void;
-  addTile: (tile: Omit<Extract<DashboardItem, { type: "tile" }>, "id" | "type">) => void;
+  addTile: (
+    tile: Omit<Extract<DashboardItem, { type: "tile" }>, "id" | "type">
+  ) => void;
 
   removeItem: (id: string) => void;
-  updateItem: (id: string, patch: Partial<Omit<DashboardItem, "id" | "type">>) => void;
+  updateItem: (
+    id: string,
+    patch: Partial<Omit<DashboardItem, "id" | "type">>
+  ) => void;
 };
 
-const dashId = () => `dash_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-
-const DEFAULT_DASHBOARD_ID = "dash_default";
+function getActiveItems(s: Pick<DashboardState, "layoutsById" | "activeDashboardId">) {
+  return s.layoutsById[s.activeDashboardId] ?? [];
+}
 
 export const useDashboardWidgetsStore = create<DashboardState>()(
   persist(
     (set, get) => {
-      // helper: get active items
-      const activeItems = () => {
-        const { layoutsById, activeDashboardId } = get();
-        return layoutsById[activeDashboardId] ?? [];
-      };
-
       // helper: write active items and keep `items` in sync
       const setActiveItems = (next: DashboardItem[]) => {
         const { activeDashboardId, layoutsById } = get();
@@ -237,24 +242,27 @@ export const useDashboardWidgetsStore = create<DashboardState>()(
       };
 
       return {
+        hasHydrated: false,
+        setHasHydrated: (v) => set({ hasHydrated: v }),
+
         dashboards: [
-          { id: DEFAULT_DASHBOARD_ID, name: "Dashboard", iconPath: mdi.mdiViewDashboard },
+          {
+            id: DEFAULT_DASHBOARD_ID,
+            name: "Dashboard",
+            iconPath: mdi.mdiViewDashboard,
+          },
         ],
         activeDashboardId: DEFAULT_DASHBOARD_ID,
-
-        layoutsById: {
-          [DEFAULT_DASHBOARD_ID]:  [],
-        },
-
-        // keep compatibility with existing code that reads `items`
+        layoutsById: { [DEFAULT_DASHBOARD_ID]: [] },
         items: [],
 
         setActiveDashboard: (id) => {
           const s = get();
           if (!s.dashboards.some((d) => d.id === id)) return;
-
-          const nextItems = s.layoutsById[id] ?? [];
-          set({ activeDashboardId: id, items: nextItems });
+          set({
+            activeDashboardId: id,
+            items: s.layoutsById[id] ?? [],
+          });
         },
 
         addDashboard: (name = "New dashboard") => {
@@ -264,12 +272,9 @@ export const useDashboardWidgetsStore = create<DashboardState>()(
           const id = dashId();
           const meta: DashboardMeta = { id, name, iconPath: mdi.mdiViewDashboard };
 
-          const nextDashboards = [...s.dashboards, meta];
-          const nextLayouts = { ...s.layoutsById, [id]: [] };
-
           set({
-            dashboards: nextDashboards,
-            layoutsById: nextLayouts,
+            dashboards: [...s.dashboards, meta],
+            layoutsById: { ...s.layoutsById, [id]: [] },
             activeDashboardId: id,
             items: [],
           });
@@ -296,6 +301,7 @@ export const useDashboardWidgetsStore = create<DashboardState>()(
           if (id === pinnedID) return;
 
           const nextDashboards = s.dashboards.filter((d) => d.id !== id);
+
           const nextLayouts = { ...s.layoutsById };
           delete nextLayouts[id];
 
@@ -314,28 +320,43 @@ export const useDashboardWidgetsStore = create<DashboardState>()(
 
         addHeader: (title, iconPath) =>
           setActiveItems([
-            ...activeItems(),
+            ...getActiveItems(get()),
             { type: "header", id: uid("hdr"), title, iconPath },
           ]),
 
         addTile: (tile) =>
           setActiveItems([
-            ...activeItems(),
+            ...getActiveItems(get()),
             { ...tile, id: uid("t"), type: "tile" },
           ]),
 
         removeItem: (id) =>
-          setActiveItems(activeItems().filter((x) => x.id !== id)),
+          setActiveItems(getActiveItems(get()).filter((x) => x.id !== id)),
 
         updateItem: (id, patch) =>
           setActiveItems(
-            activeItems().map((x) => (x.id === id ? ({ ...x, ...patch } as any) : x))
+            getActiveItems(get()).map((x) =>
+              x.id === id ? ({ ...x, ...patch } as any) : x
+            )
           ),
       };
     },
     {
       name: "dashboard-items-v3",
       storage: createJSONStorage(() => AsyncStorage),
+
+      // ✅ critical: after AsyncStorage rehydrates, sync `items` with active dashboard
+      onRehydrateStorage: () => (state, err) => {
+        if (err) return;
+
+        if (!state) return;
+
+        state.setHasHydrated(true);
+
+        const active = state.activeDashboardId;
+        const items = state.layoutsById?.[active] ?? [];
+        useDashboardWidgetsStore.setState({ items });
+      },
     }
   )
 );
