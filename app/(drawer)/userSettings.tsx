@@ -9,6 +9,8 @@ import { getUserProfile, UserProfile } from "@/lib/api/auth/getUserProfile"
 // @ts-ignore
 import AccountIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientAccountOutline.svg";
 // @ts-ignore
+import BrainIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientBrainOutline.svg";
+// @ts-ignore
 import SecurityIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientSecurityOutline.svg";
 // @ts-ignore
 import PrivacyIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientPrivacyOutline.svg";
@@ -86,7 +88,8 @@ export default function UserSettings() {
                 </View>
 
                 <View style={{height: 1, backgroundColor: "#E5E7EB"}}></View>
-                <SettingsItem title="Account" Icon={AccountIcon}/>
+                <SettingsItem title="Account" Icon={AccountIcon} onPress={() => router.push("/(drawer)/accountPage")}/>
+                <SettingsItem title="AI & Automation" Icon={BrainIcon} onPress={() => router.push("/(drawer)/accountPage")}/>
                 <SettingsItem title="Security" Icon={SecurityIcon}/>
                 <SettingsItem title="Privacy" Icon={PrivacyIcon}/>
                 <SettingsItem title="Terms and Conditions" Icon={Terms_Conditions_Icon}/>

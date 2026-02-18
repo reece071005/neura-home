@@ -1,7 +1,7 @@
 import { getToken } from "@/lib/storage/token";
 
 //Neura Hub URL
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://10.0.2.2:8000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.89:8000";
 
 // Types
 type RequestOptions = {
@@ -10,6 +10,7 @@ type RequestOptions = {
     body?: any;
     auth?: boolean; // Bearer token
     form?: boolean;
+    multipart?: boolean;
 };
 
 // Session-expiry handling
@@ -20,9 +21,7 @@ export class SessionExpiredError extends Error {
     }
 }
 
-
 //Global handler that runs when the user session has expired.
-
 let onSessionExpired: null | (() => void | Promise<void>) = null;
 
 //Prevent multiple requests
@@ -34,7 +33,7 @@ export function setOnSessionExpired(handler: () => void | Promise<void>) {
 
 // API request function
 export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T> {
-    const { method = "GET", headers = {}, body, auth = false, form = false } = opts;
+    const { method = "GET", headers = {}, body, auth = false, form = false, multipart = false } = opts;
 
     const finalHeaders: Record<string, string> = { ...(headers ?? {}) };
 
@@ -50,6 +49,8 @@ export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T
         if (form) {
             finalHeaders["Content-Type"] = "application/x-www-form-urlencoded";
             finalBody = body instanceof URLSearchParams ? body.toString() : String(body);
+        } else if (multipart) {
+            finalBody = body; // body is a FormData instance
         } else {
             finalHeaders["Content-Type"] = "application/json";
             finalBody = JSON.stringify(body);

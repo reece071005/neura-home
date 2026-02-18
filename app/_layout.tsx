@@ -11,15 +11,13 @@ import {
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
 
-import { setOnSessionExpired } from "@/lib/api/client";          // <-- your api file
-import { clearToken } from "@/lib/storage/token";        // <-- must exist
-// import { useAuthStore } from "@/lib/stores/authStore"; // <-- optional if you have one
+import { setOnSessionExpired } from "@/lib/api/client";
+import { clearToken } from "@/lib/storage/token";
 
 import "./globals.css";
 
 export default function RootLayout() {
   const router = useRouter();
-  // const logout = useAuthStore((s) => s.logout); // optional
 
   const [fontsLoaded] = useFonts({
     Poppins: Poppins_400Regular,

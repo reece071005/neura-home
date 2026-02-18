@@ -1,38 +1,45 @@
-import { Pressable } from "react-native";
-import { Stack, router } from "expo-router";
+import React from "react";
+import { Pressable, View } from "react-native";
+import { Stack, router, usePathname } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { MaterialIcons} from "@expo/vector-icons"
+import { MaterialIcons } from "@expo/vector-icons";
 
 export default function OnboardingLayout() {
+  const pathname = usePathname();
+  const isIndex = pathname === "/"; // or adjust if your onboarding base path differs
+
   return (
     <LinearGradient
       colors={["#3DC4E0", "#4985EE"]}
       locations={[0, 0.44]}
       style={{ flex: 1 }}
     >
-      <Stack
-          screenOptions={{
-              contentStyle: {backgroundColor: "transparent"},
-              headerTitle: "",
-              headerShadowVisible: false,
-              headerTransparent: true,
-              headerLeft: () => (
-                <Pressable onPress={() => router.back()} hitSlop={12}>
-                    <MaterialIcons name="arrow-back" size={35} color="white" />
-                </Pressable>
-            )
-      }}
-      >
-          <Stack.Screen
-              name="index"
-              options={{
-                  headerLeft: () => null,
-              }}
-          />
+      {/* Hide native header completely */}
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" } }} />
 
-          <Stack.Screen name="hubSetup" />
-          <Stack.Screen name="hubSearch" />
-        </Stack>
+      {/* Custom back button overlay (no iOS grey circle) */}
+      {!isIndex && (
+        <View
+          style={{
+            position: "absolute",
+            top: 60,
+            left: 16,
+            zIndex: 50,
+          }}
+        >
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={12}
+            android_ripple={{ color: "transparent" }}
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.6 : 1,
+              padding: 6,
+            })}
+          >
+            <MaterialIcons name="arrow-back" size={35} color="white" />
+          </Pressable>
+        </View>
+      )}
     </LinearGradient>
   );
 }

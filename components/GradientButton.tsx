@@ -15,9 +15,11 @@ const GradientButton = ({title, onPress}: GradientButtonProps) => {
               locations={[0, 0.44]}
               className="px-16 py-4"
             >
-                <Text className="text-textWhite text-button font-bold text-center">
-                    {title}
-                </Text>
+                <View className="px-16 py-3.5">
+                    <Text className="text-textWhite text-button font-medium text-center">
+                        {title}
+                    </Text>
+                </View>
             </LinearGradient>
         </Pressable>
     )

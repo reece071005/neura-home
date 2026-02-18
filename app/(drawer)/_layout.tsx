@@ -114,7 +114,7 @@ export default function DrawerLayout() {
                     headerShadowVisible: false,
 
                     headerLeft: () => (
-                        isTabsWorld ? <BurgerSearchWidget/> : <BurgerWidget/>
+                        isTabsWorld ? <BurgerWidget/> : <BurgerWidget/>
                     ),
                     headerLeftContainerStyle: {
                         paddingLeft: isTabsWorld ? 10 : 3,   // 👈 different per world
@@ -132,10 +132,17 @@ export default function DrawerLayout() {
                     drawerItemStyle: { display: "none" },
                     headerShown: false,
                   }}
-/>
+            />
 
             <Drawer.Screen
-                name="devices"
+                name="uploadFace"
+                options={{
+                    drawerItemStyle: { display: "none" },
+                    headerShown: false,
+                }}
+            />
+            <Drawer.Screen
+                name="resetPassword"
                 options={{
                     drawerItemStyle: { display: "none" },
                     headerShown: false,

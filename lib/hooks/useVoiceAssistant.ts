@@ -11,7 +11,7 @@ import {
   type AudioPlayer,
 } from "expo-audio";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://10.0.2.2:8000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.89:8000";
 
 type SttResponse = {
   success: boolean;
@@ -293,6 +293,7 @@ export function useVoiceAssistant() {
       const url = `${BASE_URL}/voice/stt?execute_command=${
         executeCommand ? "true" : "false"
       }`;
+
       const res = await fetch(url, {
         method: "POST",
         headers,
@@ -315,6 +316,7 @@ export function useVoiceAssistant() {
         setLastText(json.transcribed_text ?? "");
       }
 
+      console.log(executeCommand)
       return json;
     } catch (error) {
       console.error("Error in stopAndSend:", error);

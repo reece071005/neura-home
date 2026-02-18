@@ -47,22 +47,6 @@ const CATEGORIES: Category[] = [
 export default function DevicesCategoryList() {
     return (
         <>
-            <Stack.Screen
-                options={{
-                    title: "Devices",
-                    headerLeft: () => <BurgerSearchWidget />,
-                    headerRight: () => (
-                        <Pressable
-                            onPress={() => router.push("/(drawer)/devices/add")}
-                            hitSlop={10}
-                            style={{ paddingRight: 12 }}
-                        >
-                            <MaterialIcons name="add" size={22} color="#3C7BFF" />
-                        </Pressable>
-                    ),
-                }}
-            />
-
             <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
                 <View className="pt-2">
                     {CATEGORIES.map((cat) => {

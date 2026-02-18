@@ -8,6 +8,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -127,19 +128,35 @@ const VoiceAssistant = () => {
 
     try {
       setErrorMsg("");
-      await sendTextCommand(text);  // ✅ calls /voice/command
-      closeSheet();                 // clears input too in your closeSheet()
+      await sendTextCommand(text);
+      closeSheet();
     } catch (e: any) {
       setErrorMsg(e?.message ?? "Failed to send command");
     }
   };
 
-  const assistantMessage = lastResult?.command_result?.response|| lastResult?.response || "";
+  //Parses JSON depending on if its LLM or Command
+  const assistantMessage = typeof lastResult?.response === "string"
+      ? lastResult.response
+      : typeof (lastResult as any)?.response?.response === "string"
+          ? (lastResult as any).response.response
+          : typeof (lastResult as any)?.response?.message === "string"
+              ? (lastResult as any).response.message
+              : typeof (lastResult as any)?.message === "string"
+                  ? (lastResult as any).message
+                  : "";
 
   return (
     <View className="flex-1">
       <View className="flex-1 px-5 pt-36 pb-6">
-        <View className="flex-1 bg-white rounded-3xl px-6 pt-6">
+        {/* Replace this: <View className="flex-1 bg-white rounded-3xl px-6 pt-6"> */}
+        <ScrollView
+            className="flex-1 bg-white rounded-3xl px-6 pt-6"
+            contentContainerStyle={{ paddingBottom: 24 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+        >
+
           <Text className="text-h3 font-bold text-black">Good Morning, User!</Text>
           <Text className="text-body font-medium text-black mt-2">
             What can I help you with?
@@ -168,7 +185,7 @@ const VoiceAssistant = () => {
           </View>
 
           {/* Mic button: press & hold */}
-          <View className="mt-auto pb-10 items-center">
+          <View className="mt-auto pb-10 pt-10 items-center">
             <Pressable
               onPressIn={async () => {
                 try {
@@ -217,9 +234,10 @@ const VoiceAssistant = () => {
               </Pressable>
             )}
           </View>
-
+          </ScrollView>
           {/* Keyboard button */}
-          <View className="absolute right-5 bottom-5">
+
+          <View className="absolute right-9 bottom-10">
             <Pressable
               onPress={openSheet}
               className="w-10 h-10 rounded-full items-center justify-center bg-gray-100"
@@ -233,7 +251,6 @@ const VoiceAssistant = () => {
             </Pressable>
           </View>
         </View>
-      </View>
 
       {/* Bottom sheet */}
       <Modal visible={sheetOpen} transparent animationType="none">
