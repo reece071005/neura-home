@@ -148,6 +148,13 @@ export default function DrawerLayout() {
                     headerShown: false,
                 }}
             />
+            <Drawer.Screen
+                name="createRoom"
+                options={{
+                    drawerItemStyle: { display: "none" },
+                    headerShown: false,
+                }}
+            />
         </Drawer>
     );
 }

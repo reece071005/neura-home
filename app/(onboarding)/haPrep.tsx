@@ -29,10 +29,6 @@ const HaPrep = () => {
                         1. Ensure Home Assistant is powered on and fully booted.{"\n"}
                         2. Confirm your phone or computer is on the same Wi-Fi network as
                         Home Assistant.{"\n"}
-                        3. If using a Raspberry Pi, ensure it’s connected via Ethernet or
-                        Wi-Fi.{"\n"}
-                        4. Keep the Home Assistant address ready (for example:
-                        http://homeassistant.local:8123).
                     </Text>
                 </View>
 

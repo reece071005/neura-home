@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Text, View, Platform } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { router } from "expo-router";
-import { register } from "@/lib/api/auth";
+
+import { setOnboardingAccount } from "@/lib/storage/onboardingStore";
 
 import GradientButton from "@/components/GradientButton";
 import GradientTextInput from "@/components/GradientTextInput";
@@ -13,13 +14,11 @@ const HubNewAccount = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [registerError, setRegisterError] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  const onRegister = async () => {
-    setRegisterError(null);
+  const onNext = () => {
     setUsernameError(null);
     setEmailError(null);
     setPasswordError(null);
@@ -53,40 +52,9 @@ const HubNewAccount = () => {
 
     if (hasError) return;
 
-    try {
-      await register(e, u, p);
-      router.replace("/(onboarding)/haPrep");
-    } catch (err: any) {
-      const msg =
-        typeof err?.message === "string"
-          ? err.message
-          : "Register failed. Please try again.";
-
-      const lower = msg.toLowerCase();
-
-      if (
-        lower.includes("email") &&
-        (lower.includes("exists") || lower.includes("already") || lower.includes("taken"))
-      ) {
-        setEmailError(msg);
-        return;
-      }
-
-      if (
-        lower.includes("username") &&
-        (lower.includes("exists") || lower.includes("already") || lower.includes("taken"))
-      ) {
-        setUsernameError(msg);
-        return;
-      }
-
-      if (lower.includes("password")) {
-        setPasswordError(msg);
-        return;
-      }
-
-      setRegisterError(msg);
-    }
+    // Save to onboarding store — no API call yet
+    setOnboardingAccount(u, e, p);
+    router.replace("/(onboarding)/haPrep");
   };
 
   return (
@@ -114,10 +82,6 @@ const HubNewAccount = () => {
             <Text className="text-textSecondary text-body font-semibold">
               Create an account to link this hub to you
             </Text>
-
-            {registerError ? (
-              <Text className="text-red-500 font-medium mt-2">{registerError}</Text>
-            ) : null}
           </View>
 
           {/* Form */}
@@ -130,7 +94,7 @@ const HubNewAccount = () => {
                 placeholder="Username"
                 keyboardType="default"
                 autoCapitalize="none"
-                error={!!(registerError || usernameError)}
+                error={!!usernameError}
                 errorText={usernameError}
                 returnKeyType="next"
               />
@@ -142,7 +106,7 @@ const HubNewAccount = () => {
                 placeholder="Email"
                 keyboardType="email-address"
                 autoCapitalize="none"
-                error={!!(registerError || emailError)}
+                error={!!emailError}
                 errorText={emailError}
                 returnKeyType="next"
               />
@@ -155,14 +119,14 @@ const HubNewAccount = () => {
                 secureTextEntry
                 showPasswordToggle
                 autoCapitalize="none"
-                error={!!(registerError || passwordError)}
-                errorText={passwordError || registerError}
+                error={!!passwordError}
+                errorText={passwordError}
                 returnKeyType="done"
               />
             </View>
 
             <View className="w-full mt-4">
-              <GradientButton title="Create Account" onPress={onRegister} />
+              <GradientButton title="Continue" onPress={onNext} />
             </View>
           </View>
         </KeyboardAwareScrollView>

@@ -83,6 +83,8 @@ export default function TabsLayout() {
                 <Tabs.Screen
                     name="dashboardEdit"
                     options={{
+                        headerShown: false,
+                        tabBarStyle: {display: "none"},
                         tabBarIcon: ({ focused }) => (
                             <MdiIcon
                                 path={mdiPencil}
@@ -96,4 +98,3 @@ export default function TabsLayout() {
         </LinearGradient>
     );
 }
-

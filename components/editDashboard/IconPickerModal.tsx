@@ -51,7 +51,7 @@ export default function IconPickerModal({
             >
                 {/* Content */}
                 <Pressable
-                    onPress={() => {}}
+                    onPress={(e) => e.stopPropagation()}
                     style={{
                         backgroundColor: "white",
                         borderRadius: 24,

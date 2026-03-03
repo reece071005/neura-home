@@ -2,6 +2,10 @@
 import { api } from "./client";
 import { saveToken } from "@/lib/storage/token";
 
+
+/*
+Login
+ */
 //Login Response parameters
 type LoginResponse = {
     access_token: string;
@@ -27,6 +31,10 @@ export async function login(username: string, password: string) {
     return data;
 }
 
+/*
+Registration
+*/
+
 //Register response paramaters
 type RegisterResponse = {
     id: number;
@@ -37,6 +45,9 @@ type RegisterResponse = {
     role: "admin" | "user";
 };
 
+/*
+Register
+*/
 //Function for register (takes email, username, password)
 export async function register(email: string, username: string, password: string) {
     return api<RegisterResponse>("/auth/register", {
@@ -44,4 +55,19 @@ export async function register(email: string, username: string, password: string
         body: {email, username, password},
         auth: false
     })
+}
+
+/*
+Change Password
+*/
+export async function changePasswordSelf(
+    old_password: string,
+    new_password: string,
+    confirm_password: string
+): Promise<void> {
+    await api("/auth/users/change-password-self", {
+        method: "PUT",
+        auth: true,
+        body: { old_password, new_password, confirm_password },
+    });
 }

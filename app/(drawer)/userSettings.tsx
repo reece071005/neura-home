@@ -89,7 +89,7 @@ export default function UserSettings() {
 
                 <View style={{height: 1, backgroundColor: "#E5E7EB"}}></View>
                 <SettingsItem title="Account" Icon={AccountIcon} onPress={() => router.push("/(drawer)/accountPage")}/>
-                <SettingsItem title="AI & Automation" Icon={BrainIcon} onPress={() => router.push("/(drawer)/accountPage")}/>
+                <SettingsItem title="AI & Automation" Icon={BrainIcon} onPress={() => router.push("/(drawer)/aiAndAutomation")}/>
                 <SettingsItem title="Security" Icon={SecurityIcon}/>
                 <SettingsItem title="Privacy" Icon={PrivacyIcon}/>
                 <SettingsItem title="Terms and Conditions" Icon={Terms_Conditions_Icon}/>

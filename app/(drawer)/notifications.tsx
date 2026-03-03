@@ -1,14 +1,13 @@
 import React, { useMemo, useRef, useState } from "react";
 import {
-    ScrollView,
-    Text,
-    View,
-    TouchableOpacity,
-    NativeSyntheticEvent,
-    NativeScrollEvent,
+  ScrollView,
+  Text,
+  View,
+  Pressable,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
@@ -18,317 +17,351 @@ type NotificationType = "automation" | "package" | "device" | "security" | "syst
 type NotificationSeverity = "info" | "warning" | "critical";
 
 type NotificationItem = {
-    id: string;
-    type: NotificationType;
-    severity: NotificationSeverity;
-
-    icon: keyof typeof MaterialIcons.glyphMap;
-    title: string;
-    message: string;
-
-    createdAt: string;
-    read?: boolean;
-
-    action?: {
-        label: string;
-        route?: string;
-        params?: Record<string, any>;
-    };
+  id: string;
+  type: NotificationType;
+  severity: NotificationSeverity;
+  icon: keyof typeof MaterialIcons.glyphMap;
+  title: string;
+  message: string;
+  createdAt: string;
+  read?: boolean;
+  action?: {
+    label: string;
+    route?: string;
+    params?: Record<string, any>;
+  };
 };
 
 /* ---------------- Helpers ---------------- */
 
 const typeToIcon = (type: NotificationType): keyof typeof MaterialIcons.glyphMap => {
-    switch (type) {
-        case "automation":
-            return "bolt";
-        case "package":
-            return "inventory-2";
-        case "device":
-            return "devices";
-        case "security":
-            return "shield";
-        default:
-            return "info";
-    }
+  switch (type) {
+    case "automation": return "bolt";
+    case "package":    return "inventory-2";
+    case "device":     return "devices";
+    case "security":   return "shield";
+    default:           return "info";
+  }
 };
 
-const severityPill = (severity: NotificationSeverity) => {
-    switch (severity) {
-        case "critical":
-            return { bg: "bg-red-500/12", border: "border-red-500/30", text: "text-red-700", label: "CRITICAL" };
-        case "warning":
-            return { bg: "bg-amber-500/12", border: "border-amber-500/30", text: "text-amber-800", label: "WARNING" };
-        default:
-            return { bg: "bg-blue-500/12", border: "border-blue-500/30", text: "text-blue-800", label: "INFO" };
-    }
+const severityConfig = (severity: NotificationSeverity) => {
+  switch (severity) {
+    case "critical": return { dot: "#EF4444", label: "Critical", labelColor: "#EF4444" };
+    case "warning":  return { dot: "#F59E0B", label: "Warning",  labelColor: "#B45309" };
+    default:         return { dot: "#3B82F6", label: "Info",     labelColor: "#1D4ED8" };
+  }
 };
 
-const formatTime = (iso: string) => new Date(iso).toLocaleString();
-
-const headerTextShadow = {
-    textShadowColor: "rgba(0,0,0,0.55)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+const formatRelativeTime = (iso: string) => {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1)  return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)  return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
 };
 
-/* ---------------- UI Components ---------------- */
-
-const SectionHeader = ({
-                           icon,
-                           title,
-                       }: {
-    icon: keyof typeof MaterialIcons.glyphMap;
-    title: string;
-}) => {
-    return (
-        <View className="flex-row items-center gap-2 mt-6 mb-3">
-            <MaterialIcons name={icon} size={22} color="white" />
-            <Text style={headerTextShadow} className="text-white font-extrabold text-lg">
-                {title}
-            </Text>
-        </View>
-    );
-};
+/* ---------------- Notification Card ---------------- */
 
 function NotificationCard({
-                              item,
-                              isDraggingRef,
-                              onMarkRead,
-                          }: {
-    item: NotificationItem;
-    isDraggingRef: React.MutableRefObject<boolean>;
-    onMarkRead: (id: string) => void;
+  item,
+  isDraggingRef,
+  onMarkRead,
+}: {
+  item: NotificationItem;
+  isDraggingRef: React.MutableRefObject<boolean>;
+  onMarkRead: (id: string) => void;
 }) {
-    const pill = severityPill(item.severity);
+  const sev = severityConfig(item.severity);
 
-    const onPress = () => {
-        if (isDraggingRef.current) return;
+  const onPress = () => {
+    if (isDraggingRef.current) return;
+    onMarkRead(item.id);
+    if (item.action?.route) {
+      router.push({ pathname: item.action.route as any, params: item.action.params ?? {} });
+    }
+  };
 
-        onMarkRead(item.id);
+  return (
+    <Pressable
+      onPress={onPress}
+      delayLongPress={140}
+      style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+    >
+      <View
+        style={{
+          backgroundColor: "white",
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: item.read ? "#E5E7EB" : "#D1D5DB",
+          overflow: "hidden",
+          flexDirection: "row",
+        }}
+      >
+        {/* Unread indicator strip */}
+        <View
+          style={{
+            width: 3,
+            backgroundColor: item.read ? "transparent" : sev.dot,
+          }}
+        />
 
-        if (item.action?.route) {
-            router.push({
-                pathname: item.action.route as any,
-                params: item.action.params ?? {},
-            });
-        }
-    };
-
-    return (
-        <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={onPress}
-            delayPressIn={140}
-            pressRetentionOffset={{ top: 22, left: 22, right: 22, bottom: 22 }}
-        >
+        <View style={{ flex: 1, padding: 14 }}>
+          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+            {/* Icon */}
             <View
-                className="bg-white rounded-2xl px-4 py-4 border border-black/10"
-                style={{
-                    shadowOpacity: 0.12,
-                    shadowRadius: 12,
-                    shadowOffset: { width: 0, height: 8 },
-                    elevation: 4, // Android
-                }}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                backgroundColor: "#F3F4F6",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
             >
-                <View className="flex-row items-start gap-3">
-                    <View className="w-10 h-10 rounded-xl items-center justify-center bg-black/5">
-                        <MaterialIcons name={item.icon} size={20} color="#111827" />
-                    </View>
-
-                    <View className="flex-1">
-                        <View className="flex-row items-start justify-between gap-3">
-                            <Text className="text-black font-extrabold text-[15px] flex-1">
-                                {item.title}
-                            </Text>
-
-                            <View className={`px-2 py-1 rounded-full border ${pill.bg} ${pill.border}`}>
-                                <Text className={`text-[10px] font-extrabold ${pill.text}`}>
-                                    {pill.label}
-                                </Text>
-                            </View>
-                        </View>
-
-                        <Text className="text-zinc-700 mt-2 leading-[18px]">
-                            {item.message}
-                        </Text>
-
-                        <View className="flex-row items-center justify-between mt-4">
-                            <Text className="text-zinc-500 text-xs">
-                                {formatTime(item.createdAt)}
-                            </Text>
-
-                            {item.action?.label ? (
-                                <Text className="text-black font-extrabold text-xs">
-                                    {item.action.label} →
-                                </Text>
-                            ) : !item.read ? (
-                                <Text className="text-black font-extrabold text-xs">New</Text>
-                            ) : null}
-                        </View>
-                    </View>
-                </View>
+              <MaterialIcons name={item.icon} size={18} color="#374151" />
             </View>
-        </TouchableOpacity>
-    );
+
+            {/* Content */}
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: item.read ? "500" : "700",
+                    color: "#111827",
+                    flex: 1,
+                  }}
+                  numberOfLines={1}
+                >
+                  {item.title}
+                </Text>
+
+                {/* Time */}
+                <Text style={{ fontSize: 11, color: "#9CA3AF", flexShrink: 0 }}>
+                  {formatRelativeTime(item.createdAt)}
+                </Text>
+              </View>
+
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: "#6B7280",
+                  marginTop: 3,
+                  lineHeight: 18,
+                }}
+                numberOfLines={2}
+              >
+                {item.message}
+              </Text>
+
+              {/* Footer */}
+              {(item.action?.label || item.severity !== "info") && (
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+                  {/* Severity pill */}
+                  <View
+                    style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 999,
+                      backgroundColor: "#F3F4F6",
+                    }}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: "600", color: sev.labelColor }}>
+                      {sev.label}
+                    </Text>
+                  </View>
+
+                  {item.action?.label && (
+                    <Text style={{ fontSize: 12, fontWeight: "700", color: "#111827" }}>
+                      {item.action.label} →
+                    </Text>
+                  )}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
 }
 
 /* ---------------- Screen ---------------- */
 
 export default function Notifications() {
-    const insets = useSafeAreaInsets();
+  const seed = useMemo<NotificationItem[]>(() => {
+    const now = Date.now();
+    const iso = (msAgo: number) => new Date(now - msAgo).toISOString();
 
-    const seed = useMemo<NotificationItem[]>(() => {
-        const now = Date.now();
-        const iso = (msAgo: number) => new Date(now - msAgo).toISOString();
+    return [
+      {
+        id: "n1",
+        type: "automation",
+        severity: "info",
+        icon: typeToIcon("automation"),
+        title: "Automation created",
+        message: "Night Mode will arm doors, dim lights, and enable camera alerts at 11:00 PM.",
+        createdAt: iso(1000 * 60 * 10),
+        action: { label: "View automation", route: "/(drawer)/automations" },
+      },
+      {
+        id: "n2",
+        type: "package",
+        severity: "warning",
+        icon: typeToIcon("package"),
+        title: "Package at the door",
+        message: "Front Door camera detected a package. Tap to review the clip and confirm delivery.",
+        createdAt: iso(1000 * 60 * 35),
+        action: { label: "Open cameras", route: "/(drawer)/(tabs)/cameraDashboard" },
+      },
+      {
+        id: "n3",
+        type: "device",
+        severity: "critical",
+        icon: typeToIcon("device"),
+        title: "Device needs attention",
+        message: "Living Room camera is offline. Check Wi-Fi or power and try reconnecting.",
+        createdAt: iso(1000 * 60 * 90),
+        action: { label: "Manage devices", route: "/(drawer)/devices" },
+      },
+      {
+        id: "n4",
+        type: "security",
+        severity: "info",
+        icon: typeToIcon("security"),
+        title: "Door unlocked",
+        message: "Main Door was unlocked at 12:30 PM by 'Home Owner'.",
+        createdAt: iso(1000 * 60 * 140),
+      },
+      {
+        id: "n5",
+        type: "system",
+        severity: "info",
+        icon: typeToIcon("system"),
+        title: "App update applied",
+        message: "Performance improvements and stability fixes are now active.",
+        createdAt: iso(1000 * 60 * 240),
+        read: true,
+      },
+    ];
+  }, []);
 
-        return [
-            {
-                id: "n1",
-                type: "automation",
-                severity: "info",
-                icon: typeToIcon("automation"),
-                title: "Automation created",
-                message: "“Night Mode” will arm doors, dim lights, and enable camera alerts at 11:00 PM.",
-                createdAt: iso(1000 * 60 * 10),
-                action: { label: "View automation", route: "/(drawer)/automations" },
-            },
-            {
-                id: "n2",
-                type: "package",
-                severity: "warning",
-                icon: typeToIcon("package"),
-                title: "Package at the door",
-                message: "Front Door camera detected a package. Tap to review the clip and confirm delivery.",
-                createdAt: iso(1000 * 60 * 35),
-                action: { label: "Open cameras", route: "/(drawer)/(tabs)/cameraDashboard" },
-            },
-            {
-                id: "n3",
-                type: "device",
-                severity: "critical",
-                icon: typeToIcon("device"),
-                title: "Device needs attention",
-                message: "Living Room camera is offline. Check Wi-Fi or power and try reconnecting.",
-                createdAt: iso(1000 * 60 * 90),
-                action: { label: "Manage devices", route: "/(drawer)/devices" },
-            },
-            {
-                id: "n4",
-                type: "security",
-                severity: "info",
-                icon: typeToIcon("security"),
-                title: "Door unlocked",
-                message: "Main Door was unlocked at 12:30 PM by ‘Home Owner’.",
-                createdAt: iso(1000 * 60 * 140),
-            },
-            {
-                id: "n5",
-                type: "system",
-                severity: "info",
-                icon: typeToIcon("system"),
-                title: "App update applied",
-                message: "Performance improvements and stability fixes are now active.",
-                createdAt: iso(1000 * 60 * 240),
-                read: true,
-            },
-        ];
-    }, []);
+  const [items, setItems] = useState(seed);
 
-    const [items, setItems] = useState(seed);
-    const unreadCount = items.filter((n) => !n.read).length;
+  const unread = items.filter((n) => !n.read);
+  const read   = items.filter((n) => n.read);
 
-    // Supposed to prevent accidental opens while dragging
-    const isDraggingRef = useRef(false);
-    const lastYRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const lastYRef = useRef(0);
 
-    const onScrollBeginDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-        isDraggingRef.current = true;
-        lastYRef.current = e.nativeEvent.contentOffset.y;
-    };
+  const onScrollBeginDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    isDraggingRef.current = true;
+    lastYRef.current = e.nativeEvent.contentOffset.y;
+  };
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    if (Math.abs(y - lastYRef.current) > 2) isDraggingRef.current = true;
+    lastYRef.current = y;
+  };
+  const onScrollEndDrag = () => {
+    setTimeout(() => { isDraggingRef.current = false; }, 140);
+  };
 
-    const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const y = e.nativeEvent.contentOffset.y;
-        if (Math.abs(y - lastYRef.current) > 2) isDraggingRef.current = true;
-        lastYRef.current = y;
-    };
+  const markRead = (id: string) =>
+    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
 
-    const onScrollEndDrag = () => {
-        setTimeout(() => {
-            isDraggingRef.current = false;
-        }, 140);
-    };
+  const markAllRead = () =>
+    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
 
-    const markRead = (id: string) => {
-        setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    };
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
+      {/* Header */}
+      <View style={{ alignItems: "center", paddingTop: 3, paddingBottom: 18 }}>
+        <Text style={{ fontSize: 22, fontWeight: "700", color: "#111827" }}>Notifications</Text>
+        {unread.length > 0 && (
+          <Text style={{ fontSize: 13, color: "#6B7280", marginTop: 2 }}>
+            {unread.length} unread
+          </Text>
+        )}
+      </View>
 
-    const markAllRead = () => {
-        setItems((prev) => prev.map((n) => ({ ...n, read: true })));
-    };
+      <View style={{ height: 1, backgroundColor: "#E5E7EB" }} />
 
-    // Header Alignment
-    const topPad = Math.max(insets.top + 6, 14);
-    const headerLeftPad = 56;
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={onScrollBeginDrag}
+        onScroll={onScroll}
+        onScrollEndDrag={onScrollEndDrag}
+        scrollEventThrottle={16}
+      >
+        {/* Unread section */}
+        {unread.length > 0 && (
+          <View style={{ paddingHorizontal: 24, paddingTop: 20 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: "#111827" }}>
+                New
+              </Text>
+              <Pressable onPress={markAllRead} hitSlop={10}>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280" }}>
+                  Mark all read
+                </Text>
+              </Pressable>
+            </View>
+            <View style={{ gap: 10 }}>
+              {unread.map((n) => (
+                <NotificationCard
+                  key={n.id}
+                  item={n}
+                  isDraggingRef={isDraggingRef}
+                  onMarkRead={markRead}
+                />
+              ))}
+            </View>
+          </View>
+        )}
 
-    return (
-        <LinearGradient
-            colors={["#3DC4E0", "#4985EE"]}
-            locations={[0, 0.44]}
-            style={{ flex: 1 }}
-        >
-            <ScrollView
-                className="flex-1"
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{
-                    paddingBottom: 24,
-                    paddingTop: topPad,
-                }}
-                onScrollBeginDrag={onScrollBeginDrag}
-                onScroll={onScroll}
-                onScrollEndDrag={onScrollEndDrag}
-                scrollEventThrottle={16}
-            >
-                <View className="px-4" style={{ gap: 8 }}>
-                    {/* Header */}
-                    <View className="flex-row items-start justify-between" style={{ paddingLeft: headerLeftPad }}>
-                        <View>
-                            <Text style={headerTextShadow} className="text-white font-extrabold text-2xl">
-                                Notifications
-                            </Text>
-                            <Text style={headerTextShadow} className="text-white/95 mt-1 text-sm font-semibold">
-                                {unreadCount > 0
-                                    ? `${unreadCount} unread update${unreadCount === 1 ? "" : "s"}`
-                                    : "You're all caught up"}
-                            </Text>
-                        </View>
+        {/* Read / earlier section */}
+        {read.length > 0 && (
+          <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
+            <Text style={{ fontSize: 13, fontWeight: "700", color: "#111827", marginBottom: 12 }}>
+              Earlier
+            </Text>
+            <View style={{ gap: 10 }}>
+              {read.map((n) => (
+                <NotificationCard
+                  key={n.id}
+                  item={n}
+                  isDraggingRef={isDraggingRef}
+                  onMarkRead={markRead}
+                />
+              ))}
+            </View>
+          </View>
+        )}
 
-                        <TouchableOpacity
-                            activeOpacity={0.9}
-                            onPress={markAllRead}
-                            delayPressIn={80}
-                            className="px-3 py-2 rounded-2xl bg-white/92 border border-white/35"
-                            style={{
-                                shadowOpacity: 0.12,
-                                shadowRadius: 12,
-                                shadowOffset: { width: 0, height: 8 },
-                            }}
-                        >
-                            <Text className="text-black font-extrabold text-xs">Mark all read</Text>
-                        </TouchableOpacity>
-                    </View>
+        {/* All read empty state */}
+        {unread.length === 0 && read.length === 0 && (
+          <View style={{ paddingTop: 80, alignItems: "center", paddingHorizontal: 32 }}>
+            <Text style={{ fontSize: 16, fontWeight: "600", color: "#111827" }}>
+              You're all caught up
+            </Text>
+            <Text style={{ fontSize: 14, color: "#6B7280", marginTop: 6, textAlign: "center" }}>
+              No notifications right now.
+            </Text>
+          </View>
+        )}
 
-                    <SectionHeader icon="notifications" title="Latest Updates" />
-
-                    <View className="gap-4">
-                        {items.map((n) => (
-                            <NotificationCard key={n.id} item={n} isDraggingRef={isDraggingRef} onMarkRead={markRead} />
-                        ))}
-                    </View>
-
-                    <View className="h-8" />
-                </View>
-            </ScrollView>
-        </LinearGradient>
-    );
+        {unread.length === 0 && read.length > 0 && (
+          <View style={{ alignItems: "center", paddingTop: 20 }}>
+            <Text style={{ fontSize: 13, color: "#9CA3AF" }}>You're all caught up</Text>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
 }

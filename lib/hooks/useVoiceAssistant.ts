@@ -11,7 +11,7 @@ import {
   type AudioPlayer,
 } from "expo-audio";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.89:8000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.10.18:8000";
 
 type SttResponse = {
   success: boolean;

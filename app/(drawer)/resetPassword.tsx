@@ -3,12 +3,15 @@ import { Text, View, Platform, Pressable } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { mdiArrowLeft } from "@mdi/js";
 
 import GradientButton from "@/components/GradientButton";
 import GradientTextInput from "@/components/GradientTextInput";
 import MdiIcon from "@/components/MdiIcon";
 
-import { mdiArrowLeft } from "@mdi/js";
+import { changePasswordSelf } from "@/lib/api/auth"; // adjust path
+
+
 
 export default function ResetPasswordPage() {
   const [oldPassword, setOldPassword] = useState("");
@@ -57,8 +60,8 @@ export default function ResetPasswordPage() {
     try {
       setLoading(true);
 
-      // TODO: wire up API call here
-      // await resetPassword({ oldPassword, newPassword });
+
+      await changePasswordSelf(oldPassword, newPassword, confirmPassword);
 
       setSuccess(true);
       setTimeout(() => router.replace("/(drawer)/accountPage"), 1500);
