@@ -51,7 +51,7 @@ export default function LargeLightTile({
   showBlueBorder = true,
 }: Props) {
 
-  const effectiveOn = isOn || value > 0.02;
+  const effectiveOn = isOn ||    value > 0.02;
   const v = clamp(effectiveOn ? value : 0, 0, 1);
 
   const ACTIVE = "#F4C400";

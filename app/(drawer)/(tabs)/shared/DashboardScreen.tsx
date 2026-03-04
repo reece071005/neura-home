@@ -1,7 +1,7 @@
 // app/(drawer)/(tabs)/shared/DashboardScreen.tsx
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { router } from "expo-router";
-import { ScrollView, View } from "react-native";
+import { ScrollView, View, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useDashboardWidgetsStore, buildLayoutFromItems } from "@/lib/storage/dashboardWidgetStore";
@@ -42,10 +42,25 @@ export default function DashboardScreen() {
     climateModeMap,
     fanPctMap,
     coverPosMap,
+    presenceMap,
     refreshNow,
     setLightOnMap,
     setCoverPosMap,
   } = useDashboardState(dashboardEntityIds);
+
+  // -------------------------
+  // Pull-to-refresh
+  // -------------------------
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshNow?.();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshNow]);
 
   // -------------------------
   // Fan (UI-only overrides for slider)
@@ -64,23 +79,48 @@ export default function DashboardScreen() {
   // Light (UI-only overrides for large slider)
   // -------------------------
   const [lightValueOverrides, setLightValueOverrides] = useState<Record<string, number>>({});
+  const pendingLightRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
   const mergedLightValues = useMemo(
     () => ({ ...lightValues, ...lightValueOverrides }),
     [lightValues, lightValueOverrides]
   );
 
+  // Clear override once HA polling has caught up to our committed value
+  useEffect(() => {
+    setLightValueOverrides((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      for (const entityId of Object.keys(prev)) {
+        const overrideVal = prev[entityId];
+        const polledVal = lightValues[entityId];
+
+        if (polledVal !== undefined && Math.abs(polledVal - overrideVal) < 0.05) {
+          delete next[entityId];
+
+          if (pendingLightRef.current[entityId]) {
+            clearTimeout(pendingLightRef.current[entityId]);
+            delete pendingLightRef.current[entityId];
+          }
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [lightValues]);
+
   const onToggleLight = async (entityId: string) => {
     const current = !!lightOnMap[entityId];
     const next: "on" | "off" = current ? "off" : "on";
 
-    // optimistic
     setLightOnMap((prev) => ({ ...prev, [entityId]: next === "on" }));
 
     try {
       await setLight({ entity_id: entityId, state: next });
       refreshNow?.();
     } catch {
-      // revert
       setLightOnMap((prev) => ({ ...prev, [entityId]: current }));
     }
   };
@@ -90,12 +130,18 @@ export default function DashboardScreen() {
   };
 
   const onCommitLargeLight = (entityId: string) => {
-    // remove override so the polled state becomes source of truth again
-    setLightValueOverrides((prev) => {
-      const next = { ...prev };
-      delete next[entityId];
-      return next;
-    });
+    if (pendingLightRef.current[entityId]) {
+      clearTimeout(pendingLightRef.current[entityId]);
+    }
+
+    pendingLightRef.current[entityId] = setTimeout(() => {
+      setLightValueOverrides((prev) => {
+        const next = { ...prev };
+        delete next[entityId];
+        return next;
+      });
+      delete pendingLightRef.current[entityId];
+    }, 5000);
   };
 
   // -------------------------
@@ -104,7 +150,6 @@ export default function DashboardScreen() {
   const onChangeCover = async (entityId: string, nextPos: number) => {
     const prev = coverPosMap[entityId] ?? 0;
 
-    // optimistic
     setCoverPosMap((m) => ({ ...m, [entityId]: nextPos }));
 
     try {
@@ -130,7 +175,6 @@ export default function DashboardScreen() {
   const onChangeClimateMode = async (entityId: string, mode: ClimateHvacMode) => {
     const prev = mergedClimateModeMap[entityId] ?? "cool";
 
-    // optimistic
     setClimateModeOverrides((m) => ({ ...m, [entityId]: mode }));
 
     try {
@@ -142,7 +186,6 @@ export default function DashboardScreen() {
 
       refreshNow?.();
 
-      // optional: clear override so HA polling becomes source of truth
       setClimateModeOverrides((m) => {
         const next = { ...m };
         delete next[entityId];
@@ -160,14 +203,12 @@ export default function DashboardScreen() {
       await setClimate({
         entity_id: entityId,
         temperature: temp,
-        hvac_mode: mode, // keep current mode (prevents HA defaulting)
+        hvac_mode: mode,
         state: mode === "off" ? "off" : "on",
       });
 
       refreshNow?.();
-    } catch {
-      // no optimistic temp map here yet; we just rely on polling
-    }
+    } catch {}
   };
 
   // -------------------------
@@ -178,6 +219,14 @@ export default function DashboardScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 24, paddingTop: 64 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor="#F4C400"
+            colors={["#F4C400"]}
+          />
+        }
       >
         <View className="px-4 pt-6" style={{ gap: GAP }}>
           {isEmpty ? (
@@ -202,6 +251,7 @@ export default function DashboardScreen() {
                 onChangeFanPct={onChangeFanPct}
                 coverPosMap={coverPosMap}
                 onChangeCover={onChangeCover}
+                presenceMap={presenceMap}
               />
             ))
           )}

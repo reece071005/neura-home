@@ -15,6 +15,7 @@ import LargeClimateTile from "@/components/dashboard/widgets/LargeClimateTile";
 import SmallFanTile from "@/components/dashboard/widgets/SmallFanTile";
 import SmallCoverTile from "@/components/dashboard/widgets/SmallCoverTile";
 import LargeCameraTile from "@/components/dashboard/widgets/LargeCameraTile";
+import SmallPresenceTile from "@/components/dashboard/widgets/SmallPresenceTile";
 
 import type { DashboardRow, Tile, Variant } from "@/lib/dashboard/dashboardTypes";
 
@@ -64,6 +65,8 @@ export function RenderTile({
 
   coverPosMap,
   onChangeCover,
+
+  presenceMap,
 }: {
   tile: Tile;
   variant: Variant;
@@ -84,6 +87,8 @@ export function RenderTile({
 
   coverPosMap: Record<string, number>;
   onChangeCover: (entityId: string, nextPos: number) => void;
+
+  presenceMap: Record<string, boolean>;
 }) {
   switch (tile.kind) {
     /* ------------------------------- LIGHT -------------------------------- */
@@ -125,7 +130,6 @@ export function RenderTile({
         return <DashboardTile tile={tile} variant={variant} />;
 
       const entityId = tile.entityId ?? "";
-
       const setTemp = climateSetTempMap[entityId] ?? 23;
       const mode = climateModeMap[entityId] ?? "cool";
 
@@ -154,9 +158,7 @@ export function RenderTile({
           title={tile.title}
           entityId={entityId}
           percentage={pct}
-          onChangePercentage={(nextPct) =>
-            onChangeFanPct(entityId, nextPct)
-          }
+          onChangePercentage={(nextPct) => onChangeFanPct(entityId, nextPct)}
         />
       );
     }
@@ -174,9 +176,7 @@ export function RenderTile({
         <SmallCoverTile
           title={tile.title}
           position={pos}
-          onChangePosition={(nextPos) =>
-            onChangeCover(entityId, nextPos)
-          }
+          onChangePosition={(nextPos) => onChangeCover(entityId, nextPos)}
         />
       );
     }
@@ -193,6 +193,20 @@ export function RenderTile({
         );
       }
       return <DashboardTile tile={tile} variant={variant} />;
+
+    /* ------------------------------- SENSOR ------------------------------- */
+
+    case "sensor": {
+      const entityId = tile.entityId ?? "";
+      const detected = presenceMap[entityId] ?? false;
+
+      return (
+        <SmallPresenceTile
+          title={tile.title}
+          detected={detected}
+        />
+      );
+    }
 
     default:
       return <DashboardTile tile={tile} variant={variant} />;
@@ -215,13 +229,15 @@ export function RenderRow({
   climateSetTempMap,
   climateModeMap,
   onChangeClimateMode,
-    onCommitClimateTemp,
+  onCommitClimateTemp,
 
   fanPctMap,
   onChangeFanPct,
 
   coverPosMap,
   onChangeCover,
+
+  presenceMap,
 }: {
   row: DashboardRow;
 
@@ -241,6 +257,8 @@ export function RenderRow({
 
   coverPosMap: Record<string, number>;
   onChangeCover: (entityId: string, nextPos: number) => void;
+
+  presenceMap: Record<string, boolean>;
 }) {
   const render = (tile: Tile, variant: Variant) => (
     <RenderTile
@@ -259,6 +277,7 @@ export function RenderRow({
       onChangeFanPct={onChangeFanPct}
       coverPosMap={coverPosMap}
       onChangeCover={onChangeCover}
+      presenceMap={presenceMap}
     />
   );
 
@@ -296,4 +315,3 @@ export function RenderRow({
       );
   }
 }
-

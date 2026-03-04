@@ -19,20 +19,18 @@ type Maps = {
   climateModeMap: Record<string, UiHvacMode>;
   fanPctMap: Record<string, number>;
   coverPosMap: Record<string, number>;
+  presenceMap: Record<string, boolean>;
 };
 
 function normalizeHvacMode(raw: unknown): UiHvacMode | null {
   if (typeof raw !== "string") return null;
 
-  // HA commonly uses heat_cool for Auto
   if (raw === "heat_cool") return "auto";
-
   if (raw === "auto") return "auto";
   if (raw === "cool") return "cool";
   if (raw === "heat") return "heat";
   if (raw === "off") return "off";
 
-  // sometimes state can be "on"/"idle"/etc. ignore those
   return null;
 }
 
@@ -43,6 +41,7 @@ export function useDashboardState(dashboardEntityIds: string[]) {
   const [climateModeMap, setClimateModeMap] = React.useState<Record<string, UiHvacMode>>({});
   const [fanPctMap, setFanPctMap] = React.useState<Record<string, number>>({});
   const [coverPosMap, setCoverPosMap] = React.useState<Record<string, number>>({});
+  const [presenceMap, setPresenceMap] = React.useState<Record<string, boolean>>({});
 
   const fetchAndApply = React.useCallback(async () => {
     if (dashboardEntityIds.length === 0) return;
@@ -58,6 +57,7 @@ export function useDashboardState(dashboardEntityIds: string[]) {
       climateModeMap: {},
       fanPctMap: {},
       coverPosMap: {},
+      presenceMap: {},
     };
 
     for (const s of states) {
@@ -78,15 +78,13 @@ export function useDashboardState(dashboardEntityIds: string[]) {
 
       // CLIMATE
       if (domain === "climate") {
-        // set temperature
         if (typeof attrs.temperature === "number") {
           next.climateSetTempMap[s.entity_id] = attrs.temperature;
         }
 
-        // hvac mode: most HA climate entities put current hvac mode in state
         const mode =
           normalizeHvacMode(s.state) ??
-          normalizeHvacMode(attrs.hvac_mode) ?? // fallback
+          normalizeHvacMode(attrs.hvac_mode) ??
           null;
 
         if (mode) {
@@ -109,6 +107,11 @@ export function useDashboardState(dashboardEntityIds: string[]) {
           next.coverPosMap[s.entity_id] = attrs.current_position;
         }
       }
+
+      // SENSOR — binary_sensor (presence, motion, occupancy)
+      if (domain === "binary_sensor") {
+        next.presenceMap[s.entity_id] = s.state === "on";
+      }
     }
 
     // Merge with previous so missing attrs don't reset UI values
@@ -118,6 +121,7 @@ export function useDashboardState(dashboardEntityIds: string[]) {
     setClimateModeMap((prev) => ({ ...prev, ...next.climateModeMap }));
     setFanPctMap((prev) => ({ ...prev, ...next.fanPctMap }));
     setCoverPosMap((prev) => ({ ...prev, ...next.coverPosMap }));
+    setPresenceMap((prev) => ({ ...prev, ...next.presenceMap }));
   }, [dashboardEntityIds]);
 
   useFocusEffect(
@@ -162,6 +166,7 @@ export function useDashboardState(dashboardEntityIds: string[]) {
     climateModeMap,
     fanPctMap,
     coverPosMap,
+    presenceMap,
     refreshNow,
     setLightOnMap,
     setLightValues,

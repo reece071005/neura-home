@@ -19,6 +19,7 @@ export const kindOptions: TileKind[] = [
     "lock",
     "camera",
     "media",
+    "sensor",
     "generic",
 ];
 
@@ -43,6 +44,7 @@ export const TILEKIND_TO_DEVICEKINDS: Record<TileKind, ApiDevice["kind"][]> = {
     lock: [], // backend doesn't return lock in ApiDevice.kind yet
     camera: ["camera"],
     media: ["media_player"],
+    sensor: ["binary_sensor", "sensor"],
     generic: [
         "light",
         "fan",
