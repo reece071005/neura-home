@@ -17,6 +17,11 @@ export function useHydrateDashboardsFromDb() {
     if (!hasHydrated) return; // wait until AsyncStorage rehydrate completes
 
     let mounted = true;
+    const startSnapshot = JSON.stringify({
+      dashboards: useDashboardWidgetsStore.getState().dashboards,
+      activeDashboardId: useDashboardWidgetsStore.getState().activeDashboardId,
+      layoutsById: useDashboardWidgetsStore.getState().layoutsById,
+    });
 
     (async () => {
       try {
@@ -27,6 +32,12 @@ export function useHydrateDashboardsFromDb() {
         if (!dash || dash.version !== 2) return;
 
         if (!mounted) return;
+        const currentSnapshot = JSON.stringify({
+          dashboards: useDashboardWidgetsStore.getState().dashboards,
+          activeDashboardId: useDashboardWidgetsStore.getState().activeDashboardId,
+          layoutsById: useDashboardWidgetsStore.getState().layoutsById,
+        });
+        if (currentSnapshot !== startSnapshot) return;
 
         useDashboardWidgetsStore.setState((s) => {
           const nextDashboards = dash.dashboards ?? s.dashboards;

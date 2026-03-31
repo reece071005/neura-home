@@ -19,7 +19,6 @@ import SyncPill from "@/components/editDashboard/SyncPill";
 import MdiIcon from "@/components/MdiIcon";
 import DashboardItemRow from "@/components/editDashboard/DashboardItemRow";
 import DashboardSettingsSheet from "@/components/editDashboard/DashboardSettingsSheet";
-import IconPickerModal from "@/components/editDashboard/IconPickerModal";
 import AddEditModal from "@/components/editDashboard/AddEditModal";
 
 // ─── Pill button ─────────────────────────────────────────────────────────────
@@ -105,6 +104,10 @@ export default function EditDashboard() {
     setDashSettingsOpen(true);
   };
 
+  const openDashboardIconPicker = () => {
+    setDashIconPickerOpen(true);
+  };
+
   // ── Renderer ─────────────────────────────────────────────────────────────
 
   const renderItem = ({ item, drag, isActive }: RenderItemParams<DashboardItem>) => (
@@ -146,16 +149,16 @@ export default function EditDashboard() {
 
         <View className="items-center">
           <Pressable onPress={openDashboardSettings} hitSlop={12} className="items-center">
-            <View className="flex-row items-center" style={{ gap: 1 }}>
-              {activeDashboard?.iconPath && (
-                <View style={{ width: 34, height: 34, alignItems: "center", justifyContent: "center" }}>
+            <View className="flex-row items-center">
+              <View style={{ width: 34, height: 34, alignItems: "center", justifyContent: "center" }}>
+                {activeDashboard?.iconPath ? (
                   <MdiIcon path={activeDashboard.iconPath} size={20} color="#111827" />
-                </View>
-              )}
-              <Text className="text-textPrimary text-body font-bold">
+                ) : null}
+              </View>
+              <Text className="text-textPrimary text-body font-bold" style={{ marginHorizontal: 4 }}>
                 {activeDashboard?.name ?? "Dashboard"}
               </Text>
-              <View pointerEvents="none" className="px-3">
+              <View pointerEvents="none" style={{ width: 34, height: 34, alignItems: "center", justifyContent: "center" }}>
                 <MdiIcon path={mdiPencil} size={20} color="#000000" />
               </View>
             </View>
@@ -218,7 +221,13 @@ export default function EditDashboard() {
         dashNameDraft={dashNameDraft}
         setDashNameDraft={setDashNameDraft}
         dashIconDraft={dashIconDraft}
-        onPickIcon={() => setDashIconPickerOpen(true)}
+        iconPickerVisible={dashIconPickerOpen}
+        onOpenIconPicker={openDashboardIconPicker}
+        onCloseIconPicker={() => setDashIconPickerOpen(false)}
+        onSelectIcon={(path) => {
+          setDashIconDraft(path);
+          setDashIconPickerOpen(false);
+        }}
         onClearIcon={() => setDashIconDraft(undefined)}
         onCancel={() => {
           setDashNameDraft(activeDashboard?.name ?? "");
@@ -234,20 +243,6 @@ export default function EditDashboard() {
         cannotDelete={isPinnedDashboard}
         isPinnedDashboard={isPinnedDashboard}
         onConfirmDelete={() => removeDashboard(activeDashboardId)}
-      />
-
-      {/*
-        Dashboard icon picker lives outside DashboardSettingsSheet.
-        If that sheet is ever its own Modal, move this inside it too.
-      */}
-      <IconPickerModal
-        visible={dashIconPickerOpen}
-        onClose={() => setDashIconPickerOpen(false)}
-        selectedPath={dashIconDraft}
-        onSelect={(path) => {
-          setDashIconDraft(path);
-          setDashIconPickerOpen(false);
-        }}
       />
     </SafeAreaView>
   );

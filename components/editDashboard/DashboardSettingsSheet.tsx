@@ -3,6 +3,7 @@ import { Modal, Pressable, Text, TextInput, View } from "react-native";
 
 import MdiIcon from "@/components/MdiIcon";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import IconPickerModal from "@/components/editDashboard/IconPickerModal";
 
 type Props = {
     visible: boolean;
@@ -12,7 +13,10 @@ type Props = {
     setDashNameDraft: (v: string) => void;
 
     dashIconDraft?: string;
-    onPickIcon: () => void;
+    iconPickerVisible: boolean;
+    onOpenIconPicker: () => void;
+    onCloseIconPicker: () => void;
+    onSelectIcon: (iconPath: string) => void;
     onClearIcon: () => void;
 
     onCancel: () => void;
@@ -29,7 +33,10 @@ export default function DashboardSettingsSheet({
   dashNameDraft,
   setDashNameDraft,
   dashIconDraft,
-  onPickIcon,
+  iconPickerVisible,
+  onOpenIconPicker,
+  onCloseIconPicker,
+  onSelectIcon,
   onClearIcon,
   onCancel,
   onSave,
@@ -49,6 +56,10 @@ export default function DashboardSettingsSheet({
             <Pressable
             className="flex-1 justify-end bg-black/40"
             onPress={() => {
+              if (iconPickerVisible) {
+                onCloseIconPicker();
+                return;
+              }
               if (confirmOpen) return;
               onClose();
             }}
@@ -58,6 +69,10 @@ export default function DashboardSettingsSheet({
                         <Text className="text-black text-lg font-bold">Dashboard settings</Text>
                         <Pressable
                             onPress={() => {
+                                if (iconPickerVisible) {
+                                  onCloseIconPicker();
+                                  return;
+                                }
                                 if (confirmOpen) return;
                                 onClose();
                             }}
@@ -80,7 +95,7 @@ export default function DashboardSettingsSheet({
                     {/* Icon */}
                     <Text className="text-gray-600 mt-4 mb-2">Icon</Text>
                     <View className="flex-row items-center" style={{ gap: 10 }}>
-                        <Pressable onPress={onPickIcon} className="px-4 py-3 rounded-2xl bg-gray-100">
+                        <Pressable onPress={onOpenIconPicker} className="px-4 py-3 rounded-2xl bg-gray-100">
                             <Text className="text-black font-semibold">
                                 {dashIconDraft ? "Change icon" : "Choose icon"}
                             </Text>
@@ -153,6 +168,14 @@ export default function DashboardSettingsSheet({
                         setConfirmOpen(false);
                         onClose();
                     }}
+                />
+
+                <IconPickerModal
+                  embedded
+                  visible={iconPickerVisible}
+                  onClose={onCloseIconPicker}
+                  selectedPath={dashIconDraft}
+                  onSelect={onSelectIcon}
                 />
             </Pressable>
         </Modal>
