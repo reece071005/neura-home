@@ -1,6 +1,6 @@
 import { api } from "@/lib/api/client";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.10.18:8000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.239:8000";
 
 /* ---------------- Types ---------------- */
 

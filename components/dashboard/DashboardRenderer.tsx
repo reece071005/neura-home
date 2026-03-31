@@ -51,6 +51,8 @@ export function RenderTile({
 
   lightOnMap,
   lightValues,
+  lightColorMap,
+  lightTempMap,
   onPressSmallLight,
   onChangeLargeLight,
   onCommitLargeLight,
@@ -73,6 +75,8 @@ export function RenderTile({
 
   lightOnMap: Record<string, boolean>;
   lightValues: Record<string, number>;
+  lightColorMap: Record<string, [number, number, number]>;
+  lightTempMap: Record<string, number>;
   onPressSmallLight: (entityId: string) => void;
   onChangeLargeLight: (entityId: string, v01: number) => void;
   onCommitLargeLight: (entityId: string) => void;
@@ -97,6 +101,8 @@ export function RenderTile({
       const entityId = tile.entityId ?? "";
       const isOn = lightOnMap[entityId] ?? false;
       const v = lightValues[entityId] ?? 0;
+      const rgb = lightColorMap[entityId];
+      const colorTemp = lightTempMap[entityId];
 
       if (variant === "large") {
         return (
@@ -105,6 +111,8 @@ export function RenderTile({
             entityId={entityId}
             value={v}
             isOn={isOn}
+            rgbColor={rgb}
+            colorTemp={colorTemp}
             onChange={(next) => onChangeLargeLight(entityId, next)}
             onCommit={() => onCommitLargeLight(entityId)}
             onMenuPress={() => console.log("menu")}
@@ -118,6 +126,8 @@ export function RenderTile({
           title={tile.title}
           entityId={entityId}
           isOn={isOn}
+          rgbColor={rgb}
+          colorTemp={colorTemp}
           onPress={() => onPressSmallLight(entityId)}
         />
       );
@@ -222,6 +232,8 @@ export function RenderRow({
 
   lightOnMap,
   lightValues,
+  lightColorMap,
+  lightTempMap,
   onPressSmallLight,
   onChangeLargeLight,
   onCommitLargeLight,
@@ -243,6 +255,8 @@ export function RenderRow({
 
   lightOnMap: Record<string, boolean>;
   lightValues: Record<string, number>;
+  lightColorMap: Record<string, [number, number, number]>;
+  lightTempMap: Record<string, number>;
   onPressSmallLight: (entityId: string) => void;
   onChangeLargeLight: (entityId: string, v01: number) => void;
   onCommitLargeLight: (entityId: string) => void;
@@ -266,6 +280,8 @@ export function RenderRow({
       variant={variant}
       lightOnMap={lightOnMap}
       lightValues={lightValues}
+      lightColorMap={lightColorMap}
+      lightTempMap={lightTempMap}
       onPressSmallLight={onPressSmallLight}
       onChangeLargeLight={onChangeLargeLight}
       onCommitLargeLight={onCommitLargeLight}
@@ -306,7 +322,6 @@ export function RenderRow({
           <View className="flex-1">
             {render(row.left, row.left.variant)}
           </View>
-
           <View className="flex-1" style={{ gap: GAP }}>
             {render(row.right[0], row.right[0].variant)}
             {render(row.right[1], row.right[1].variant)}

@@ -18,6 +18,7 @@ import { getDashboardState, type DashboardStateV2 } from "@/lib/api/userState";
 
 import { RenderRow } from "@/components/dashboard/DashboardRenderer";
 import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
+import type { RgbColor } from "@/components/dashboard/widgets/lights/LightModal";
 
 const GAP = 8;
 
@@ -38,6 +39,8 @@ export default function DashboardScreen() {
   const {
     lightOnMap,
     lightValues,
+    lightColorMap,
+    lightTempMap,
     climateSetTempMap,
     climateModeMap,
     fanPctMap,
@@ -45,6 +48,7 @@ export default function DashboardScreen() {
     presenceMap,
     refreshNow,
     setLightOnMap,
+    setLightColorMap,   // ← for optimistic colour updates
     setCoverPosMap,
   } = useDashboardState(dashboardEntityIds);
 
@@ -144,6 +148,15 @@ export default function DashboardScreen() {
     }, 5000);
   };
 
+  // Optimistically update lightColorMap when the picker commits a colour
+  // so the tile updates immediately without waiting for the next HA poll.
+  const onColorCommit = useCallback((entityId: string, color: RgbColor) => {
+    setLightColorMap((prev) => ({
+      ...prev,
+      [entityId]: [color.r, color.g, color.b],
+    }));
+  }, [setLightColorMap]);
+
   // -------------------------
   // Cover
   // -------------------------
@@ -240,6 +253,8 @@ export default function DashboardScreen() {
                 row={row}
                 lightOnMap={lightOnMap}
                 lightValues={mergedLightValues}
+                lightColorMap={lightColorMap}
+                lightTempMap={lightTempMap}
                 onPressSmallLight={onToggleLight}
                 onChangeLargeLight={onChangeLargeLight}
                 onCommitLargeLight={onCommitLargeLight}

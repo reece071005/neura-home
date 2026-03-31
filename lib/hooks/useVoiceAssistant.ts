@@ -1,13 +1,13 @@
 // useVoiceAssistant.ts
 import { useRef, useState, useEffect } from "react";
 import { getToken } from "@/lib/storage/token";
-import { File, Paths } from "expo-file-system";
+import { File } from "expo-file-system";
 import * as FileSystemLegacy from "expo-file-system/legacy";
 import {
-  useAudioRecorder,
-  useAudioRecorderState,
-  RecordingPresets,
-  AudioModule,
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from "expo-speech-recognition";
+import {
   setAudioModeAsync,
   createAudioPlayer,
   type AudioPlayer,
@@ -15,17 +15,7 @@ import {
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.10.18:8000";
 
-type SttResponse = {
-  success: boolean;
-  message?: string;
-  transcribed_text?: string;
-  intent_data?: any;
-  command_result?: { success: boolean; message: string };
-  response?: any;
-};
-
 type TextCommandResponse = any;
-type RecState = "idle" | "starting" | "recording" | "stopping";
 
 function extractAssistantText(payload: any): string {
   if (!payload) return "";
@@ -39,21 +29,55 @@ function extractAssistantText(payload: any): string {
 }
 
 export function useVoiceAssistant() {
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const recorderState = useAudioRecorderState(recorder);
-
   const playbackRef = useRef<AudioPlayer | null>(null);
   const playbackCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastTtsFileRef = useRef<string | null>(null);
-  const stateRef = useRef<RecState>("idle");
   const isMountedRef = useRef(true);
 
+  // Accumulates the live transcript as words come in
+  const transcriptRef = useRef<string>("");
+
+  const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPlayingBack, setIsPlayingBack] = useState(false);
   const [lastText, setLastText] = useState("");
-  const [lastResult, setLastResult] = useState<SttResponse | null>(null);
+  const [lastResult, setLastResult] = useState<TextCommandResponse | null>(null);
 
-  const isRecording = recorderState.isRecording;
+  // ─── Speech recognition event listeners ──────────────────────────────────
+
+  // Live interim results — updates "Heard:" in real time while user speaks
+  useSpeechRecognitionEvent("result", (event) => {
+    const transcript = event.results[0]?.transcript ?? "";
+    transcriptRef.current = transcript;
+    if (isMountedRef.current) setLastText(transcript);
+  });
+
+  // Recognition ended — fire the command with the final transcript
+  useSpeechRecognitionEvent("end", async () => {
+    if (isMountedRef.current) setIsRecording(false);
+
+    const finalText = transcriptRef.current.trim();
+    if (!finalText) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      await _sendCommand(finalText, { playback: true });
+    } catch (e) {
+      console.error("[STT] Error sending command after recognition ended:", e);
+    }
+  });
+
+  useSpeechRecognitionEvent("error", (event) => {
+    console.error("[STT] Recognition error:", event.error, event.message);
+    if (isMountedRef.current) {
+      setIsRecording(false);
+      setIsLoading(false);
+    }
+  });
+
+  // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -77,14 +101,12 @@ export function useVoiceAssistant() {
         lastTtsFileRef.current = null;
       }
 
-      if (recorderState.isRecording) {
-        recorder.stop().catch(() => {});
-      }
-
+      ExpoSpeechRecognitionModule.abort();
       setAudioModeAsync({ playsInSilentMode: false, allowsRecording: false }).catch(() => {});
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ─── Playback helpers ─────────────────────────────────────────────────────
 
   async function stopPlayback() {
     const p = playbackRef.current;
@@ -126,7 +148,6 @@ export function useVoiceAssistant() {
 
     const player = createAudioPlayer(uri);
     playbackRef.current = player;
-    console.log("[TTS] Player created for uri:", uri);
 
     if (isMountedRef.current) setIsPlayingBack(true);
 
@@ -139,7 +160,6 @@ export function useVoiceAssistant() {
       try {
         const currentTime = player.currentTime;
         const duration = player.duration;
-        console.log("[TTS] currentTime:", currentTime, "duration:", duration);
         if (duration > 0 && currentTime >= duration - 0.1) {
           clearInterval(playbackCheckIntervalRef.current!);
           playbackCheckIntervalRef.current = null;
@@ -185,129 +205,18 @@ export function useVoiceAssistant() {
     const base64 = btoa(binary);
 
     const fileUri = `${FileSystemLegacy.cacheDirectory ?? ""}neura_tts_${Date.now()}.mp3`;
-    await FileSystemLegacy.writeAsStringAsync(fileUri, base64, { encoding: FileSystemLegacy.EncodingType.Base64 });
+    await FileSystemLegacy.writeAsStringAsync(fileUri, base64, {
+      encoding: FileSystemLegacy.EncodingType.Base64,
+    });
 
-    console.log("[TTS] File written to:", fileUri);
     await _playbackUri(fileUri);
     lastTtsFileRef.current = fileUri;
   }
 
-  async function startRecording() {
-    if (stateRef.current === "starting" || stateRef.current === "recording") {
-      console.warn("Already recording or starting");
-      return;
-    }
+  // ─── Core command sender (shared by voice + text paths) ──────────────────
 
-    stateRef.current = "starting";
-
-    try {
-      await stopPlayback();
-
-      if (recorderState.isRecording) {
-        try {
-          await recorder.stop();
-          await new Promise((r) => setTimeout(r, 150));
-        } catch (e) {
-          console.error("Error stopping existing recording:", e);
-        }
-      }
-
-      const perm = await AudioModule.requestRecordingPermissionsAsync();
-      if (!perm.granted) throw new Error("Mic permission not granted");
-
-      await new Promise((r) => setTimeout(r, 200));
-      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
-      await new Promise((r) => setTimeout(r, 50));
-
-      await recorder.prepareToRecordAsync();
-      await recorder.record();
-
-      stateRef.current = "recording";
-    } catch (e) {
-      console.error("Error starting recording:", e);
-      stateRef.current = "idle";
-      try {
-        await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
-      } catch {}
-      throw e;
-    }
-  }
-
-  async function stopAndSend(options?: { executeCommand?: boolean; playback?: boolean; minConfidence?: number }) {
-    const executeCommand = options?.executeCommand ?? true;
+  async function _sendCommand(text: string, options?: { playback?: boolean }) {
     const playbackAssistantTts = options?.playback ?? true;
-
-    //Potentially let user set this???
-    const minConfidence = options?.minConfidence ?? 0.1;
-
-    if (stateRef.current !== "recording") {
-      console.warn("Not currently recording");
-      return;
-    }
-
-    stateRef.current = "stopping";
-
-    try {
-      await recorder.stop();
-      await new Promise((r) => setTimeout(r, 100));
-
-      const uri = recorder.uri;
-      if (!uri) throw new Error("No recording URI");
-
-      const form = new FormData();
-      form.append("file", { uri, name: "voice.m4a", type: "audio/mp4" } as any);
-
-      const token = await getToken();
-      const headers: Record<string, string> = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const params = new URLSearchParams({
-        execute_command: executeCommand ? "true" : "false",
-        min_confidence: String(minConfidence),
-      });
-
-      const url = `${BASE_URL}/voice/stt?${params.toString()}`;
-
-      setIsLoading(true);
-      const res = await fetch(url, { method: "POST", headers, body: form });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(
-          typeof err?.detail === "string"
-            ? err.detail
-            : err?.message ?? `STT failed (${res.status})`
-        );
-      }
-
-      const json = (await res.json()) as SttResponse;
-
-      if (isMountedRef.current) {
-        setLastResult(json);
-        setLastText(json.transcribed_text ?? "");
-      }
-
-      if (playbackAssistantTts) {
-        const assistantText = extractAssistantText(json);
-        if (assistantText) {
-          await fetchAndPlayTts(assistantText);
-        }
-      }
-
-      return json;
-    } catch (error) {
-      console.error("Error in stopAndSend:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-      try {
-        await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
-      } catch {}
-      stateRef.current = "idle";
-    }
-  }
-
-  async function sendTextCommand(text: string) {
     const q = text.trim();
     if (!q) throw new Error("Text is empty");
 
@@ -335,13 +244,53 @@ export function useVoiceAssistant() {
 
       if (isMountedRef.current) {
         setLastText(q);
-        setLastResult(json as any);
+        setLastResult(json);
+      }
+
+      if (playbackAssistantTts) {
+        const assistantText = extractAssistantText(json);
+        if (assistantText) await fetchAndPlayTts(assistantText);
       }
 
       return json;
     } finally {
       setIsLoading(false);
     }
+  }
+
+  // ─── Public API ───────────────────────────────────────────────────────────
+
+  async function startRecording() {
+    const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!granted) throw new Error("Microphone / speech recognition permission not granted");
+
+    await stopPlayback();
+
+    transcriptRef.current = "";
+    if (isMountedRef.current) {
+      setLastText("");
+      setLastResult(null);
+    }
+
+    ExpoSpeechRecognitionModule.start({
+      lang: "en-US",
+      interimResults: true,           // live transcript updates in "Heard:" field
+      requiresOnDeviceRecognition: true, // Apple on-device SFSpeechRecognizer, no server
+      addsPunctuation: true,
+    });
+
+    if (isMountedRef.current) setIsRecording(true);
+  }
+
+  // Called by VoiceAssistant on onPressOut — stops recognition, "end" event fires the command
+  async function stopAndSend(_options?: { executeCommand?: boolean; playback?: boolean }) {
+    ExpoSpeechRecognitionModule.stop();
+    // "end" event listener above handles the rest
+  }
+
+  // Called by the keyboard sheet — same backend route, no STT involved
+  async function sendTextCommand(text: string) {
+    return _sendCommand(text, { playback: true });
   }
 
   return {

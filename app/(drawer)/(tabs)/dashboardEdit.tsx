@@ -1,8 +1,9 @@
 // dashboardEdit.tsx
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, Pressable, InteractionManager } from "react-native";
 import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import { mdiPencil } from "@mdi/js";
 
@@ -78,6 +79,18 @@ export default function EditDashboard() {
   const [dashIconDraft, setDashIconDraft] = useState<string | undefined>(undefined);
   const [dashIconPickerOpen, setDashIconPickerOpen] = useState(false);
 
+  // Defensive cleanup: if this tab loses focus, close any overlays so they
+  // cannot capture touches on other screens.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setModalOpen(false);
+        setDashSettingsOpen(false);
+        setDashIconPickerOpen(false);
+      };
+    }, [])
+  );
+
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   const openAdd = () => {
@@ -118,10 +131,18 @@ export default function EditDashboard() {
   return (
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white pb-6">
       {/* Top bar */}
-      <View className="px-4 pt-4 pb-3 flex-row items-center justify-between">
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text className="text-black font-semibold">Back</Text>
-        </Pressable>
+      <View className="px-4 pt-4 pb-3" style={{ minHeight: 74 }}>
+        <View style={{ position: "absolute", left: 16, top: 18, zIndex: 2 }}>
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Text className="text-black font-semibold">Back</Text>
+          </Pressable>
+        </View>
+
+        <View style={{ position: "absolute", right: 16, top: 18, zIndex: 2 }}>
+          <Pressable onPress={openAdd} hitSlop={12}>
+            <Text className="text-black font-semibold">Add</Text>
+          </Pressable>
+        </View>
 
         <View className="items-center">
           <Pressable onPress={openDashboardSettings} hitSlop={12} className="items-center">
@@ -141,10 +162,6 @@ export default function EditDashboard() {
           </Pressable>
           <SyncPill status={status} error={error} />
         </View>
-
-        <Pressable onPress={openAdd} hitSlop={12}>
-          <Text className="text-black font-semibold">Add</Text>
-        </Pressable>
       </View>
 
       {/* Dashboard picker */}

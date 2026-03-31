@@ -1,5 +1,6 @@
 import { Drawer } from "expo-router/drawer";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
+import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import { View, Text, Pressable } from "react-native";
 import { router } from "expo-router";
 
@@ -105,9 +106,11 @@ export default function DrawerLayout() {
             drawerContent={(props) => <CustomDrawerContent {...props} />}
             screenOptions= {({ route }) => {
                 const isTabsWorld = route.name === "(tabs)";
+                const focusedRouteName = getFocusedRouteNameFromRoute(route) ?? "dash0";
+                const isDashboardEdit = isTabsWorld && focusedRouteName === "dashboardEdit";
 
                 return {
-                    headerShown: true,
+                    headerShown: !isDashboardEdit,
                     drawerType: "front",
                     headerTransparent: true,
                     headerTitle: "",

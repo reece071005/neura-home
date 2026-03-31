@@ -85,6 +85,7 @@ export default function TabsLayout() {
                     options={{
                         headerShown: false,
                         tabBarStyle: {display: "none"},
+                        unmountOnBlur: true,
                         tabBarIcon: ({ focused }) => (
                             <MdiIcon
                                 path={mdiPencil}

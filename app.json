@@ -60,7 +60,11 @@
           "recordAudioAndroid": "true",
           "microphonePermission": "Allow Neura Home to access your microphone."
         }
-      ]
+      ],
+      ["expo-speech-recognition", {
+        "microphonePermission": "Allow Neura Home to access your microphone.",
+        "speechRecognitionPermission": "Allow Neura Home to access your speech recognition."
+      }]
     ],
     "experiments": {
       "typedRoutes": true,
