@@ -1,6 +1,6 @@
 import { getToken } from "@/lib/storage/token";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.239:8000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.10.86:8000";
 
 type BinaryRequestOptions = {
   method?: "GET" | "POST";

@@ -18,12 +18,6 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import { useVoiceAssistant } from "@/lib/hooks/useVoiceAssistant";
 
-const Chip = ({ label }: { label: string }) => (
-  <Pressable className="px-4 py-2 rounded-full border border-gray-300 bg-white">
-    <Text className="text-black text-subtext font-medium">{label}</Text>
-  </Pressable>
-);
-
 const VoiceAssistant = () => {
   const {
     isRecording,
@@ -109,22 +103,17 @@ const VoiceAssistant = () => {
       <View className="flex-1 px-5 pt-36 pb-6">
         <ScrollView
           className="flex-1 bg-white rounded-3xl px-6 pt-6"
-          contentContainerStyle={{ paddingBottom: 24 }}
+          contentContainerStyle={{ paddingBottom: 12, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <Text className="text-h3 font-bold text-black">Good Morning, User!</Text>
           <Text className="text-body font-medium text-black mt-2">What can I help you with?</Text>
+          <Text className="text-textSecondary font-medium text-subtext mt-3">
+            Press and hold the mic to speak, or use the keyboard button to type.
+          </Text>
 
-          <View className="mt-6 flex-row flex-wrap gap-3">
-            <Chip label="Turn on the lights" />
-            <Chip label="Close the blinds" />
-            <Chip label="Add device" />
-            <Chip label="What are the latest deliveries" />
-            <Chip label="Show me the camera feeds" />
-          </View>
-
-          <View className="mt-6">
+          <View className="mt-8">
             <Text className="text-textSecondary font-medium text-subtext">Heard:</Text>
             <Text className="text-black font-semibold mt-1">{lastText || "—"}</Text>
 
@@ -151,7 +140,7 @@ const VoiceAssistant = () => {
             )}
           </View>
 
-          <View className="mt-auto pb-10 pt-10 items-center">
+          <View className="mt-auto pt-8 pb-4 items-center">
             <Pressable
               onPressIn={async () => {
                 try {
