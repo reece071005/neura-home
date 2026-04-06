@@ -3,6 +3,7 @@ import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import { View, Text, Pressable } from "react-native";
 import { router } from "expo-router";
+import { sendLocalNotification } from "@/services/pushNotifications";
 
 import BurgerSearchWidget from "@/components/BurgerSearchWidget";
 import BurgerWidget from "@/components/BurgerWidget";
@@ -33,7 +34,8 @@ function CustomDrawerContent(props: any) {
                     className="flex-row items-center text-center"
                     onPress={() => {
                         props.navigation.closeDrawer();
-                        router.push("/(drawer)/(tabs)/mainDashboard");
+                        sendLocalNotification("Motion Detected", "Living room camera triggered")
+                        //router.push("/(drawer)/(tabs)/mainDashboard");
                     }}
                 >
                     <TabIcon name="history" size={30} />

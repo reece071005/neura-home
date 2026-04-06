@@ -21,7 +21,7 @@ import {
 
 /* ---------------- Constants ---------------- */
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 /* ---------------- Helpers ---------------- */
 
@@ -44,21 +44,27 @@ const formatCameraName = (name?: string) => {
     .join(" ");
 };
 
+const areNotificationListsEqual = (a: VisionNotification[], b: VisionNotification[]) => {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i].id !== b[i].id) return false;
+    if (a[i].created_at !== b[i].created_at) return false;
+  }
+  return true;
+};
+
 /* ---------------- Vision Notification Card ---------------- */
 
 function VisionNotificationCard({
   item,
   isRead,
-  isDraggingRef,
   onMarkRead,
 }: {
   item: VisionNotification;
   isRead: boolean;
-  isDraggingRef: React.MutableRefObject<boolean>;
   onMarkRead: (id: number) => void;
 }) {
   const onPress = () => {
-    if (isDraggingRef.current) return;
     onMarkRead(item.id);
     router.push({
       pathname: "/(drawer)/visionNotificationDetail",
@@ -157,7 +163,7 @@ export default function Notifications() {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isDraggingRef = useRef(false);
+  const hasUserScrolledRef = useRef(false);
   const lastYRef = useRef(0);
   const loadingMoreRef = useRef(false); // ref copy prevents stale closure issues
 
@@ -166,9 +172,13 @@ export default function Notifications() {
     try {
       isRefresh ? setRefreshing(true) : setLoading(true);
       setError(null);
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+      hasUserScrolledRef.current = false;
       const data = await getVisionNotifications(0, PAGE_SIZE);
-      setItems(data);
-      setHasMore(data.length === PAGE_SIZE);
+      const firstPage = data.slice(0, PAGE_SIZE);
+      setItems((prev) => (areNotificationListsEqual(prev, firstPage) ? prev : firstPage));
+      setHasMore(firstPage.length === PAGE_SIZE);
     } catch (e: any) {
       setError(e?.message ?? "Failed to load notifications");
     } finally {
@@ -179,19 +189,22 @@ export default function Notifications() {
 
   /** Load the next page when the user scrolls near the bottom */
   const fetchMore = useCallback(async () => {
-    if (loadingMoreRef.current || !hasMore) return;
+    if (loadingMoreRef.current || !hasMore || refreshing || loading) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
-      const data = await getVisionNotifications(items.length, PAGE_SIZE);
+      const data = (await getVisionNotifications(items.length, PAGE_SIZE)).slice(0, PAGE_SIZE);
       if (data.length === 0) {
         setHasMore(false);
       } else {
-        setItems((prev) => {
-          const existingIds = new Set(prev.map((n) => n.id));
-          return [...prev, ...data.filter((n) => !existingIds.has(n.id))];
-        });
-        setHasMore(data.length === PAGE_SIZE);
+        const existingIds = new Set(items.map((n) => n.id));
+        const additions = data.filter((n) => !existingIds.has(n.id));
+        if (additions.length === 0) {
+          setHasMore(false);
+        } else {
+          setItems((prev) => [...prev, ...additions]);
+          setHasMore(data.length === PAGE_SIZE);
+        }
       }
     } catch {
       // Silent — user can scroll again to retry
@@ -199,7 +212,7 @@ export default function Notifications() {
       setLoadingMore(false);
       loadingMoreRef.current = false;
     }
-  }, [hasMore, items.length]);
+  }, [hasMore, items, loading, refreshing]);
 
   useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
 
@@ -211,22 +224,22 @@ export default function Notifications() {
   const selectedItems = viewMode === "unread" ? unread : read;
 
   const onScrollBeginDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    isDraggingRef.current = true;
+    hasUserScrolledRef.current = true;
     lastYRef.current = e.nativeEvent.contentOffset.y;
   };
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
-    if (Math.abs(contentOffset.y - lastYRef.current) > 2) isDraggingRef.current = true;
     lastYRef.current = contentOffset.y;
+
+    // Trigger load-more only after user interaction and only when content is actually scrollable.
+    if (!hasUserScrolledRef.current) return;
+    if (contentOffset.y <= 0) return;
+    if (contentSize.height <= layoutMeasurement.height) return;
 
     // Trigger load-more when within 300px of the bottom
     const distanceFromBottom = contentSize.height - layoutMeasurement.height - contentOffset.y;
     if (distanceFromBottom < 300) fetchMore();
-  };
-
-  const onScrollEndDrag = () => {
-    setTimeout(() => { isDraggingRef.current = false; }, 140);
   };
 
   if (loading) {
@@ -315,7 +328,6 @@ export default function Notifications() {
         showsVerticalScrollIndicator={false}
         onScrollBeginDrag={onScrollBeginDrag}
         onScroll={onScroll}
-        onScrollEndDrag={onScrollEndDrag}
         scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => fetchNotifications(true)} tintColor="#111827" />
@@ -338,7 +350,6 @@ export default function Notifications() {
                 key={n.id}
                 item={n}
                 isRead={viewMode === "read"}
-                isDraggingRef={isDraggingRef}
                 onMarkRead={markRead}
               />
             ))}

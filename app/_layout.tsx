@@ -3,6 +3,8 @@ import { useFonts } from "expo-font";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useEffect } from "react";
 import { View, ActivityIndicator, Alert } from "react-native";
+import { requestNotificationPermissions } from "@/services/pushNotifications";
+import { useVisionNotificationPoller } from "@/lib/hooks/useVisionNotificationPoller";
 
 import {
   Poppins_400Regular,
@@ -19,6 +21,8 @@ import "./globals.css";
 export default function RootLayout() {
   const router = useRouter();
 
+  useVisionNotificationPoller();
+
   const [fontsLoaded] = useFonts({
     Poppins: Poppins_400Regular,
     "Poppins-Medium": Poppins_500Medium,
@@ -27,17 +31,18 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    async function initNotifications() {
+      const granted = await requestNotificationPermissions();
+      if (!granted) console.warn("Notification permission not granted");
+    }
+    initNotifications();
+  }, []);
+
+  useEffect(() => {
     setOnSessionExpired(async () => {
-      // 1) clear auth state
       await clearToken();
-      // logout?.(); // if you store user state
-
-      // 2) tell user
       Alert.alert("Session timed out", "Please log in again.");
-
-      // 3) redirect to login (adjust path if needed)
       router.replace("/");
-      // e.g. "/(auth)/login" if that’s your folder
     });
   }, [router]);
 

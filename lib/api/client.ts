@@ -1,7 +1,7 @@
 import { getToken } from "@/lib/storage/token";
 
 //Neura Hub URL
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.10.86:8000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.10.123:8000";
 
 // Types
 type RequestOptions = {

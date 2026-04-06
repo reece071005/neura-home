@@ -13,7 +13,7 @@ import {
   type AudioPlayer,
 } from "expo-audio";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.10.86:8000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.10.123:8000";
 
 type TextCommandResponse = any;
 

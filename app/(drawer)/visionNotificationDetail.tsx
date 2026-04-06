@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import {
+  getCachedVisionNotification,
   getImageUri,
   getVisionNotificationById,
   VisionNotification,
@@ -93,25 +94,42 @@ function DetailRow({
 
 export default function VisionNotificationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const notificationId = id ? Number(id) : NaN;
+  const hasValidId = Number.isFinite(notificationId);
+  const initialCached = Number.isFinite(notificationId)
+    ? getCachedVisionNotification(notificationId)
+    : null;
 
-  const [notification, setNotification] = useState<VisionNotification | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState<VisionNotification | null>(initialCached);
+  const [loading, setLoading] = useState(hasValidId && !initialCached);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) return;
+    if (!hasValidId) {
+      setLoading(false);
+      setError("Invalid notification ID");
+      return;
+    }
+
+    const cached = getCachedVisionNotification(notificationId);
+    if (cached) {
+      setNotification(cached);
+      setLoading(false);
+    }
+
     (async () => {
       try {
-        setLoading(true);
-        const data = await getVisionNotificationById(Number(id));
+        if (!cached) setLoading(true);
+        const data = await getVisionNotificationById(notificationId);
         setNotification(data);
+        setError(null);
       } catch (e: any) {
         setError(e?.message ?? "Failed to load notification");
       } finally {
         setLoading(false);
       }
     })();
-  }, [id]);
+  }, [hasValidId, notificationId]);
 
   if (loading) {
     return (
