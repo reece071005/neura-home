@@ -1,4 +1,5 @@
 import * as Network from "expo-network";
+import { getHubBaseUrl } from "@/lib/storage/hubStore";
 
 export type Hub = {
     id: string;
@@ -105,7 +106,7 @@ export function startHubDiscovery(opts: DiscoverOptions) {
 //Hub rediscovery (IP Address change)
 export async function rediscoverHub(timeoutMs = 10000): Promise<string | null> {
 
-  const hub = await getHubBaseUrl();   // last known IP
+  const hub = await getHubBaseUrl();
   const start = Date.now();
 
   while (Date.now() - start < timeoutMs) {
