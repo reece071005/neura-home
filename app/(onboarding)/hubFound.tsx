@@ -1,16 +1,51 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Text, Pressable, View } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+
+import { setHubBaseUrl } from "@/lib/storage/hubStore";
 
 import NeuraHubIcon from "@/assets/illustrations/neuraHubIcon.svg";
 
 const HubFound = () => {
+    const { id, name, ip } = useLocalSearchParams();
+
+    const [configured, setConfigured] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const checkHub = async () => {
+            try {
+                const res = await fetch(`${ip}/health`);
+                const data = await res.json();
+
+                //setConfigured(data?.configured ?? true);
+                setConfigured(true);
+
+            } catch (err) {
+                setConfigured(true);
+            }
+        };
+
+        checkHub();
+    }, []);
+
+    const handlePress = async () => {
+        await setHubBaseUrl(ip);
+
+        if (configured) {
+            router.push("/(onboarding)/hubLogin");
+        } else {
+            router.push({
+                pathname: "/(onboarding)/hubNewAccount",
+                params: { id, name, ip }
+            });
+        }
+    };
+
     return (
         <View className="flex-1">
-            {/* Top spacer */}
+
             <View className="flex-1" />
 
-            {/* Bottom panel */}
             <View className="flex-[7] bg-white px-6 pt-6 rounded-t-3xl">
                 <View className="gap-1">
                     <Text className="text-primaryTo text-h3 font-bold">
@@ -21,56 +56,34 @@ const HubFound = () => {
                     </Text>
                 </View>
 
-                {/* Hub list (Hardcoded for now)*/}
                 <View className="mt-4 gap-4">
-                    {/* Hub 1 → already set up */}
+
                     <Pressable
-                        onPress={() =>
-                            router.push("/(onboarding)/hubLogin")
-                        }
+                        onPress={handlePress}
                         className="flex-row border-2 border-greyButton rounded-3xl p-3 items-center gap-4"
                     >
                         <NeuraHubIcon width={36} height={36} />
+
                         <View>
                             <Text className="font-semibold text-body">
-                                Neura Hub
+                                {name}
                             </Text>
+
                             <Text className="font-regular text-subtext">
-                                http://192.168.1.50
+                                {ip}
                             </Text>
+
                             <Text className="text-hint text-xs mt-0.5">
-                                Already set up
+                                {configured === null
+                                    ? "Checking hub..."
+                                    : configured
+                                        ? "Already set up"
+                                        : "Not set up"}
                             </Text>
                         </View>
+
                     </Pressable>
 
-                    {/* Hub 2 → new account setup */}
-                    <Pressable
-                        onPress={() =>
-                            router.push({
-                                pathname: "/(onboarding)/hubNewAccount",
-                                params: {
-                                    id: "hub-2",
-                                    name: "Neura Hub",
-                                    ip: "http://192.168.1.51",
-                                },
-                            })
-                        }
-                        className="flex-row border-2 border-greyButton rounded-3xl p-3 items-center gap-4"
-                    >
-                        <NeuraHubIcon width={36} height={36} />
-                        <View>
-                            <Text className="font-semibold text-body">
-                                Neura Hub (Living Room)
-                            </Text>
-                            <Text className="font-regular text-subtext">
-                                http://192.168.1.51
-                            </Text>
-                            <Text className="text-hint text-xs mt-0.5">
-                                Not set up
-                            </Text>
-                        </View>
-                    </Pressable>
                 </View>
             </View>
         </View>

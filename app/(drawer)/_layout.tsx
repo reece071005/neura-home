@@ -1,4 +1,4 @@
-\import { Drawer } from "expo-router/drawer";
+import { Drawer } from "expo-router/drawer";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import { View, Text, Pressable } from "react-native";

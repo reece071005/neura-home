@@ -10,18 +10,30 @@ import {startHubDiscovery} from "@/services/hubDiscovery";
 const HubSearch = () => {
     const navigated = useRef(false);
 
-    useEffect(()=> {
+    useEffect(() => {
+
+        const minDisplayTime = 1200;
+        const startTime = Date.now();
+
+        const finish = (callback: () => void) => {
+            const elapsed = Date.now() - startTime;
+            const remaining = Math.max(0, minDisplayTime - elapsed);
+
+            setTimeout(callback, remaining);
+        };
+
         const stop = startHubDiscovery({
             timeoutMs: 6000,
-            fake: {outcome: "found", delayMs: 2000},
 
             onFound: (hub) => {
                 if (navigated.current) return;
                 navigated.current = true;
 
-                router.replace({
-                    pathname: "/(onboarding)/hubFound",
-                    params: {id: hub.id, name: hub.name, ip: hub.ip}
+                finish(() => {
+                    router.replace({
+                        pathname: "/(onboarding)/hubFound",
+                        params: { id: hub.id, name: hub.name, ip: hub.ip }
+                    });
                 });
             },
 
@@ -29,10 +41,14 @@ const HubSearch = () => {
                 if (navigated.current) return;
                 navigated.current = true;
 
-                router.replace("/(onboarding)/hubNotFound");
+                finish(() => {
+                    router.replace("/(onboarding)/hubNotFound");
+                });
             },
         });
+
         return stop;
+
     }, []);
 
     return (
