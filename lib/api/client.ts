@@ -1,7 +1,10 @@
 import { getToken } from "@/lib/storage/token";
+import { getHubBaseUrl, setHubBaseUrl, clearHubBaseUrl } from "@/lib/storage/hubStore";
 
-//Neura Hub URL
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.10.123:8000";
+
+
+import { rediscoverHub } from "@/services/hubDiscovery";
+import { useConnectionState } from "@/lib/storage/connectionState";
 
 // Types
 type RequestOptions = {
@@ -57,14 +60,68 @@ export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T
         }
     }
 
-    const url = `${BASE_URL}${path}`;
-    const res = await fetch(url, {
-        method,
-        headers: finalHeaders,
-        body: finalBody,
-    });
+    const hub = await getHubBaseUrl();
+
+    if (!hub) {
+        throw new Error("Neura Hub not configured");
+    }
+
+    const url = `${hub}${path}`;
+
+    let res: Response;
+
+    try {
+
+        res = await fetch(url, {
+            method,
+            headers: finalHeaders,
+            body: finalBody,
+        });
+
+    } catch (err) {
+
+        console.log("Hub unreachable, attempting rediscovery");
+
+        useConnectionState.getState().setReconnecting(true);
+
+        const newHub = await rediscoverHub(4000); // 4 second scan
+
+        if (!newHub) {
+
+            console.log("Hub rediscovery failed — logging out");
+
+            await clearHubBaseUrl();
+
+            if (!sessionExpiredFired) {
+                sessionExpiredFired = true;
+
+                try {
+                    await onSessionExpired?.();
+                } finally {
+                    setTimeout(() => {
+                        sessionExpiredFired = false;
+                    }, 1500);
+                }
+            }
+
+            throw new Error("NEURA_HUB_CONNECTION_LOST");
+        }
+
+        await setHubBaseUrl(newHub);
+        useConnectionState.getState().setReconnecting(false);
+
+        const retryUrl = `${newHub}${path}`;
+
+        res = await fetch(retryUrl, {
+            method,
+            headers: finalHeaders,
+            body: finalBody,
+        });
+    }
 
     // Safer parsing: works even if backend returns non-JSON
+    useConnectionState.getState().setReconnecting(false);
+
     const rawText = await res.text();
     let data: any = {};
     try {

@@ -1,6 +1,5 @@
 import { getToken } from "@/lib/storage/token";
-
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.10.123:8000";
+import { getHubBaseUrl } from "@/lib/storage/hubStore";
 
 type BinaryRequestOptions = {
   method?: "GET" | "POST";
@@ -18,7 +17,14 @@ export async function apiBinary(path: string, opts: BinaryRequestOptions = {}) {
     if (token) finalHeaders.Authorization = `Bearer ${token}`;
   }
 
-  const url = `${BASE_URL}${path}`;
+  const hub = await getHubBaseUrl();
+
+  if (!hub) {
+    throw new Error("Neura Hub not configured");
+  }
+
+  const url = `${hub}${path}`;
+
   const res = await fetch(url, { method, headers: finalHeaders });
 
   if (!res.ok) {
@@ -26,7 +32,5 @@ export async function apiBinary(path: string, opts: BinaryRequestOptions = {}) {
     throw new Error(raw || `Request failed (${res.status})`);
   }
 
-  return res; // caller decides res.blob(), res.arrayBuffer(), etc.
+  return res;
 }
-
-export { BASE_URL };
