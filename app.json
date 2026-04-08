@@ -10,14 +10,16 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.neurahome.app",
       "infoPlist": {
         "NSLocalNetworkUsageDescription": "Used to discover Home Assistant on your local network",
         "NSBonjourServices": [
           "_home-assistant._tcp",
           "_home-assistant._tcp"
-        ]
-      },
-      "bundleIdentifier": "com.neurahome.app"
+        ],
+        "UIBackgroundModes": ["remote-notification"],
+        "NSUserNotificationUsageDescription": "Neura Home sends you smart home alerts and updates."
+      }
     },
     "android": {
       "package": "com.neurahome.app",
@@ -41,6 +43,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {
@@ -61,11 +64,19 @@
           "microphonePermission": "Allow Neura Home to access your microphone."
         }
       ],
-      ["expo-speech-recognition", {
-        "microphonePermission": "Allow Neura Home to access your microphone.",
-        "speechRecognitionPermission": "Allow Neura Home to access your speech recognition."
-      }]
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Neura Home to access your microphone.",
+          "speechRecognitionPermission": "Allow Neura Home to access your speech recognition."
+        }
+      ]
     ],
+    "extra": {
+      "eas": {
+        "projectId": "neura-home"
+      }
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

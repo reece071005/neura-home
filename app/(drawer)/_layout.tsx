@@ -1,4 +1,4 @@
-import { Drawer } from "expo-router/drawer";
+\import { Drawer } from "expo-router/drawer";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import { View, Text, Pressable } from "react-native";
@@ -155,6 +155,13 @@ export default function DrawerLayout() {
             />
             <Drawer.Screen
                 name="createRoom"
+                options={{
+                    drawerItemStyle: { display: "none" },
+                    headerShown: false,
+                }}
+            />
+            <Drawer.Screen
+                name="visionNotificationDetail"
                 options={{
                     drawerItemStyle: { display: "none" },
                     headerShown: false,

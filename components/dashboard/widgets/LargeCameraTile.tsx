@@ -19,9 +19,13 @@ export default function LargeCameraTile({ title, cameraEntity, onMenuPress }: Pr
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
     const inFlightRef = useRef(false);
+    const lastLoadAtRef = useRef(0);
+    const MIN_LOAD_GAP_MS = 15000;
 
-    const load = async () => {
+    const load = async (force = false) => {
         if (inFlightRef.current) return;
+        const now = Date.now();
+        if (!force && now - lastLoadAtRef.current < MIN_LOAD_GAP_MS) return;
         inFlightRef.current = true;
 
         setLoading(true);
@@ -30,6 +34,7 @@ export default function LargeCameraTile({ title, cameraEntity, onMenuPress }: Pr
             const next = await getCameraSnapshotDataUri(cameraEntity);
             setUri(next);
             setLastUpdated(new Date());
+            lastLoadAtRef.current = Date.now();
         } catch (e) {
             setHadError(true);
         } finally {
@@ -38,12 +43,14 @@ export default function LargeCameraTile({ title, cameraEntity, onMenuPress }: Pr
         }
     };
 
-    // Load once for the tile when the camera changes
-
     useEffect(() => {
-        load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [cameraEntity]);
+        // Reset preview on camera switch; do not auto-fetch to avoid stressing HA on low-power hubs.
+        setUri(null);
+        setHadError(false);
+        setLastUpdated(null);
+        setLoading(false);
+        lastLoadAtRef.current = 0;
+    }, [cameraEntity]);
 
   // Refresh once when modal opens
   useEffect(() => {
@@ -65,10 +72,12 @@ export default function LargeCameraTile({ title, cameraEntity, onMenuPress }: Pr
 
                   <Pressable
                       onPress={() => setOpen(true)}
-                      className="flex-1"
-                      style={({ pressed }) => [{ opacity: pressed ? 0.94 : 1 }]}
+                      style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.94 : 1 }]}
                   >
-                      <View className="overflow-hidden" style={{ borderRadius: 22, height: 160 }}>
+                      <View
+                          className="overflow-hidden"
+                          style={{ flex: 1, width: "100%", minHeight: 148, borderRadius: 22 }}
+                      >
                           {!!uri ? (
                               <Image
                                   source={{ uri }}
@@ -78,15 +87,14 @@ export default function LargeCameraTile({ title, cameraEntity, onMenuPress }: Pr
                               />
                           ) : (<View
                                   style={{
-                                      width: "100%",
-                                      height: "100%",
+                                      flex: 1,
                                       alignItems: "center",
                                       justifyContent: "center",
                                       backgroundColor: "#0B5AA6",
                                   }}
                               >
                                   <Text style={{ color: "white", fontWeight: "700" }}>
-                                      {loading ? "Loading…" : hadError ? "No image" : "Loading…"}
+                                      {loading ? "Loading…" : hadError ? "No image" : "Tap to load"}
                                   </Text>
                           </View>
                           )}
@@ -139,7 +147,7 @@ export default function LargeCameraTile({ title, cameraEntity, onMenuPress }: Pr
                           </Text>
 
                           {/* Refresh */}
-                          <Pressable onPress={load} hitSlop={10} style={{ marginRight: 10 }}>
+                          <Pressable onPress={() => load(true)} hitSlop={10} style={{ marginRight: 10 }}>
                               <MaterialIcons name="refresh" size={22} color="black" />
                           </Pressable>
 
@@ -204,4 +212,3 @@ export default function LargeCameraTile({ title, cameraEntity, onMenuPress }: Pr
       </>
   );
 }
-
