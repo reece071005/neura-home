@@ -27,7 +27,7 @@ const HubPrep = () => {
                 <View className="flex-1 justify-center items-center">
                     <GradientButton
                         title={"Continue"}
-                        onPress={() => router.push("/(onboarding)/hubSearch")}
+                        onPress={() => router.replace("/hub/hubSearch")}
                     />
                 </View>
             </View>

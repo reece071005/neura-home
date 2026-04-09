@@ -18,10 +18,10 @@ const HubFound = () => {
                 const data = await res.json();
 
                 //setConfigured(data?.configured ?? true);
-                setConfigured(true);
+                setConfigured(false);
 
             } catch (err) {
-                setConfigured(true);
+                setConfigured(false);
             }
         };
 
@@ -32,10 +32,10 @@ const HubFound = () => {
         await setHubBaseUrl(ip);
 
         if (configured) {
-            router.push("/(onboarding)/hubLogin");
+            router.push("/hub/hubLogin");
         } else {
             router.push({
-                pathname: "/(onboarding)/hubNewAccount",
+                pathname: "/hub/hubNewAccount",
                 params: { id, name, ip }
             });
         }

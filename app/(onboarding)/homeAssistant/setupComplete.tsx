@@ -1,6 +1,6 @@
 // app/(onboarding)/setupComplete.tsx
 import React from "react";
-import { View, Text, Platform } from "react-native";
+import { View, Text} from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -23,7 +23,7 @@ export default function SetupComplete() {
         <View className="flex-[5] bg-white px-6 pt-7 rounded-t-3xl -mt-6">
           <View className="gap-2">
             <Text className="text-primaryTo font-bold text-h2">
-              Setup complete 🎉
+              Setup complete
             </Text>
 
             <Text className="text-textSecondary text-body font-semibold">

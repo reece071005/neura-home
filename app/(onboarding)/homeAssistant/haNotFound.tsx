@@ -30,7 +30,7 @@ const HaNotFound = () => {
                 <View className="mt-auto w-full">
                     <GradientButton
                         title="Retry"
-                        onPress={() => router.push("/(onboarding)/haSearch")}
+                        onPress={() => router.replace("/homeAssistant/haSearch")}
                     />
 
                     <View className="items-center mt-3">
@@ -40,7 +40,8 @@ const HaNotFound = () => {
 
                         <Link
                             className="font-medium text-hint text-primaryTo"
-                            href="/(onboarding)/haManualAddress"
+                            href="/homeAssistant/haManualAddress"
+                            replace
                         >
                             Manual Address
                         </Link>

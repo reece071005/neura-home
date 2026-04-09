@@ -1,7 +1,7 @@
-import { Text, View, Platform, KeyboardAvoidingView } from 'react-native'
-import { router, Link} from "expo-router";
+import { Text, View, Platform, KeyboardAvoidingView, ScrollView } from 'react-native'
+import { router } from "expo-router";
 import React, { useState } from 'react'
-import { ScrollView } from "react-native";
+
 import {login} from "@/lib/api/auth";
 
 import GradientButton from "@/components/GradientButton";

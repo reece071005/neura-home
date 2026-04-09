@@ -8,14 +8,12 @@ import HubSetupIllustration from "@/assets/illustrations/manualIP.svg";
 const HaPrep = () => {
     return (
         <View style={{ flex: 1 }}>
-            {/* Illustration */}
             <View style={{ flex: 1.6 }} className="justify-center items-center">
                 <View className="w-5/6">
                     <HubSetupIllustration width="100%" height="100%" />
                 </View>
             </View>
 
-            {/* White panel */}
             <View
                 style={{ flex: 1.4 }}
                 className="bg-white px-6 pt-6 rounded-t-3xl"
@@ -35,7 +33,7 @@ const HaPrep = () => {
                 <View className="flex-1 justify-center items-center">
                     <GradientButton
                         title="Continue"
-                        onPress={() => router.push("/(onboarding)/haSearch")}
+                        onPress={() => router.replace("/homeAssistant/haSearch")}
                     />
                 </View>
             </View>

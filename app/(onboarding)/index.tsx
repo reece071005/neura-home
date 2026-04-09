@@ -1,4 +1,4 @@
-import {Text, View} from "react-native";
+import {View} from "react-native";
 import { useRouter } from "expo-router";
 import WhiteButton from "@/components/WhiteButton";
 import Logo from "@/components/Logo";
@@ -16,7 +16,7 @@ export default function Index() {
             />
             <WhiteButton
                 title="Get Started"
-                onPress={()=> router.push("/(onboarding)/hubPrep")}
+                onPress={()=> router.push("/(onboarding)/hub/hubPrep")}
             />
         </View>
     );

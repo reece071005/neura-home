@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { Text, View, Platform } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { Text, View, Platform, KeyboardAvoidingView, ScrollView } from "react-native";
 import { router } from "expo-router";
 
 import { setOnboardingAccount } from "@/lib/storage/onboardingStore";
@@ -51,13 +50,17 @@ const HubNewAccount = () => {
     }
 
     if (hasError) return;
-
-    // Save to onboarding store — no API call yet
+    
     setOnboardingAccount(u, e, p);
-    router.replace("/(onboarding)/haPrep");
+    router.replace("/homeAssistant/haPrep");
   };
 
   return (
+      <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+      >
     <View className="flex-1">
       {/* Illustration */}
       <View className="flex-[4.5] justify-center items-center">
@@ -68,13 +71,9 @@ const HubNewAccount = () => {
 
       {/* Bottom panel */}
       <View className="flex-[5.5] bg-white px-6 pt-6 rounded-t-3xl -mt-6">
-        <KeyboardAwareScrollView
-          keyboardShouldPersistTaps="always"
-          enableOnAndroid
-          extraScrollHeight={16}
-          extraHeight={Platform.OS === "ios" ? 16 : 120}
-          contentContainerStyle={{ paddingBottom: 24 }}
-          showsVerticalScrollIndicator={false}
+        <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
         >
           {/* Header */}
           <View className="gap-1">
@@ -129,9 +128,10 @@ const HubNewAccount = () => {
               <GradientButton title="Continue" onPress={onNext} />
             </View>
           </View>
-        </KeyboardAwareScrollView>
+        </ScrollView>
       </View>
     </View>
+      </KeyboardAvoidingView>
   );
 };
 

@@ -1,7 +1,6 @@
 import React from "react";
-import { Pressable, Text, View } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Text, View } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 
 const CameraFullScreen = () => {
     const params = useLocalSearchParams<{ id?: string; label?: string }>();

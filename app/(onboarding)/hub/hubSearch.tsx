@@ -1,6 +1,6 @@
-import {Image, Text, View} from 'react-native';
-import {Link, router, useLocalSearchParams } from "expo-router"
-import React, { useEffect, useRef } from 'react';
+import {Image, Pressable, Text, View} from 'react-native';
+import {router, useFocusEffect, useLocalSearchParams } from "expo-router"
+import React, { useCallback, useRef } from 'react';
 
 import Spinner from "@/components/Spinner";
 
@@ -11,52 +11,78 @@ const HubSearch = () => {
     const navigated = useRef(false);
     const { manualIp } = useLocalSearchParams();
 
-    useEffect(() => {
+    useFocusEffect(
+      useCallback(() => {
+      navigated.current = false;
+      let isActive = true;
+      let finishTimer: ReturnType<typeof setTimeout> | null = null;
+      let stopDiscovery: (() => void) | undefined;
+      const manualIpValue = Array.isArray(manualIp) ? manualIp[0] : manualIp;
 
       const minDisplayTime = 1200;
       const startTime = Date.now();
 
+      const clearFinishTimer = () => {
+        if (!finishTimer) return;
+        clearTimeout(finishTimer);
+        finishTimer = null;
+      };
+
+      const safeReplace = (target: Parameters<typeof router.replace>[0]) => {
+        if (!isActive || navigated.current) return;
+        navigated.current = true;
+        router.replace(target);
+      };
+
       const finish = (callback: () => void) => {
         const elapsed = Date.now() - startTime;
         const remaining = Math.max(0, minDisplayTime - elapsed);
-        setTimeout(callback, remaining);
+        clearFinishTimer();
+        finishTimer = setTimeout(() => {
+          if (!isActive || navigated.current) return;
+          callback();
+        }, remaining);
       };
 
       // If manual IP provided
-      if (manualIp) {
+      if (manualIpValue) {
 
         const checkManual = async () => {
 
-          const hub = await checkHubAddress(String(manualIp));
+          const hub = await checkHubAddress(String(manualIpValue));
+          if (!isActive) return;
 
           if (hub) {
             finish(() => {
-              router.replace({
-                pathname: "/(onboarding)/hubFound",
+              safeReplace({
+                pathname: "/hub/hubFound",
                 params: { id: hub.id, name: hub.name, ip: hub.ip }
               });
             });
           } else {
             finish(() => {
-              router.replace("/(onboarding)/hubNotFound");
+              safeReplace("/hub/hubNotFound");
             });
           }
 
         };
 
         checkManual();
-        return;
+        return () => {
+          isActive = false;
+          clearFinishTimer();
+        };
 
       }
 
       // Normal discovery
-      const stop = startHubDiscovery({
+      stopDiscovery = startHubDiscovery({
         timeoutMs: 6000,
 
         onFound: (hub) => {
           finish(() => {
-            router.replace({
-              pathname: "/(onboarding)/hubFound",
+            safeReplace({
+              pathname: "/hub/hubFound",
               params: { id: hub.id, name: hub.name, ip: hub.ip }
             });
           });
@@ -64,14 +90,19 @@ const HubSearch = () => {
 
         onTimeout: () => {
           finish(() => {
-            router.replace("/(onboarding)/hubNotFound");
+            safeReplace("/hub/hubNotFound");
           });
         }
       });
 
-      return stop;
+      return () => {
+        isActive = false;
+        clearFinishTimer();
+        stopDiscovery?.();
+      };
 
-    }, []);
+    }, [manualIp])
+    );
 
     return (
         <View className="flex-1">
@@ -94,17 +125,17 @@ const HubSearch = () => {
                             style={{ top: 0, bottom: 0, left: 0, right: 0, transform: [{ translateY: -4 }] }}
                         >
                             <Image
-                                source={require("../../assets/logo/png/logoGradientSquareNoText.png")}
+                                source={require("../../../assets/logo/png/logoGradientSquareNoText.png")}
                                 style={{width:120, height:120}}
                                 resizeMode="contain"
                             />
                         </View>
                     </View>
-                    <Link href="/(onboarding)/hubManualAddress" className="mt-36">
+                    <Pressable className="mt-36" onPress={() => router.replace("/hub/hubManualAddress")}>
                         <Text className="text-textSecondary text-body font-semibold">
                             Add address manually
                         </Text>
-                    </Link>
+                    </Pressable>
                 </View>
             </View>
         </View>

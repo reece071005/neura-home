@@ -1,5 +1,5 @@
-import {StyleSheet, Text, View, Dimensions} from 'react-native'
-import {router, Link} from "expo-router";
+import {StyleSheet, Text, View, Dimensions, Pressable} from 'react-native'
+import {router} from "expo-router";
 import React from 'react'
 
 import GradientButton from "@/components/GradientButton";
@@ -28,18 +28,20 @@ const HubNotFound = () => {
                 <View className="w-full pb-6">
                     <GradientButton
                         title={"Retry"}
-                        onPress={() => router.push("/(onboarding)/hubSearch")}
+                        onPress={() => router.replace("/hub/hubSearch")}
                     />
                     <View className="items-center mt-3">
                         <Text className="font-medium text-subtext text-black">
                             Can't find your hub?
                         </Text>
-                        <Link
-                            className="font-medium text-hint text-primaryTo"
-                            href={"/(onboarding)/hubManualAddress"}
+                        <Pressable
+                            className="font-medium text-hint text-primaryTo pb-3"
+                            onPress={() => router.replace("/hub/hubManualAddress")}
                         >
-                            Manual Address
-                        </Link>
+                            <Text className="font-medium text-hint text-primaryTo pb-3">
+                                Manual Address
+                            </Text>
+                        </Pressable>
                     </View>
                 </View>
 

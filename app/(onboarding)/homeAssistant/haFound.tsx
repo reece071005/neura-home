@@ -11,10 +11,8 @@ const HaFound = () => {
 
   return (
     <View className="flex-1">
-      {/* Top spacer */}
       <View className="flex-1" />
 
-      {/* Bottom panel */}
       <View className="flex-[7] bg-white px-6 pt-6 rounded-t-3xl">
         <View className="gap-1">
           <Text className="text-primaryTo text-h3 font-bold">
@@ -32,13 +30,13 @@ const HaFound = () => {
         >
           {instances.map((ha) => (
             <Pressable
-              key={ha.url}
-              onPress={() => {
-                setOnboardingHA(ha.name, ha.url);
-                router.push("/(onboarding)/haToken");
-              }}
-              className="flex-row border-2 border-greyButton rounded-3xl p-3 items-center gap-4"
-              style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+                key={ha.url}
+                onPress={() => {
+                  setOnboardingHA(ha.name, ha.url);
+                  router.push("/homeAssistant/haToken");
+                }}
+                className="flex-row border-2 border-greyButton rounded-3xl p-3 items-center gap-4"
+                style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
             >
               <NeuraHubIcon width={36} height={36} />
               <View className="flex-1">

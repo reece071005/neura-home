@@ -56,6 +56,7 @@ export function startHubDiscovery(opts: DiscoverOptions) {
 
             //Try preferred IP first
             const preferred = await tryHub(preferredIp);
+            if (stopped) return;
             if (preferred) {
                 stopped = true;
                 opts.onFound(preferred);
@@ -64,6 +65,7 @@ export function startHubDiscovery(opts: DiscoverOptions) {
 
             //Get device IP
             const deviceIp = await Network.getIpAddressAsync();
+            if (stopped) return;
             const subnet = getSubnet(deviceIp);
 
             //Scan subnet
@@ -74,6 +76,7 @@ export function startHubDiscovery(opts: DiscoverOptions) {
                 if (ip === preferredIp) continue;
 
                 const hub = await tryHub(ip);
+                if (stopped) return;
 
                 if (hub) {
                     stopped = true;
@@ -85,6 +88,7 @@ export function startHubDiscovery(opts: DiscoverOptions) {
             if (!stopped) opts.onTimeout();
 
         } catch (err) {
+            if (stopped) return;
             opts.onError?.(err as Error);
         }
     };

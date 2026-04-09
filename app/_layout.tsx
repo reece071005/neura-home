@@ -12,7 +12,6 @@ import { useConnectionState } from "@/lib/storage/connectionState";
 import { setOnSessionExpired } from "@/lib/api/client";
 import { clearToken } from "@/lib/storage/token";
 
-
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -27,7 +26,6 @@ export default function RootLayout() {
   const insets = useSafeAreaInsets();
 
   const reconnecting = useConnectionState((s) => s.reconnecting);
-
   useVisionNotificationPoller();
 
   const [fontsLoaded] = useFonts({
@@ -73,34 +71,33 @@ export default function RootLayout() {
     );
   }
 
+
   return (
-    <SafeAreaProvider>
-
-      {/* Global Hub Reconnect Banner */}
-      {reconnecting && (
-        <View
-          style={{
-            position: "absolute",
-            top: insets.top + 12,
-            alignSelf: "center",
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            borderRadius: 20,
-            backgroundColor: "rgba(0,0,0,0.6)",
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
-            zIndex: 999,
-          }}
-        >
-          <ActivityIndicator size="small" color="white" />
-          <Text style={{ color: "white", fontWeight: "500" }}>
-            Reconnecting…
-          </Text>
-        </View>
-      )}
-      <Stack screenOptions={{ headerShown: false }} />
-
-    </SafeAreaProvider>
+      //Global Hub Reconnect Banner
+      <SafeAreaProvider>
+        {reconnecting && (
+            <View
+                style={{
+                  position: "absolute",
+                  top: insets.top + 12,
+                  alignSelf: "center",
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 20,
+                  backgroundColor: "rgba(0,0,0,0.6)",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8,
+                  zIndex: 999,
+                }}
+            >
+              <ActivityIndicator size="small" color="white" />
+              <Text style={{ color: "white", fontWeight: "500" }}>
+                Reconnecting…
+              </Text>
+            </View>
+        )}
+        <Stack screenOptions={{ headerShown: false }} />
+      </SafeAreaProvider>
   );
 }
