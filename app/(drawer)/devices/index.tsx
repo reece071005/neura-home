@@ -47,6 +47,11 @@ const CATEGORIES: Category[] = [
 export default function DevicesCategoryList() {
     return (
         <>
+            <Stack.Screen
+                options={{
+                    title: "Devices"
+                }}
+            />
             <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
                 <View className="pt-2">
                     {CATEGORIES.map((cat) => {

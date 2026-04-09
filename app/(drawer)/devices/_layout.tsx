@@ -9,6 +9,7 @@ export default function DevicesLayout() {
                 headerTitleAlign: "center",
                 headerShadowVisible: false,
                 headerTransparent: false,
+                headerBackVisible: false
             }}
         />
     );

@@ -47,17 +47,7 @@ export default function DevicesByCategory() {
         <>
             <Stack.Screen
                 options={{
-                    title,
-                    headerLeft: () => (
-                        <Pressable onPress={() => router.back()} style={{ paddingLeft: 12 }} hitSlop={10}>
-                            <MaterialIcons name="chevron-left" size={28} color="#3C7BFF" />
-                        </Pressable>
-                    ),
-                    headerRight: () => (
-                        <Pressable onPress={() => router.push("/(drawer)/devices/add")} style={{ paddingRight: 12 }} hitSlop={10}>
-                            <MaterialIcons name="add" size={22} color="#3C7BFF" />
-                        </Pressable>
-                    ),
+                    title
                 }}
             />
             <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
@@ -95,7 +85,6 @@ export default function DevicesByCategory() {
                                     <Text className="text-gray-500 text-hint mt-1">{d.entity_id}</Text>
                                 </View>
 
-                                <MaterialIcons name="chevron-right" size={22} color="#9CA3AF" />
                             </Pressable>
                         ))}
                 </View>
