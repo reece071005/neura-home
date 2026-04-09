@@ -103,6 +103,27 @@ export function startHubDiscovery(opts: DiscoverOptions) {
     };
 }
 
+export async function checkHubAddress(ip: string): Promise<Hub | null> {
+  try {
+    const res = await fetch(`http://${ip}:8000/health`);
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+
+    if (data?.status === "healthy") {
+      return {
+        id: data?.hub_id ?? "hub",
+        name: "Neura Hub",
+        ip: `http://${ip}:8000`,
+      };
+    }
+
+  } catch {}
+
+  return null;
+}
+
 //Hub rediscovery (IP Address change)
 export async function rediscoverHub(timeoutMs = 10000): Promise<string | null> {
 

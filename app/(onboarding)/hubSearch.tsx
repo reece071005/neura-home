@@ -1,53 +1,75 @@
 import {Image, Text, View} from 'react-native';
-import {Link, router} from "expo-router"
+import {Link, router, useLocalSearchParams } from "expo-router"
 import React, { useEffect, useRef } from 'react';
 
-import Logo from '@/components/Logo';
 import Spinner from "@/components/Spinner";
 
-import {startHubDiscovery} from "@/services/hubDiscovery";
+import {startHubDiscovery, checkHubAddress} from "@/services/hubDiscovery";
+
 
 const HubSearch = () => {
     const navigated = useRef(false);
+    const { manualIp } = useLocalSearchParams();
 
     useEffect(() => {
 
-        const minDisplayTime = 1200;
-        const startTime = Date.now();
+      const minDisplayTime = 1200;
+      const startTime = Date.now();
 
-        const finish = (callback: () => void) => {
-            const elapsed = Date.now() - startTime;
-            const remaining = Math.max(0, minDisplayTime - elapsed);
+      const finish = (callback: () => void) => {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, minDisplayTime - elapsed);
+        setTimeout(callback, remaining);
+      };
 
-            setTimeout(callback, remaining);
+      // If manual IP provided
+      if (manualIp) {
+
+        const checkManual = async () => {
+
+          const hub = await checkHubAddress(String(manualIp));
+
+          if (hub) {
+            finish(() => {
+              router.replace({
+                pathname: "/(onboarding)/hubFound",
+                params: { id: hub.id, name: hub.name, ip: hub.ip }
+              });
+            });
+          } else {
+            finish(() => {
+              router.replace("/(onboarding)/hubNotFound");
+            });
+          }
+
         };
 
-        const stop = startHubDiscovery({
-            timeoutMs: 6000,
+        checkManual();
+        return;
 
-            onFound: (hub) => {
-                if (navigated.current) return;
-                navigated.current = true;
+      }
 
-                finish(() => {
-                    router.replace({
-                        pathname: "/(onboarding)/hubFound",
-                        params: { id: hub.id, name: hub.name, ip: hub.ip }
-                    });
-                });
-            },
+      // Normal discovery
+      const stop = startHubDiscovery({
+        timeoutMs: 6000,
 
-            onTimeout: () => {
-                if (navigated.current) return;
-                navigated.current = true;
+        onFound: (hub) => {
+          finish(() => {
+            router.replace({
+              pathname: "/(onboarding)/hubFound",
+              params: { id: hub.id, name: hub.name, ip: hub.ip }
+            });
+          });
+        },
 
-                finish(() => {
-                    router.replace("/(onboarding)/hubNotFound");
-                });
-            },
-        });
+        onTimeout: () => {
+          finish(() => {
+            router.replace("/(onboarding)/hubNotFound");
+          });
+        }
+      });
 
-        return stop;
+      return stop;
 
     }, []);
 
@@ -67,10 +89,13 @@ const HubSearch = () => {
                 <View className="flex-1 items-center justify-center">
                     <View className="relative items-center justify-center" style={{width:260, height:260}}>
                         <Spinner size={260}></Spinner>
-                        <View className="absolute inset-0 items-center justify-center">
+                        <View
+                            className="absolute inset-0 items-center justify-center"
+                            style={{ top: 0, bottom: 0, left: 0, right: 0, transform: [{ translateY: -4 }] }}
+                        >
                             <Image
                                 source={require("../../assets/logo/png/logoGradientSquareNoText.png")}
-                                style-={{width:180, height:180}}
+                                style={{width:120, height:120}}
                                 resizeMode="contain"
                             />
                         </View>

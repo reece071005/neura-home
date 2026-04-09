@@ -258,7 +258,9 @@ function Header({ title = "Back" }: { title?: string }) {
       }}
     >
       <Pressable
-        onPress={() => router.back()}
+        onPress={() => router.replace({ pathname: "/(drawer)/notifications" })}
+        android_ripple={{ color: "#E5E7EB", borderless: true }}
+        disabled={router.canGoBack() === false}
         hitSlop={12}
         style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
       >

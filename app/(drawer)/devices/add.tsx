@@ -71,7 +71,7 @@ export default function AddDevice() {
                         <Spinner size={200} />
                         <View className="absolute inset-0 items-center justify-center">
                             <Image
-                                source={require("../../../assets/logo/png/logoGradientSquareNoText.png")}
+                                source={require("../../../assets/logo/png/logoGradientSquareNoText2.png")}
                                 style={{ width: 140, height: 140 }}
                                 resizeMode="contain"
                             />

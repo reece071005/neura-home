@@ -1,8 +1,6 @@
 import { getToken } from "@/lib/storage/token";
 import { getHubBaseUrl, setHubBaseUrl, clearHubBaseUrl } from "@/lib/storage/hubStore";
 
-
-
 import { rediscoverHub } from "@/services/hubDiscovery";
 import { useConnectionState } from "@/lib/storage/connectionState";
 

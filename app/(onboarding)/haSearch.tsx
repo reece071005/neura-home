@@ -91,7 +91,7 @@ const HaSearch = () => {
 
             <View className="absolute inset-0 items-center justify-center">
               <Image
-                source={require("../../assets/logo/png/logoGradientSquareNoText.png")}
+                source={require("../../assets/logo/png/logoGradientSquareNoText2.png")}
                 style={{ width: 180, height: 180 }}
                 resizeMode="contain"
               />

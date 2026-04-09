@@ -34,20 +34,6 @@ function CustomDrawerContent(props: any) {
                     className="flex-row items-center text-center"
                     onPress={() => {
                         props.navigation.closeDrawer();
-                        sendLocalNotification("Motion Detected", "Living room camera triggered")
-                        //router.push("/(drawer)/(tabs)/mainDashboard");
-                    }}
-                >
-                    <TabIcon name="history" size={30} />
-                    <Text className="text-textPrimary font-medium text-button pl-4">
-                        History
-                    </Text>
-                </Pressable>
-
-                <Pressable
-                    className="flex-row items-center text-center"
-                    onPress={() => {
-                        props.navigation.closeDrawer();
                         router.push("/(drawer)/automations");
                     }}
                 >

@@ -14,7 +14,8 @@ const HubNotFound = () => {
                     <HubNotFoundIllustration width="100%" height="100%"/>
                 </View>
             </View>
-            <View className="flex-1 bg-white px-6 pt-6 rounded-t-3xl">
+            <View className="flex-1 bg-white px-6 pt-6 rounded-t-3xl justify-between">
+
                 <View className="gap-1">
                     <Text className="text-primaryTo font-bold text-h3 ">
                         No hub found
@@ -23,16 +24,25 @@ const HubNotFound = () => {
                         We could not find your hub, please check the hub is powered on and ready to pair.
                     </Text>
                 </View>
-                <View className="mt-auto w-full">
+
+                <View className="w-full pb-6">
                     <GradientButton
                         title={"Retry"}
                         onPress={() => router.push("/(onboarding)/hubSearch")}
                     />
                     <View className="items-center mt-3">
-                        <Text className="font-medium text-subtext text-black">Can't find your hub?</Text>
-                        <Link className="font-medium text-hint text-primaryTo"   href={"/(onboarding)/manualAddress"}>Manual Address</Link>
+                        <Text className="font-medium text-subtext text-black">
+                            Can't find your hub?
+                        </Text>
+                        <Link
+                            className="font-medium text-hint text-primaryTo"
+                            href={"/(onboarding)/hubManualAddress"}
+                        >
+                            Manual Address
+                        </Link>
                     </View>
                 </View>
+
             </View>
         </View>
     )
