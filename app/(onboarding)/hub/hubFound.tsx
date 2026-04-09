@@ -18,10 +18,10 @@ const HubFound = () => {
                 const data = await res.json();
 
                 //setConfigured(data?.configured ?? true);
-                setConfigured(false);
+                setConfigured(true);
 
             } catch (err) {
-                setConfigured(false);
+                setConfigured(true);
             }
         };
 

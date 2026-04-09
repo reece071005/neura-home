@@ -44,7 +44,6 @@ export default function LargeCameraTile({ title, cameraEntity, onMenuPress }: Pr
     };
 
     useEffect(() => {
-        // Reset preview on camera switch; do not auto-fetch to avoid stressing HA on low-power hubs.
         setUri(null);
         setHadError(false);
         setLastUpdated(null);
@@ -52,31 +51,27 @@ export default function LargeCameraTile({ title, cameraEntity, onMenuPress }: Pr
         lastLoadAtRef.current = 0;
     }, [cameraEntity]);
 
-  // Refresh once when modal opens
-  useEffect(() => {
-    if (open) load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Fetch new snapshot on load of the widget
+    useEffect(() => {
+        load();
+    }, [open]);
+
+    // Fetch new snapshot on opening of the widget
+    useEffect(() => {
+        if (open) load();
   }, [open]);
 
-  return (
-      <>
-          <Card variant="large" transparent noPadding>
-              <View className="flex-1 pt-1.5">
-                  {!!onMenuPress && (
-                      <View style={{ position: "absolute", top: 6, right: 6, zIndex: 10 }}>
-                          <Pressable onPress={onMenuPress} hitSlop={10}>
-                              <MaterialIcons name="more-vert" size={26} color="white" />
-                          </Pressable>
-                      </View>
-                  )}
-
+    return (
+        <>
+            <Card variant="large" transparent noPadding className="shadow-none">
+              <View className="flex-1">
                   <Pressable
                       onPress={() => setOpen(true)}
                       style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.94 : 1 }]}
                   >
                       <View
                           className="overflow-hidden"
-                          style={{ flex: 1, width: "100%", minHeight: 148, borderRadius: 22 }}
+                          style={{ flex: 1, width: "100%", minHeight: 180 }}
                       >
                           {!!uri ? (
                               <Image

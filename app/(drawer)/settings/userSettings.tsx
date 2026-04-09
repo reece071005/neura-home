@@ -7,29 +7,25 @@ import { logout } from "@/lib/auth/session";
 import { getUserProfile, UserProfile } from "@/lib/api/auth/getUserProfile"
 
 // @ts-ignore
-import AccountIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientAccountOutline.svg";
+import AccountIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientAccountOutline.svg";
 // @ts-ignore
-import BrainIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientBrainOutline.svg";
+import BrainIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientBrainOutline.svg";
 // @ts-ignore
-import SecurityIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientSecurityOutline.svg";
+import SecurityIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientSecurityOutline.svg";
 // @ts-ignore
-import PrivacyIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientPrivacyOutline.svg";
+import PrivacyIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientPrivacyOutline.svg";
 // @ts-ignore
-import Terms_Conditions_Icon from "../../assets/illustrations/customMaterialIcons/outline/gradientTermsConditionsOutline.svg";
+import Terms_Conditions_Icon from "../../../assets/illustrations/customMaterialIcons/outline/gradientTermsConditionsOutline.svg";
 // @ts-ignore
-import ContactIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientContactOutline.svg";
+import ContactIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientContactOutline.svg";
 // @ts-ignore
-import FeedbackIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientFeedbackOutline.svg";
+import FeedbackIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientFeedbackOutline.svg";
 // @ts-ignore
-import LogoutIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientLogoutOutline.svg";
+import LogoutIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientLogoutOutline.svg";
 // @ts-ignore
-import AdminIcon from "../../assets/illustrations/customMaterialIcons/outline/gradientAdminOutline.svg";
+import AdminIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientAdminOutline.svg";
 
-function SettingsItem({
-      title,
-      onPress,
-      Icon,
-      }: {
+function SettingsItem({title, onPress, Icon,}: {
     title: string;
     onPress?: () => void;
     Icon?: React.ComponentType<{ width?: number; height?: number }>;
@@ -88,8 +84,8 @@ export default function UserSettings() {
                 </View>
 
                 <View style={{height: 1, backgroundColor: "#E5E7EB"}}></View>
-                <SettingsItem title="Account" Icon={AccountIcon} onPress={() => router.push("/(drawer)/accountPage")}/>
-                <SettingsItem title="AI & Automation" Icon={BrainIcon} onPress={() => router.push("/(drawer)/aiAndAutomation")}/>
+                <SettingsItem title="Account" Icon={AccountIcon} onPress={() => router.push("/settings/account/accountPage")}/>
+                <SettingsItem title="AI & Automation" Icon={BrainIcon} onPress={() => router.push("/settings/aiAndAutomation/aiAndAutomation")}/>
                 <SettingsItem title="Security" Icon={SecurityIcon}/>
                 <SettingsItem title="Privacy" Icon={PrivacyIcon}/>
                 <SettingsItem title="Terms and Conditions" Icon={Terms_Conditions_Icon}/>
@@ -101,7 +97,7 @@ export default function UserSettings() {
             </ScrollView>
                   {me?.role ==="admin" && (
                       <View style={{borderTopWidth: 1, borderTopColor: "#E5E7EB"}}>
-                          <SettingsItem title="Admin" Icon={AdminIcon} onPress={() => router.push("/(drawer)/adminPage")}/>
+                          <SettingsItem title="Admin" Icon={AdminIcon} onPress={() => router.push("/settings/adminPage")}/>
                       </View>
                   )}
         </SafeAreaView>

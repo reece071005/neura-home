@@ -9,9 +9,7 @@ import GradientButton from "@/components/GradientButton";
 import GradientTextInput from "@/components/GradientTextInput";
 import MdiIcon from "@/components/MdiIcon";
 
-import { changePasswordSelf } from "@/lib/api/auth"; // adjust path
-
-
+import { changePasswordSelf } from "@/lib/api/auth";
 
 export default function ResetPasswordPage() {
   const [oldPassword, setOldPassword] = useState("");
@@ -26,12 +24,14 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+
   const onSubmit = async () => {
     setFormError(null);
     setOldPasswordError(null);
     setNewPasswordError(null);
     setConfirmPasswordError(null);
 
+    // Input checks
     let hasError = false;
 
     if (!oldPassword) {
@@ -60,11 +60,10 @@ export default function ResetPasswordPage() {
     try {
       setLoading(true);
 
-
       await changePasswordSelf(oldPassword, newPassword, confirmPassword);
 
       setSuccess(true);
-      setTimeout(() => router.replace("/(drawer)/accountPage"), 1500);
+      setTimeout(() => router.replace("/settings/account/accountPage"), 1500);
     } catch (err: any) {
       const msg =
           typeof err?.message === "string"
@@ -91,7 +90,6 @@ export default function ResetPasswordPage() {
 
   return (
       <SafeAreaView style={{flex: 1, backgroundColor: "white"}}>
-        {/* Header */}
         <View style={{
           flexDirection: "row",
           alignItems: "center",
@@ -99,7 +97,7 @@ export default function ResetPasswordPage() {
           paddingBottom: 12,
           paddingHorizontal: 16
         }}>
-          <Pressable onPress={() => router.replace("/(drawer)/accountPage")} hitSlop={8}>
+          <Pressable onPress={() => router.replace("/settings/account/accountPage")} hitSlop={8}>
             <MdiIcon path={mdiArrowLeft} size={24} color="#4985EE"/>
           </Pressable>
 
@@ -137,7 +135,7 @@ export default function ResetPasswordPage() {
               ) : null}
             </View>
 
-            {/* Form */}
+            {/* Reset Password Form */}
             <View className="pt-4">
               <View className="w-full gap-1">
                 <GradientTextInput

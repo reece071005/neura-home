@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
@@ -23,7 +23,6 @@ import {
 import { listDevices, type ApiDevice } from "@/lib/api/devices";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 type DialogState = {
@@ -39,8 +38,7 @@ type DialogState = {
 
 const DIALOG_HIDDEN: DialogState = { visible: false, title: "" };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
+//Device kinds
 const KIND_LABEL: Record<ApiDevice["kind"], string> = {
   light: "Lights",
   fan: "Fans",
@@ -63,8 +61,7 @@ function grouped(devices: ApiDevice[]): [string, ApiDevice[]][] {
   return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
+//Status indicator
 function StatusPill({ status, error }: { status: SaveStatus; error?: string | null }) {
   if (status === "idle") return null;
   const config = {
@@ -73,98 +70,90 @@ function StatusPill({ status, error }: { status: SaveStatus; error?: string | nu
     error:  { bg: "#FEE2E2", text: "#DC2626", label: "Error" },
   }[status];
   return (
-    <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: config.bg }}>
-      <Text style={{ fontSize: 12, fontWeight: "600", color: config.text }}>{config.label}</Text>
-    </View>
+      <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: config.bg }}>
+        <Text style={{ fontSize: 12, fontWeight: "600", color: config.text }}>{config.label}</Text>
+      </View>
   );
 }
 
+//Section Cards for screen
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <View className="px-6 pt-4">
-      <Text className="text-primaryTo text-h3 font-bold">{title}</Text>
-      <View className="mt-3 rounded-2xl border border-gray-200 bg-white overflow-hidden">
-        {children}
+      <View className="px-6 pt-4">
+        <Text className="text-primaryTo text-h3 font-bold">{title}</Text>
+        <View className="mt-3 rounded-2xl border border-gray-200 bg-white overflow-hidden">
+          {children}
+        </View>
       </View>
-    </View>
   );
 }
 
-function DeviceRow({
-  device,
-  isAdded,
-  isLast,
-  onToggle,
-}: {
+function DeviceRow({device, isAdded, isLast, onToggle}: {
   device: ApiDevice;
   isAdded: boolean;
   isLast: boolean;
   onToggle: () => void;
 }) {
   return (
-    <View className={`px-4 py-3 flex-row items-center justify-between ${!isLast ? "border-b border-gray-200" : ""}`}>
-      <View className="flex-1 pr-3">
-        <Text className="text-subtext text-black" numberOfLines={1}>{device.name}</Text>
-        {!!device.area && (
-          <Text className="text-hint text-textSecondary mt-0.5" numberOfLines={1}>{device.area}</Text>
-        )}
+      <View className={`px-4 py-3 flex-row items-center justify-between ${!isLast ? "border-b border-gray-200" : ""}`}>
+        <View className="flex-1 pr-3">
+          <Text className="text-subtext text-black" numberOfLines={1}>{device.name}</Text>
+          {!!device.area && (
+              <Text className="text-hint text-textSecondary mt-0.5" numberOfLines={1}>{device.area}</Text>
+          )}
+        </View>
+        <Pressable
+            onPress={onToggle}
+            hitSlop={10}
+            className="px-3 py-2 rounded-2xl items-center justify-center"
+            style={({ pressed }) => ({
+              backgroundColor: isAdded ? "#FFF1F2" : "white",
+              borderWidth: 1,
+              borderColor: isAdded ? "#FCA5A5" : "#D1D5DB",
+              opacity: pressed ? 0.7 : 1,
+            })}
+        >
+          <Text style={{ fontSize: 13, fontWeight: "600", color: isAdded ? "#EF4444" : "#111827" }}>
+            {isAdded ? "Remove" : "Add"}
+          </Text>
+        </Pressable>
       </View>
-      <Pressable
-        onPress={onToggle}
-        hitSlop={10}
-        className="px-3 py-2 rounded-2xl items-center justify-center"
-        style={({ pressed }) => ({
-          backgroundColor: isAdded ? "#FFF1F2" : "white",
-          borderWidth: 1,
-          borderColor: isAdded ? "#FCA5A5" : "#D1D5DB",
-          opacity: pressed ? 0.7 : 1,
-        })}
-      >
-        <Text style={{ fontSize: 13, fontWeight: "600", color: isAdded ? "#EF4444" : "#111827" }}>
-          {isAdded ? "Remove" : "Add"}
-        </Text>
-      </Pressable>
-    </View>
   );
 }
 
-// ─── Main screen ──────────────────────────────────────────────────────────────
-
+// Main screen
 export default function CreateRoomScreen() {
-  // If `id` param is present we're in edit mode
+  // If id param is present edit mode is active
   const { id } = useLocalSearchParams<{ id?: string }>();
   const roomId = id ? Number(id) : null;
   const isEditMode = roomId !== null;
 
-  // ── Data ─────────────────────────────────────────────────────────────────────
+  // Data
   const [existingRoom, setExistingRoom] = useState<RoomDto | null>(null);
   const [allDevices, setAllDevices] = useState<ApiDevice[]>([]);
   const [loading, setLoading] = useState(isEditMode); // only show loader in edit mode
 
-  // ── Form state ────────────────────────────────────────────────────────────────
+  // Form state
   const [roomName, setRoomName] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
 
-  // ── Edit mode toggle (only relevant when editing) ─────────────────────────────
-  // In create mode the form is always "open". In edit mode it starts read-only.
+  // Edit Mode Toggle
   const [isEditing, setIsEditing] = useState(!isEditMode);
   const [devicesLoading, setDevicesLoading] = useState(false);
 
-  // ── Status ───────────────────────────────────────────────────────────────────
+  // Save Status
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogState>(DIALOG_HIDDEN);
 
   const nameInputRef = useRef<TextInput>(null);
 
-  // ── Load ─────────────────────────────────────────────────────────────────────
   useFocusEffect(
     useCallback(() => {
       const currentId = id && id !== "" ? Number(id) : null;
       const currentlyEditMode = currentId !== null && !isNaN(currentId);
 
-      // Always reset form state on focus
       setRoomName("");
       setSelectedIds(new Set());
       setQuery("");
@@ -181,7 +170,7 @@ export default function CreateRoomScreen() {
             setExistingRoom(room);
             setRoomName(room.name);
             setSelectedIds(new Set(room.entity_ids));
-            setAllDevices(devices); // ← devices available from the start
+            setAllDevices(devices);
           })
           .catch((e) => {
             setDialog({
@@ -200,9 +189,8 @@ export default function CreateRoomScreen() {
           .then((devices) => setAllDevices(devices))
           .catch(() => {});
       }
-    }, [id]) // ← depends on `id` directly, not `isEditMode`
+    }, [id])
   );
-  // ── Derived ──────────────────────────────────────────────────────────────────
 
   const filteredDevices = query.trim()
     ? allDevices.filter(
@@ -215,8 +203,6 @@ export default function CreateRoomScreen() {
 
   const groupedDevices = grouped(filteredDevices);
   const selectedDevices = allDevices.filter((d) => selectedIds.has(d.entity_id));
-
-  // ── Handlers ──────────────────────────────────────────────────────────────────
 
   const toggleDevice = useCallback((entityId: string) => {
     setSelectedIds((prev) => {
@@ -271,9 +257,9 @@ export default function CreateRoomScreen() {
     }
   }
 
+  // Revert to last saved state
   const handleCancel = () => {
     if (isEditMode && isEditing) {
-      // Revert to last saved state
       if (existingRoom) {
         setRoomName(existingRoom.name);
         setSelectedIds(new Set(existingRoom.entity_ids));
@@ -282,10 +268,11 @@ export default function CreateRoomScreen() {
       setIsEditing(false);
       Keyboard.dismiss();
     } else {
-      router.push("/(drawer)/aiAndAutomation");
+      router.push("/settings/aiAndAutomation/aiAndAutomation");
     }
   };
 
+  //Deleting a room
   const handleDeletePress = () => {
     setDialog({
       visible: true,
@@ -315,8 +302,7 @@ export default function CreateRoomScreen() {
     });
   };
 
-  // ── Loading state (edit mode only) ───────────────────────────────────────────
-
+  // Loading state (edit mode only)
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
@@ -328,8 +314,7 @@ export default function CreateRoomScreen() {
     );
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────────
-
+  // Rendering screen
   const screenTitle = isEditMode
     ? (existingRoom?.name ?? "Room")
     : "New Room";
@@ -340,7 +325,6 @@ export default function CreateRoomScreen() {
     <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: "white" }}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
 
-        {/* ── Header ── */}
         <View style={{
           flexDirection: "row",
           alignItems: "center",
@@ -360,7 +344,6 @@ export default function CreateRoomScreen() {
             <StatusPill status={saveStatus} error={saveError} />
           </View>
 
-          {/* Right: Save (when editing/creating) or Edit (when viewing) */}
           {isEditing ? (
             <Pressable onPress={handleSave} disabled={saveStatus === "saving"} hitSlop={12}>
               <Text style={{ fontWeight: "700", color: saveStatus === "saving" ? "#9CA3AF" : "#111827" }}>
@@ -405,13 +388,12 @@ export default function CreateRoomScreen() {
             </View>
         )}
 
-
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* ── Room name ── */}
+          {/* Room name */}
           <SectionCard title="Room name">
             <View className="px-4 py-4">
               <TextInput
@@ -433,7 +415,7 @@ export default function CreateRoomScreen() {
             </View>
           </SectionCard>
 
-          {/* ── Devices in room ── */}
+          {/* Devices in room */}
           <SectionCard title={`Devices in room (${selectedDevices.length})`}>
             {selectedDevices.length === 0 ? (
               <View className="px-4 py-4">
@@ -477,7 +459,7 @@ export default function CreateRoomScreen() {
             )}
           </SectionCard>
 
-          {/* ── Device picker — shown when editing or creating ── */}
+          {/* Device picker */}
           {isEditing && (
             <>
               <View className="px-6 pt-4">
@@ -550,7 +532,7 @@ export default function CreateRoomScreen() {
             </>
           )}
 
-          {/* ── Delete — only in edit mode ── */}
+          {/* Delete Room, only in edit mode */}
           {isEditMode && (
             <View className="px-6 pt-6">
               <Pressable

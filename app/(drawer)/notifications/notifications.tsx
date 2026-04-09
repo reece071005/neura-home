@@ -67,7 +67,7 @@ function VisionNotificationCard({
   const onPress = () => {
     onMarkRead(item.id);
     router.push({
-      pathname: "/(drawer)/visionNotificationDetail",
+      pathname: "/notifications/visionNotificationDetail",
       params: { id: String(item.id) },
     });
   };

@@ -16,6 +16,7 @@ import {
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.10.123:8000";
 
 type TextCommandResponse = any;
+type SpeechErrorEvent = { error?: string; message?: string };
 
 function extractAssistantText(payload: any): string {
   if (!payload) return "";
@@ -42,6 +43,20 @@ export function useVoiceAssistant() {
   const [isPlayingBack, setIsPlayingBack] = useState(false);
   const [lastText, setLastText] = useState("");
   const [lastResult, setLastResult] = useState<TextCommandResponse | null>(null);
+  const [recognitionError, setRecognitionError] = useState("");
+
+  function getSpeechErrorMessage(event: SpeechErrorEvent): string {
+    if (event.error === "no-speech") {
+      return "No speech detected. Please try again.";
+    }
+    if (event.error === "audio-capture") {
+      return "Microphone isn't available right now. Please try again.";
+    }
+    if (event.error === "not-allowed") {
+      return "Microphone permission is required.";
+    }
+    return event.message?.trim() || "Couldn't process speech. Please try again.";
+  }
 
   // ─── Speech recognition event listeners ──────────────────────────────────
 
@@ -64,14 +79,16 @@ export function useVoiceAssistant() {
 
     try {
       await _sendCommand(finalText, { playback: true });
-    } catch (e) {
-      console.error("[STT] Error sending command after recognition ended:", e);
+    } catch {
+      if (isMountedRef.current) {
+        setRecognitionError("Couldn't process your request. Please try again.");
+      }
     }
   });
 
   useSpeechRecognitionEvent("error", (event) => {
-    console.error("[STT] Recognition error:", event.error, event.message);
     if (isMountedRef.current) {
+      setRecognitionError(getSpeechErrorMessage(event));
       setIsRecording(false);
       setIsLoading(false);
     }
@@ -265,6 +282,7 @@ export function useVoiceAssistant() {
     if (!granted) throw new Error("Microphone / speech recognition permission not granted");
 
     await stopPlayback();
+    if (isMountedRef.current) setRecognitionError("");
 
     transcriptRef.current = "";
     if (isMountedRef.current) {
@@ -290,7 +308,12 @@ export function useVoiceAssistant() {
 
   // Called by the keyboard sheet — same backend route, no STT involved
   async function sendTextCommand(text: string) {
+    if (isMountedRef.current) setRecognitionError("");
     return _sendCommand(text, { playback: true });
+  }
+
+  function clearRecognitionError() {
+    if (isMountedRef.current) setRecognitionError("");
   }
 
   return {
@@ -299,9 +322,11 @@ export function useVoiceAssistant() {
     isPlayingBack,
     lastText,
     lastResult,
+    recognitionError,
     startRecording,
     stopAndSend,
     stopPlayback,
     sendTextCommand,
+    clearRecognitionError,
   };
 }

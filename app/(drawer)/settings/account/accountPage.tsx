@@ -17,6 +17,7 @@ import GradientButton from "@/components/GradientButton";
 import { getUserProfile, UserProfile } from "@/lib/api/auth/getUserProfile";
 import { getMyUserFace, deleteMyUserFace, UserFaceResponse } from "@/lib/api/faces";
 
+// Template for account section card
 function SectionCard({
   title,
   children,
@@ -34,6 +35,7 @@ function SectionCard({
   );
 }
 
+//Template for rows for account information
 function InfoRow({
   label,
   value,
@@ -57,6 +59,7 @@ function InfoRow({
   );
 }
 
+// Reset password button template
 function OutlineButton({
   title,
   onPress,
@@ -87,15 +90,14 @@ export default function AccountPage() {
   const faceUri = useMemo(() => {
     if (!face?.image_base64) return null;
 
-    // If API returns a normal URL, use it. If it returns raw base64, wrap it.
     const s = face.image_base64.trim();
     if (s.startsWith("http://") || s.startsWith("https://") || s.startsWith("file://")) return s;
     if (s.startsWith("data:image/")) return s;
 
-    // Default to jpeg; adjust if your backend returns png.
     return `data:image/jpeg;base64,${s}`;
   }, [face?.image_base64]);
 
+  // Remove face function
   const handleRemoveFace = () => {
     Alert.alert(
       "Remove face profile",
@@ -121,6 +123,7 @@ export default function AccountPage() {
     );
   };
 
+  // Loading function
   useFocusEffect(
     useCallback(() => {
       let mounted = true;
@@ -166,7 +169,7 @@ export default function AccountPage() {
 
         <View style={{ height: 1, backgroundColor: "#E5E7EB" }} />
 
-        {/* Loading */}
+        {/* Loading Indicator */}
         {loading ? (
           <View className="pt-10 items-center">
             <ActivityIndicator />
@@ -181,7 +184,7 @@ export default function AccountPage() {
               <InfoRow label="Role" value={me?.role ?? "resident"} isLast />
             </SectionCard>
 
-            {/* Security (secondary style button) */}
+            {/* Change password */}
             <SectionCard title="Security">
               <View className="px-4 py-4">
                 <Text className="text-hint text-textSecondary">
@@ -197,7 +200,7 @@ export default function AccountPage() {
               </View>
             </SectionCard>
 
-            {/* Face Profile (primary CTA is here) */}
+            {/* Face Profile  */}
             <SectionCard title="Face profile">
               <View className="px-4 py-4">
                 {faceLoading ? (
@@ -227,10 +230,10 @@ export default function AccountPage() {
 
                 <GradientButton
                   title={face ? "Update face image" : "Upload face image"}
-                  onPress={() => router.push("/(drawer)/uploadFace")}
+                  onPress={() => router.push("/settings/account/uploadFace")}
                 />
 
-                {/* Destructive action becomes a quiet link */}
+                {/* Remove face image button */}
                 {face && (
                   <View className="mt-4 items-center">
                     {faceDeleting ? (

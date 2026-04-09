@@ -29,11 +29,9 @@ const Card = ({
         !allowOverflow && "overflow-hidden"
     )
 
-    const padding = noPadding ? "":
-        {
-        small: "p-2 h-[86px]",
-        large: "p-4 h-[180px]",
-        }[variant];
+    const padding = noPadding
+      ? { small: "h-[102px]", large: "h-[180px]" }[variant]
+      : { small: "h-[86px] p-2", large: "h-[180px] p-4" }[variant];
 
     const content = (
         <View

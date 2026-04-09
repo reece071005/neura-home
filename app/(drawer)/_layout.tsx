@@ -3,9 +3,7 @@ import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import { View, Text, Pressable } from "react-native";
 import { router } from "expo-router";
-import { sendLocalNotification } from "@/services/pushNotifications";
 
-import BurgerSearchWidget from "@/components/BurgerSearchWidget";
 import BurgerWidget from "@/components/BurgerWidget";
 
 import TabIcon from "@/components/TabIcon";
@@ -47,7 +45,7 @@ function CustomDrawerContent(props: any) {
                     className="flex-row items-center text-center"
                     onPress={() => {
                         props.navigation.closeDrawer();
-                        router.push("/(drawer)/notifications");
+                        router.push("/notifications/notifications");
                     }}
                 >
                     <TabIcon name="notifications" size={30} />
@@ -56,7 +54,6 @@ function CustomDrawerContent(props: any) {
                     </Text>
                 </Pressable>
 
-                {/* ✅ Devices routes into its own stack */}
                 <Pressable
                     className="flex-row items-center text-center"
                     onPress={() => {
@@ -75,7 +72,7 @@ function CustomDrawerContent(props: any) {
                 className="flex-row items-center text-center"
                 onPress={() => {
                     props.navigation.closeDrawer();
-                    router.push("/(drawer)/userSettings");
+                    router.push("/settings/userSettings");
                 }}
             >
                 <TabIcon name="settings" size={30} />
@@ -108,7 +105,7 @@ export default function DrawerLayout() {
                         isTabsWorld ? <BurgerWidget/> : <BurgerWidget/>
                     ),
                     headerLeftContainerStyle: {
-                        paddingLeft: isTabsWorld ? 10 : 3,   // 👈 different per world
+                        paddingLeft: isTabsWorld ? 10 : 3,
                     },
                 }
             }}
@@ -126,28 +123,28 @@ export default function DrawerLayout() {
             />
 
             <Drawer.Screen
-                name="uploadFace"
+                name="settings/account/uploadFace"
                 options={{
                     drawerItemStyle: { display: "none" },
                     headerShown: false,
                 }}
             />
             <Drawer.Screen
-                name="resetPassword"
+                name="settings/account/resetPassword"
                 options={{
                     drawerItemStyle: { display: "none" },
                     headerShown: false,
                 }}
             />
             <Drawer.Screen
-                name="createRoom"
+                name="settings/aiAndAutomation/createRoom"
                 options={{
                     drawerItemStyle: { display: "none" },
                     headerShown: false,
                 }}
             />
             <Drawer.Screen
-                name="visionNotificationDetail"
+                name="notifications/visionNotificationDetail"
                 options={{
                     drawerItemStyle: { display: "none" },
                     headerShown: false,

@@ -25,10 +25,12 @@ const VoiceAssistant = () => {
     isLoading,
     lastText,
     lastResult,
+    recognitionError,
     startRecording,
     stopAndSend,
     stopPlayback,
     sendTextCommand,
+    clearRecognitionError,
   } = useVoiceAssistant();
 
   const [errorMsg, setErrorMsg] = useState<string>("");
@@ -83,6 +85,7 @@ const VoiceAssistant = () => {
     if (!text.trim()) return;
     try {
       setErrorMsg("");
+      clearRecognitionError();
       await stopPlayback();
       await sendTextCommand(text);
       closeSheet();
@@ -135,8 +138,10 @@ const VoiceAssistant = () => {
               <Text className="text-black font-semibold mt-1">—</Text>
             )}
 
-            {!!errorMsg && (
-              <Text className="text-red-500 font-medium text-subtext mt-3">{errorMsg}</Text>
+            {!!(errorMsg || recognitionError) && (
+              <Text className="text-red-500 font-medium text-subtext mt-3">
+                {errorMsg || recognitionError}
+              </Text>
             )}
           </View>
 
@@ -145,6 +150,7 @@ const VoiceAssistant = () => {
               onPressIn={async () => {
                 try {
                   setErrorMsg("");
+                  clearRecognitionError();
                   await stopPlayback();
                   await startRecording();
                 } catch (e: any) {
@@ -154,6 +160,7 @@ const VoiceAssistant = () => {
               onPressOut={async () => {
                 try {
                   setErrorMsg("");
+                  clearRecognitionError();
                   await stopAndSend({ executeCommand: true, playback: true });
                 } catch (e: any) {
                   setErrorMsg(e?.message ?? "Failed to process audio");
