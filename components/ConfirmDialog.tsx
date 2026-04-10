@@ -36,7 +36,7 @@ export default function ConfirmDialog({
         {/* Sheet */}
         <Pressable
           onPress={(e) => e.stopPropagation()}
-          className="bg-white rounded-t-3xl px-5 pt-5 pb-4"
+          className="bg-white rounded-t-3xl px-5 pt-5 pb-8"
         >
           <Text className={` text-lg font-bold ${
             error ? "text-red-600": "text-black"

@@ -1,31 +1,18 @@
-import React, { useCallback, useMemo, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useMemo, useState } from "react";
+import {Text, Pressable, View, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { mdiPencil } from "@mdi/js";
 
-import {
-  Text,
-  Pressable,
-  View,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
-
-import {
-  AvailableCamera,
-  getAvailableCameras,
-  getTrackedCameras,
-  addTrackedCamera,
-  removeTrackedCamera,
-} from "@/lib/api/deviceControllers/camera";
+import {AvailableCamera, getAvailableCameras, getTrackedCameras, addTrackedCamera, removeTrackedCamera} from "@/lib/api/deviceControllers/camera";
+import { getRooms } from "@/lib/api/ai/rooms";
 
 import GradientButton from "@/components/GradientButton";
 import AddCameraModal from "@/components/AddCameraModal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import MdiIcon from "@/components/MdiIcon";
-
-import { getRooms } from "@/lib/api/ai/rooms";
+import SectionCard from "@/components/aiAndAutomation/SectionCard";
+import Row from "@/components/aiAndAutomation/Row";
 
 type Camera = {
   id: string;
@@ -50,75 +37,6 @@ type DialogState = {
 };
 
 const DIALOG_HIDDEN: DialogState = { visible: false, title: "" };
-
-// Small shared components
-function SectionCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View className="px-6 pt-4">
-      <Text className="text-primaryTo text-h3 font-bold">{title}</Text>
-      <View className="mt-3 rounded-2xl border border-gray-200 bg-white overflow-hidden">
-        {children}
-      </View>
-    </View>
-  );
-}
-
-function Row({
-  title,
-  subtitle,
-  right,
-  isLast,
-  onPress,
-}: {
-  title: string;
-  subtitle?: string | null;
-  right?: React.ReactNode;
-  isLast?: boolean;
-  onPress?: () => void;
-}) {
-  const inner = (
-      <View className="flex-row items-center justify-between">
-        <View className="flex-1 pr-3">
-          <Text className="text-subtext text-black" numberOfLines={1}>
-            {title}
-          </Text>
-          {!!subtitle && (
-              <Text className="text-hint text-textSecondary mt-1" numberOfLines={1}>
-                {subtitle}
-              </Text>
-          )}
-        </View>
-        {right}
-      </View>
-  );
-
-  if (onPress) {
-    return (
-        <Pressable
-            onPress={onPress}
-            className={`px-4 py-4 ${!isLast ? "border-b border-gray-200" : ""}`}
-            style={({ pressed }) => ({
-              opacity: pressed ? 0.7 : 1,
-              backgroundColor: pressed ? "#F9FAFB" : "white",
-            })}
-        >
-          {inner}
-        </Pressable>
-    );
-  }
-
-  return (
-      <View className={`px-4 py-4 ${!isLast ? "border-b border-gray-200" : ""}`}>
-        {inner}
-      </View>
-  );
-}
 
 function ChipButton({
   title,
@@ -189,6 +107,11 @@ export default function AiAutomationPage() {
   const [removingCamId, setRemovingCamId] = useState<string | null>(null);
 
   const [dialog, setDialog] = useState<DialogState>(DIALOG_HIDDEN);
+
+  const [trainingFrequencyValue, setTrainingFrequencyValue] = useState(1);
+  const [trainingFrequencyUnit, setTrainingFrequencyUnit] = useState<"days" | "weeks" | "months">("weeks");
+  const [lastTrainedAt, setLastTrainedAt] = useState<string | null>(null);
+  const [trainingNow, setTrainingNow] = useState(false);
 
   const showError = (message: string) => {
     setDialog({
@@ -428,6 +351,62 @@ export default function AiAutomationPage() {
                         </View>
                       </>
                   )}
+                </SectionCard>
+                {/* AI Training */}
+                <SectionCard title="AI training & schedule">
+                  <View className="px-4 pt-4">
+                    <Text className="text-hint text-textSecondary">
+                      Neure Home periodically retrains its behaviour models using historical data.
+                      You can control how often retraining happens.
+                    </Text>
+                  </View>
+
+                  <View className="mt-2">
+
+                    <Row
+                      title="Training frequency"
+                      subtitle={`Every ${trainingFrequencyValue} ${trainingFrequencyUnit}`}
+                      right={
+                        <MdiIcon path={mdiPencil} size={22} color="#9CA3AF" />
+                      }
+                      onPress={() => {
+                        // Later: open modal to configure schedule
+                      }}
+                    />
+
+                    <Row
+                      title="Last trained"
+                      subtitle={
+                        lastTrainedAt
+                          ? lastTrainedAt
+                          : "Model has not been trained yet"
+                      }
+                      isLast
+                    />
+
+                  </View>
+
+                  <View className="px-4 py-4">
+                    <GradientButton
+                      title={trainingNow ? "Training…" : "Train AI now"}
+                      onPress={async () => {
+                        try {
+                          setTrainingNow(true);
+
+                          // placeholder logic for now
+                          await new Promise((r) => setTimeout(r, 1500));
+
+                          setLastTrainedAt(new Date().toLocaleString());
+                        } finally {
+                          setTrainingNow(false);
+                        }
+                      }}
+                    />
+
+                    <Text className="mt-3 text-hint text-textSecondary">
+                      Training may take several minutes depending on the amount of data available.
+                    </Text>
+                  </View>
                 </SectionCard>
 
                 {/* Safety context */}

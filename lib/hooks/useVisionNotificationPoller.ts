@@ -9,7 +9,6 @@ const POLL_INTERVAL = 30000; // 30 seconds
 export function useVisionNotificationPoller() {
   const knownIdsRef = useRef<Set<number> | null>(null);
   const stoppedRef = useRef(false);
-  console.log("Started polling for vision notifications");
 
   useEffect(() => {
     async function poll() {
@@ -32,7 +31,6 @@ export function useVisionNotificationPoller() {
 
         // Fire a notification for each new one
         for (const item of newItems) {
-            console.log("New notification:", item);
           await sendLocalNotification(
             "New Detection Alert",
             item.message ?? "Motion detected"

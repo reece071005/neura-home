@@ -1,7 +1,6 @@
 import React from "react";
 import { View } from "react-native";
 
-// Your current SVGs (imported as components)
 import LogoGradientSquareNoText from '@/assets/logo/svg/logoGradientSquareNoText.svg';
 import LogoWhiteSquareWithText from '@/assets/logo/svg/logoWhiteSquareWithText.svg';
 

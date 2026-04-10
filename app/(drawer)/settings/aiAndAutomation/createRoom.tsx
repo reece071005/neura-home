@@ -1,27 +1,14 @@
 import React, { useCallback, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 
-import {
-  createRoom,
-  getRoom,
-  updateRoom,
-  deleteRoom,
-  type RoomDto,
-} from "@/lib/api/ai/rooms";
+import { createRoom, getRoom, updateRoom, deleteRoom, type RoomDto } from "@/lib/api/ai/rooms";
 import { listDevices, type ApiDevice } from "@/lib/api/devices";
+
 import ConfirmDialog from "@/components/ConfirmDialog";
+import SectionCard from "@/components/aiAndAutomation/SectionCard"
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -51,6 +38,57 @@ const KIND_LABEL: Record<ApiDevice["kind"], string> = {
   binary_sensor: "Sensors",
 };
 
+function Row({
+  title,
+  subtitle,
+  right,
+  isLast,
+  onPress,
+}: {
+  title: string;
+  subtitle?: string | null;
+  right?: React.ReactNode;
+  isLast?: boolean;
+  onPress?: () => void;
+}) {
+  const inner = (
+    <View className="flex-row items-center justify-between">
+      <View className="flex-1 pr-3">
+        <Text className="text-subtext text-black" numberOfLines={1}>
+          {title}
+        </Text>
+        {!!subtitle && (
+          <Text className="text-hint text-textSecondary mt-1" numberOfLines={1}>
+            {subtitle}
+          </Text>
+        )}
+      </View>
+      {right}
+    </View>
+  );
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        className={`px-4 py-4 ${!isLast ? "border-b border-gray-200" : ""}`}
+        style={({ pressed }) => ({
+          opacity: pressed ? 0.7 : 1,
+          backgroundColor: pressed ? "#F9FAFB" : "white",
+        })}
+      >
+        {inner}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View className={`px-4 py-4 ${!isLast ? "border-b border-gray-200" : ""}`}>
+      {inner}
+    </View>
+  );
+}
+
 function grouped(devices: ApiDevice[]): [string, ApiDevice[]][] {
   const map = new Map<string, ApiDevice[]>();
   for (const d of devices) {
@@ -76,17 +114,6 @@ function StatusPill({ status, error }: { status: SaveStatus; error?: string | nu
   );
 }
 
-//Section Cards for screen
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-      <View className="px-6 pt-4">
-        <Text className="text-primaryTo text-h3 font-bold">{title}</Text>
-        <View className="mt-3 rounded-2xl border border-gray-200 bg-white overflow-hidden">
-          {children}
-        </View>
-      </View>
-  );
-}
 
 function DeviceRow({device, isAdded, isLast, onToggle}: {
   device: ApiDevice;
@@ -179,7 +206,7 @@ export default function CreateRoomScreen() {
               message: e?.message ?? "Please go back and try again.",
               error: true,
               confirmText: "Go back",
-              onConfirm: () => router.push("/(drawer)/aiAndAutomation"),
+              onConfirm: () => router.push("/settings/aiAndAutomation/aiAndAutomation"),
             });
           })
           .finally(() => setLoading(false));
@@ -203,6 +230,8 @@ export default function CreateRoomScreen() {
 
   const groupedDevices = grouped(filteredDevices);
   const selectedDevices = allDevices.filter((d) => selectedIds.has(d.entity_id));
+
+  const hasClimateDevice = selectedDevices.some(d => d.kind === "climate");
 
   const toggleDevice = useCallback((entityId: string) => {
     setSelectedIds((prev) => {
@@ -234,7 +263,7 @@ export default function CreateRoomScreen() {
       } else {
         await createRoom(trimmed, Array.from(selectedIds));
         setSaveStatus("saved");
-        setTimeout(() => router.back(), 800);
+        setTimeout(() => router.push("/settings/aiAndAutomation/aiAndAutomation"), 800);
       }
     } catch (e: any) {
       const detail = e?.detail ?? e?.message ?? "Failed to save.";
@@ -286,7 +315,7 @@ export default function CreateRoomScreen() {
         (async () => {
           try {
             await deleteRoom(roomId!);
-            router.push('/(drawer)/aiAndAutomation')
+            router.push('/settings/aiAndAutomation/aiAndAutomation')
           } catch (e: any) {
             setDialog({
               visible: true,
@@ -458,6 +487,48 @@ export default function CreateRoomScreen() {
               ))
             )}
           </SectionCard>
+
+          {/* Climate automation - only show in view mode and only if room exists */}
+          {isEditMode && !isEditing && (
+            <SectionCard title="Climate automation">
+              <Pressable
+                onPress={() => {
+                  if (hasClimateDevice) {
+                    router.push({
+                      pathname: "/settings/aiAndAutomation/climatePreferences",
+                      params: {
+                        roomId: roomId?.toString() ?? "",
+                        room: roomName ?? "",
+                      },
+                    });
+                  }
+                }}
+                disabled={!hasClimateDevice}
+                className="px-4 py-4 flex-row items-center justify-between"
+                style={({ pressed }) => ({
+                  opacity: !hasClimateDevice ? 0.5 : pressed ? 0.7 : 1,
+                })}
+              >
+                <View className="flex-1">
+                  <Text
+                    className="text-subtext"
+                    style={{ color: hasClimateDevice ? "#111827" : "#9CA3AF" }}
+                  >
+                    Climate preconditioning
+                  </Text>
+                  <Text className="text-hint text-textSecondary mt-1">
+                    {hasClimateDevice
+                      ? "Configure AI temperature control"
+                      : "Add a climate device to enable automation"}
+                  </Text>
+                </View>
+
+                {hasClimateDevice && (
+                  <Text style={{ color: "#9CA3AF", fontSize: 18 }}>›</Text>
+                )}
+              </Pressable>
+            </SectionCard>
+          )}
 
           {/* Device picker */}
           {isEditing && (
