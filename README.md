@@ -33,7 +33,7 @@ An AI-driven smart home platform that learns user routines from time-series sens
 - [System Architecture](#system-architecture)
 - [Getting Started](#getting-started)
 - [Usage](#usage)
-- [Tech Stack](#tech-stack)
+- [Tech Stack](#frontend-tech-stack)
 
 ## Overview
 
