@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import { Text, View, ScrollView, TouchableOpacity } from "react-native";
+import { Alert, Linking, Text, View, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
@@ -11,15 +11,9 @@ import AccountIcon from "../../../assets/illustrations/customMaterialIcons/outli
 // @ts-ignore
 import BrainIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientBrainOutline.svg";
 // @ts-ignore
-import SecurityIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientSecurityOutline.svg";
+import WebsiteIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientWebsiteOutline.svg";
 // @ts-ignore
-import PrivacyIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientPrivacyOutline.svg";
-// @ts-ignore
-import Terms_Conditions_Icon from "../../../assets/illustrations/customMaterialIcons/outline/gradientTermsConditionsOutline.svg";
-// @ts-ignore
-import ContactIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientContactOutline.svg";
-// @ts-ignore
-import FeedbackIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientFeedbackOutline.svg";
+import ChatIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientChatOutline.svg";
 // @ts-ignore
 import LogoutIcon from "../../../assets/illustrations/customMaterialIcons/outline/gradientLogoutOutline.svg";
 // @ts-ignore
@@ -61,6 +55,22 @@ function SettingsItem({title, onPress, Icon,}: {
 
 export default function UserSettings() {
     const [me, setMe] = useState<UserProfile | null>(null);
+    const websiteUrl = "https://neurahome.me";
+    const helpUrl = "https://neurahome.me/assistant.html";
+
+    const openExternalUrl = async (url: string) => {
+        try {
+            const supported = await Linking.canOpenURL(url);
+            if (!supported) {
+                Alert.alert("Cannot open website", "Please try again later.");
+                return;
+            }
+            await Linking.openURL(url);
+        } catch {
+            Alert.alert("Cannot open website", "Please try again later.");
+        }
+    };
+
     useEffect(() => {
         let mounted = true;
 
@@ -86,7 +96,8 @@ export default function UserSettings() {
                 <View style={{height: 1, backgroundColor: "#E5E7EB"}}></View>
                 <SettingsItem title="Account" Icon={AccountIcon} onPress={() => router.push("/settings/account/accountPage")}/>
                 <SettingsItem title="AI & Automation" Icon={BrainIcon} onPress={() => router.push("/settings/aiAndAutomation/aiAndAutomation")}/>
-                <SettingsItem title="Contact" Icon={ContactIcon} />
+                <SettingsItem title="Website" Icon={WebsiteIcon} onPress={() => openExternalUrl(websiteUrl)} />
+                <SettingsItem title="Help" Icon={ChatIcon} onPress={() => openExternalUrl(helpUrl)} />
                 <SettingsItem title="Logout" Icon={LogoutIcon} onPress={logout}/>
 
                 <View style={{flex: 1}}></View>
@@ -99,4 +110,3 @@ export default function UserSettings() {
         </SafeAreaView>
     );
 }
-
