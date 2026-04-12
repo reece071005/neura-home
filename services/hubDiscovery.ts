@@ -2,116 +2,156 @@ import * as Network from "expo-network";
 import { getHubBaseUrl } from "@/lib/storage/hubStore";
 
 export type Hub = {
-    id: string;
-    name: string;
-    ip: string;
+  id: string;
+  name: string;
+  ip: string;
 };
 
 export type DiscoverOptions = {
-    timeoutMs?: number;
-    onFound: (hub: Hub) => void;
-    onTimeout: () => void;
-    onError?: (err: Error) => void;
+  timeoutMs?: number;
+  onFound: (hub: Hub) => void;
+  onTimeout: () => void;
+  onError?: (err: Error) => void;
 };
 
-// Extract subnet (e.g. 192.168.1 from 192.168.1.34)
 function getSubnet(ip: string) {
-    const parts = ip.split(".");
-    return `${parts[0]}.${parts[1]}.${parts[2]}`;
+  const parts = ip.split(".");
+  if (parts.length !== 4) return null;
+  return `${parts[0]}.${parts[1]}.${parts[2]}`;
 }
 
-// Attempt connection to a hub
-async function tryHub(ip: string): Promise<Hub | null> {
-    try {
-        const res = await fetch(`http://${ip}:8000/health`);
 
-        if (!res.ok) return null;
+// Fetch with timeout so dead IPs don't block scanning
+async function fetchWithTimeout(url: string, timeout = 800) {
+  const controller = new AbortController();
 
-        const data = await res.json();
+  const timer = setTimeout(() => controller.abort(), timeout);
 
-        if (data?.status === "healthy") {
-            return {
-                id: data?.hub_id ?? "hub",
-                name: "Neura Hub",
-                ip: `http://${ip}:8000`,
-            };
-        }
-
-    } catch {}
-
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    return res;
+  } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-//Discovery process for macbook (mdns not possible)
+async function tryHub(ip: string): Promise<Hub | null> {
+  const res = await fetchWithTimeout(`http://${ip}:8000/health`);
+
+  if (!res || !res.ok) return null;
+
+  try {
+    const data = await res.json();
+
+    if (data?.status === "healthy") {
+      return {
+        id: data?.hub_id ?? "hub",
+        name: "Neura Hub",
+        ip: `http://${ip}:8000`,
+      };
+    }
+  } catch {}
+
+  return null;
+}
+
+
+// Hub discovery
 export function startHubDiscovery(opts: DiscoverOptions) {
 
-    const timeoutMs = opts.timeoutMs ?? 6000;
-    const preferredIp = "192.168.10.123";
+  const timeoutMs = opts.timeoutMs ?? 6000;
+  const preferredIp = "192.168.10.123";
 
-    let stopped = false;
+  let stopped = false;
 
-    const scan = async () => {
+  const stop = () => {
+    stopped = true;
+  };
 
-        try {
+  const scan = async () => {
 
-            //Try preferred IP first
-            const preferred = await tryHub(preferredIp);
-            if (stopped) return;
-            if (preferred) {
-                stopped = true;
-                opts.onFound(preferred);
-                return;
-            }
+    try {
+      const preferred = await tryHub(preferredIp);
 
-            //Get device IP
-            const deviceIp = await Network.getIpAddressAsync();
-            if (stopped) return;
-            const subnet = getSubnet(deviceIp);
+      if (preferred && !stopped) {
+        stopped = true;
+        opts.onFound(preferred);
+        return;
+      }
 
-            //Scan subnet
-            for (let i = 1; i < 255 && !stopped; i++) {
+      const deviceIp = await Network.getIpAddressAsync();
+      if (stopped) return;
 
-                const ip = `${subnet}.${i}`;
+      const subnet = getSubnet(deviceIp);
+      if (!subnet) {
+        opts.onError?.(new Error("Unable to determine subnet"));
+        return;
+      }
 
-                if (ip === preferredIp) continue;
+      const ips: string[] = [];
 
-                const hub = await tryHub(ip);
-                if (stopped) return;
+      for (let i = 1; i < 255; i++) {
+        const ip = `${subnet}.${i}`;
+        if (ip !== preferredIp) ips.push(ip);
+      }
 
-                if (hub) {
-                    stopped = true;
-                    opts.onFound(hub);
-                    return;
-                }
-            }
+      const BATCH_SIZE = 20;
 
-            if (!stopped) opts.onTimeout();
+      for (let i = 0; i < ips.length && !stopped; i += BATCH_SIZE) {
 
-        } catch (err) {
-            if (stopped) return;
-            opts.onError?.(err as Error);
+        const batch = ips.slice(i, i + BATCH_SIZE);
+
+        const results = await Promise.all(
+          batch.map(ip => tryHub(ip))
+        );
+
+        const hub = results.find(Boolean);
+
+        if (hub && !stopped) {
+          stopped = true;
+          opts.onFound(hub);
+          return;
         }
-    };
+      }
 
-    scan();
+      if (!stopped) opts.onTimeout();
 
-    const timer = setTimeout(() => {
-        if (stopped) return;
-        stopped = true;
-        opts.onTimeout();
-    }, timeoutMs);
+    } catch (err) {
 
-    return () => {
-        stopped = true;
-        clearTimeout(timer);
-    };
+      if (!stopped) {
+        opts.onError?.(err as Error);
+      }
+
+    }
+
+  };
+
+  scan();
+
+  const timer = setTimeout(() => {
+    if (!stopped) {
+      stopped = true;
+      opts.onTimeout();
+    }
+  }, timeoutMs);
+
+  return () => {
+    stop();
+    clearTimeout(timer);
+  };
 }
 
-export async function checkHubAddress(ip: string): Promise<Hub | null> {
-  try {
-    const res = await fetch(`http://${ip}:8000/health`);
 
-    if (!res.ok) return null;
+// Check specific hub address
+export async function checkHubAddress(ip: string): Promise<Hub | null> {
+
+  const res = await fetchWithTimeout(`http://${ip}:8000/health`);
+
+  if (!res || !res.ok) return null;
+
+  try {
 
     const data = await res.json();
 
@@ -128,7 +168,8 @@ export async function checkHubAddress(ip: string): Promise<Hub | null> {
   return null;
 }
 
-//Hub rediscovery (IP Address change)
+
+// Rediscover hub
 export async function rediscoverHub(timeoutMs = 10000): Promise<string | null> {
 
   const hub = await getHubBaseUrl();
@@ -139,9 +180,11 @@ export async function rediscoverHub(timeoutMs = 10000): Promise<string | null> {
     try {
 
       if (hub) {
-        const res = await fetch(`${hub}/health`);
 
-        if (res.ok) {
+        const res = await fetchWithTimeout(`${hub}/health`, 800);
+
+        if (res && res.ok) {
+
           const data = await res.json();
 
           if (data?.status === "healthy") {
@@ -152,7 +195,7 @@ export async function rediscoverHub(timeoutMs = 10000): Promise<string | null> {
 
     } catch {}
 
-    await new Promise(r => setTimeout(r, 700)); // wait before retry
+    await new Promise(r => setTimeout(r, 700));
 
   }
 

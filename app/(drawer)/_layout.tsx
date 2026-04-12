@@ -151,6 +151,13 @@ export default function DrawerLayout() {
                 }}
             />
             <Drawer.Screen
+                name="settings/aiAndAutomation/aiPreferences"
+                options={{
+                    drawerItemStyle: { display: "none" },
+                    headerShown: false,
+                }}
+            />
+            <Drawer.Screen
                 name="notifications/visionNotificationDetail"
                 options={{
                     drawerItemStyle: { display: "none" },

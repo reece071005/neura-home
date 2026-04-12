@@ -108,11 +108,6 @@ export default function AiAutomationPage() {
 
   const [dialog, setDialog] = useState<DialogState>(DIALOG_HIDDEN);
 
-  const [trainingFrequencyValue, setTrainingFrequencyValue] = useState(1);
-  const [trainingFrequencyUnit, setTrainingFrequencyUnit] = useState<"days" | "weeks" | "months">("weeks");
-  const [lastTrainedAt, setLastTrainedAt] = useState<string | null>(null);
-  const [trainingNow, setTrainingNow] = useState(false);
-
   const showError = (message: string) => {
     setDialog({
       visible: true,
@@ -351,62 +346,6 @@ export default function AiAutomationPage() {
                         </View>
                       </>
                   )}
-                </SectionCard>
-                {/* AI Training */}
-                <SectionCard title="AI training & schedule">
-                  <View className="px-4 pt-4">
-                    <Text className="text-hint text-textSecondary">
-                      Neure Home periodically retrains its behaviour models using historical data.
-                      You can control how often retraining happens.
-                    </Text>
-                  </View>
-
-                  <View className="mt-2">
-
-                    <Row
-                      title="Training frequency"
-                      subtitle={`Every ${trainingFrequencyValue} ${trainingFrequencyUnit}`}
-                      right={
-                        <MdiIcon path={mdiPencil} size={22} color="#9CA3AF" />
-                      }
-                      onPress={() => {
-                        // Later: open modal to configure schedule
-                      }}
-                    />
-
-                    <Row
-                      title="Last trained"
-                      subtitle={
-                        lastTrainedAt
-                          ? lastTrainedAt
-                          : "Model has not been trained yet"
-                      }
-                      isLast
-                    />
-
-                  </View>
-
-                  <View className="px-4 py-4">
-                    <GradientButton
-                      title={trainingNow ? "Training…" : "Train AI now"}
-                      onPress={async () => {
-                        try {
-                          setTrainingNow(true);
-
-                          // placeholder logic for now
-                          await new Promise((r) => setTimeout(r, 1500));
-
-                          setLastTrainedAt(new Date().toLocaleString());
-                        } finally {
-                          setTrainingNow(false);
-                        }
-                      }}
-                    />
-
-                    <Text className="mt-3 text-hint text-textSecondary">
-                      Training may take several minutes depending on the amount of data available.
-                    </Text>
-                  </View>
                 </SectionCard>
 
                 {/* Safety context */}

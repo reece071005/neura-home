@@ -86,11 +86,7 @@ export default function UserSettings() {
                 <View style={{height: 1, backgroundColor: "#E5E7EB"}}></View>
                 <SettingsItem title="Account" Icon={AccountIcon} onPress={() => router.push("/settings/account/accountPage")}/>
                 <SettingsItem title="AI & Automation" Icon={BrainIcon} onPress={() => router.push("/settings/aiAndAutomation/aiAndAutomation")}/>
-                <SettingsItem title="Security" Icon={SecurityIcon}/>
-                <SettingsItem title="Privacy" Icon={PrivacyIcon}/>
-                <SettingsItem title="Terms and Conditions" Icon={Terms_Conditions_Icon}/>
-                <SettingsItem title="Contact" Icon={ContactIcon}/>
-                <SettingsItem title="Feedback" Icon={FeedbackIcon}/>
+                <SettingsItem title="Contact" Icon={ContactIcon} />
                 <SettingsItem title="Logout" Icon={LogoutIcon} onPress={logout}/>
 
                 <View style={{flex: 1}}></View>

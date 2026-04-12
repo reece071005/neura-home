@@ -26,7 +26,6 @@ export async function getClimatePreferences(room: string) {
   return response;
 }
 
-
 // POST /ai/climate/preferences
 export async function setClimatePreferences(data: ClimatePreferences) {
   return api<string>(`/ai/climate/preferences`, {
@@ -35,7 +34,6 @@ export async function setClimatePreferences(data: ClimatePreferences) {
     auth: true,
   });
 }
-
 
 // DELETE /ai/climate/preferences
 export async function deleteClimatePreferences(room: string) {

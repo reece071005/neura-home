@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from "react";
 
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, Switch, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 
@@ -8,7 +8,7 @@ import { createRoom, getRoom, updateRoom, deleteRoom, type RoomDto } from "@/lib
 import { listDevices, type ApiDevice } from "@/lib/api/devices";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
-import SectionCard from "@/components/aiAndAutomation/SectionCard"
+import SectionCard from "@/components/aiAndAutomation/SectionCard";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -24,6 +24,8 @@ type DialogState = {
 };
 
 const DIALOG_HIDDEN: DialogState = { visible: false, title: "" };
+const TRAINING_FREQUENCIES = ["Daily", "Weekly", "Monthly"] as const;
+type TrainingFrequency = (typeof TRAINING_FREQUENCIES)[number];
 
 //Device kinds
 const KIND_LABEL: Record<ApiDevice["kind"], string> = {
@@ -174,6 +176,12 @@ export default function CreateRoomScreen() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogState>(DIALOG_HIDDEN);
 
+  //AI mode Toggle
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [autoTraining, setAutoTraining] = useState(false);
+  const [trainingFrequency, setTrainingFrequency] = useState<TrainingFrequency>("Weekly");
+  const [lastTrainedAt, setLastTrainedAt] = useState<string | null>(null);
+
   const nameInputRef = useRef<TextInput>(null);
 
   useFocusEffect(
@@ -236,7 +244,11 @@ export default function CreateRoomScreen() {
   const toggleDevice = useCallback((entityId: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      next.has(entityId) ? next.delete(entityId) : next.add(entityId);
+      if (next.has(entityId)) {
+        next.delete(entityId);
+      } else {
+        next.add(entityId);
+      }
       return next;
     });
   }, []);
@@ -530,6 +542,37 @@ export default function CreateRoomScreen() {
             </SectionCard>
           )}
 
+          {/* AI behaviour */}
+          <SectionCard title="AI behaviour">
+            <Pressable
+              onPress={() => {
+                router.push({
+                  pathname: "/settings/aiAndAutomation/aiPreferences",
+                  params: {
+                    roomId: roomId?.toString() ?? "",
+                    room: roomName ?? "",
+                  },
+                });
+              }}
+              className="px-4 py-4 flex-row items-center justify-between"
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <View className="flex-1">
+                <Text className="text-subtext text-black">
+                  AI behaviour
+                </Text>
+
+                <Text className="text-hint text-textSecondary mt-1">
+                  Configure AI automation and training
+                </Text>
+              </View>
+
+              <Text style={{ color: "#9CA3AF", fontSize: 18 }}>›</Text>
+            </Pressable>
+          </SectionCard>
+
           {/* Device picker */}
           {isEditing && (
             <>
@@ -570,7 +613,7 @@ export default function CreateRoomScreen() {
               ) : filteredDevices.length === 0 ? (
                 <View className="px-6 pt-4">
                   <View className="rounded-2xl border border-gray-200 bg-white px-4 py-4">
-                    <Text className="text-hint text-textSecondary">No devices match "{query}".</Text>
+                    <Text className="text-hint text-textSecondary">No devices match {`"${query}"`}.</Text>
                   </View>
                 </View>
               ) : (

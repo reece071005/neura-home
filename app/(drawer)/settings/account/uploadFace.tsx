@@ -100,7 +100,7 @@ export default function FaceCaptureScreen() {
           setUploadError(null);
           await addUserFace({ photoUri });
           setPhotoUri(null); // ← reset before leaving
-          router.replace("/(drawer)/accountPage");
+          router.replace("/settings/account/accountPage");
       } catch (e: any) {
           setUploadError(e.message ?? "Upload failed. Please try again.");
       } finally {
@@ -113,7 +113,7 @@ export default function FaceCaptureScreen() {
       <View style={{ flex: 1 }}>
         {/* Header */}
         <View className="px-5 pt-3 pb-3 flex-row items-center justify-between">
-          <Pressable onPress={() => router.replace("/(drawer)/accountPage")}>
+          <Pressable onPress={() => router.replace("/settings/account/accountPage")}>
             <Text className="text-white text-base">Back</Text>
           </Pressable>
 
