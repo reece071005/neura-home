@@ -13,15 +13,15 @@ export default function OnboardingLayout() {
     pathname === "/hub/hubSearch" ||
     pathname === "/hub/hubManualAddress" ||
     pathname === "/hub/hubNotFound";
-  const shouldRouteHubFoundBackToHaPrep = pathname === "/hub/hubFound";
+  const shouldRouteHubFoundBackToHubPrep = pathname === "/hub/hubFound";
   const shouldResetHAFlowBack =
     pathname === "/homeAssistant/haSearch" ||
     pathname === "/homeAssistant/haManualAddress" ||
     pathname === "/homeAssistant/haNotFound";
 
   const handleBack = () => {
-    if (shouldRouteHubFoundBackToHaPrep) {
-      router.replace("/homeAssistant/haPrep");
+    if (shouldRouteHubFoundBackToHubPrep) {
+      router.replace("/hub/hubPrep");
       return;
     }
     if (shouldResetHubFlowBack) {
