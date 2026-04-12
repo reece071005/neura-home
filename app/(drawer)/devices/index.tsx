@@ -1,7 +1,6 @@
 import React from "react";
 import { Pressable, Text, View, ScrollView } from "react-native";
 import { router, Stack } from "expo-router";
-import { MaterialIcons } from "@expo/vector-icons";
 
 import MdiIcon from "@/components/MdiIcon";
 
@@ -15,8 +14,6 @@ import {
   mdiCctv,
   mdiMotionSensor
 } from "@mdi/js";
-
-import BurgerSearchWidget from "@/components/BurgerSearchWidget";
 
 type Category = {
     key:

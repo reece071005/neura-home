@@ -1,30 +1,21 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import {ActivityIndicator, Image, NativeScrollEvent, NativeSyntheticEvent, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import {
-  getImageUri,
-  getVisionNotifications,
-  VisionNotification,
-} from "@/lib/api/visionNotifications";
 
-/* ---------------- Constants ---------------- */
+import { getImageUri, getVisionNotifications, VisionNotification } from "@/lib/api/notifications/visionNotifications";
+import { getAiNotifications, AiNotification } from "@/lib/api/notifications/aiNotifications";
 
+// Types
+type CombinedNotification =
+  | (VisionNotification & { source: "vision" })
+  | (AiNotification & { source: "ai" });
+
+// Constants
 const PAGE_SIZE = 10;
 
-/* ---------------- Helpers ---------------- */
-
+// Helpers
 const formatRelativeTime = (iso: string) => {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -44,28 +35,18 @@ const formatCameraName = (name?: string) => {
     .join(" ");
 };
 
-const areNotificationListsEqual = (a: VisionNotification[], b: VisionNotification[]) => {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i += 1) {
-    if (a[i].id !== b[i].id) return false;
-    if (a[i].created_at !== b[i].created_at) return false;
-  }
-  return true;
-};
-
-/* ---------------- Vision Notification Card ---------------- */
-
+// Vision Notification Card
 function VisionNotificationCard({
   item,
   isRead,
   onMarkRead,
 }: {
-  item: VisionNotification;
+  item: VisionNotification & { source: "vision" };
   isRead: boolean;
-  onMarkRead: (id: number) => void;
+  onMarkRead: (item: VisionNotification & { source: "vision" }) => void;
 }) {
   const onPress = () => {
-    onMarkRead(item.id);
+    onMarkRead(item);
     router.push({
       pathname: "/notifications/visionNotificationDetail",
       params: { id: String(item.id) },
@@ -151,11 +132,93 @@ function VisionNotificationCard({
   );
 }
 
-/* ---------------- Screen ---------------- */
+// AI Notification Card
+function AiNotificationCard({
+  item,
+  isRead,
+  onMarkRead,
+}: {
+  item: AiNotification & { source: "ai" };
+  isRead: boolean;
+  onMarkRead: (item: AiNotification & { source: "ai" }) => void;
+}) {
+  const onPress = () => {
+    onMarkRead(item);
+  };
 
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+    >
+      <View
+        style={{
+          backgroundColor: "white",
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: isRead ? "#E5E7EB" : "#D1D5DB",
+          overflow: "hidden",
+          flexDirection: "row",
+        }}
+      >
+        {/* Unread indicator strip */}
+        <View style={{ width: 3, backgroundColor: isRead ? "transparent" : "#6366F1" }} />
+
+        <View style={{ flex: 1, padding: 14 }}>
+          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+            {/* Icon thumbnail */}
+            <View
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 10,
+                backgroundColor: "#EEF2FF",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <MaterialIcons name="auto-awesome" size={24} color="#6366F1" />
+            </View>
+
+            {/* Content */}
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <Text
+                  style={{ fontSize: 14, fontWeight: isRead ? "500" : "700", color: "#111827", flex: 1 }}
+                  numberOfLines={2}
+                >
+                  {item.message}
+                </Text>
+                <Text style={{ fontSize: 11, color: "#9CA3AF", flexShrink: 0 }}>
+                  {formatRelativeTime(item.created_at)}
+                </Text>
+              </View>
+
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
+                <MaterialIcons name="smart-toy" size={13} color="#9CA3AF" />
+                <Text style={{ fontSize: 12, color: "#9CA3AF" }} numberOfLines={1}>
+                  AI Assistant
+                </Text>
+              </View>
+
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+                <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: "#EEF2FF" }}>
+                  <Text style={{ fontSize: 11, fontWeight: "600", color: "#6366F1" }}>AI Automation</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+// Screen
 export default function Notifications() {
-  const [items, setItems] = useState<VisionNotification[]>([]);
-  const [readIds, setReadIds] = useState<Set<number>>(new Set());
+  const [items, setItems] = useState<CombinedNotification[]>([]);
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"unread" | "read">("unread");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -167,18 +230,35 @@ export default function Notifications() {
   const lastYRef = useRef(0);
   const loadingMoreRef = useRef(false); // ref copy prevents stale closure issues
 
-  /** Initial load or pull-to-refresh — always resets to page 0 */
+  // Initial load or pull-to-refresh
   const fetchNotifications = useCallback(async (isRefresh = false) => {
     try {
-      isRefresh ? setRefreshing(true) : setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
-      loadingMoreRef.current = false;
-      setLoadingMore(false);
-      hasUserScrolledRef.current = false;
-      const data = await getVisionNotifications(0, PAGE_SIZE);
-      const firstPage = data.slice(0, PAGE_SIZE);
-      setItems((prev) => (areNotificationListsEqual(prev, firstPage) ? prev : firstPage));
-      setHasMore(firstPage.length === PAGE_SIZE);
+
+      const [vision, ai] = await Promise.all([
+        getVisionNotifications(0, PAGE_SIZE),
+        getAiNotifications(0, PAGE_SIZE),
+      ]);
+
+      const merged: CombinedNotification[] = [
+        ...vision.map((v) => ({ ...v, source: "vision" as const })),
+        ...ai.map((a) => ({ ...a, source: "ai" as const })),
+      ];
+
+      merged.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+      );
+
+      setItems(merged.slice(0, PAGE_SIZE));
+      setHasMore(merged.length >= PAGE_SIZE);
+
     } catch (e: any) {
       setError(e?.message ?? "Failed to load notifications");
     } finally {
@@ -193,12 +273,29 @@ export default function Notifications() {
     loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
-      const data = (await getVisionNotifications(items.length, PAGE_SIZE)).slice(0, PAGE_SIZE);
+      const [vision, ai] = await Promise.all([
+        getVisionNotifications(items.length, PAGE_SIZE),
+        getAiNotifications(items.length, PAGE_SIZE),
+      ]);
+
+      const newMerged: CombinedNotification[] = [
+        ...vision.map((v) => ({ ...v, source: "vision" as const })),
+        ...ai.map((a) => ({ ...a, source: "ai" as const })),
+      ];
+
+      newMerged.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+      );
+
+      const data = newMerged.slice(0, PAGE_SIZE);
+
       if (data.length === 0) {
         setHasMore(false);
       } else {
-        const existingIds = new Set(items.map((n) => n.id));
-        const additions = data.filter((n) => !existingIds.has(n.id));
+        const existingIds = new Set(items.map((n) => `${n.source}-${n.id}`));
+        const additions = data.filter((n) => !existingIds.has(`${n.source}-${n.id}`));
         if (additions.length === 0) {
           setHasMore(false);
         } else {
@@ -216,11 +313,18 @@ export default function Notifications() {
 
   useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
 
-  const markRead = (id: number) => setReadIds((prev) => new Set([...prev, id]));
-  const markAllRead = () => setReadIds(new Set(items.map((n) => n.id)));
+  const getCompositeKey = (item: CombinedNotification) => `${item.source}-${item.id}`;
 
-  const unread = items.filter((n) => !readIds.has(n.id));
-  const read   = items.filter((n) => readIds.has(n.id));
+  const markRead = (item: CombinedNotification) => {
+    setReadIds((prev) => new Set([...prev, getCompositeKey(item)]));
+  };
+
+  const markAllRead = () => {
+    setReadIds(new Set(items.map(getCompositeKey)));
+  };
+
+  const unread = items.filter((n) => !readIds.has(getCompositeKey(n)));
+  const read   = items.filter((n) => readIds.has(getCompositeKey(n)));
   const selectedItems = viewMode === "unread" ? unread : read;
 
   const onScrollBeginDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -344,15 +448,34 @@ export default function Notifications() {
               </Pressable>
             )}
           </View>
-          <View style={{ gap: 10 }}>
-            {selectedItems.map((n) => (
-              <VisionNotificationCard
-                key={n.id}
-                item={n}
-                isRead={viewMode === "read"}
-                onMarkRead={markRead}
-              />
-            ))}
+
+          <View style={{ gap: 12 }}>
+            {selectedItems.map((n) => {
+              const uniqueKey = `${n.source}-${n.id}`;
+
+              if (n.source === "vision") {
+                return (
+                  <VisionNotificationCard
+                    key={uniqueKey}
+                    item={n}
+                    isRead={viewMode === "read"}
+                    onMarkRead={markRead}
+                  />
+                );
+              }
+
+              if (n.source === "ai") {
+                return (
+                  <AiNotificationCard
+                    key={uniqueKey}
+                    item={n}
+                    isRead={viewMode === "read"}
+                    onMarkRead={markRead}
+                  />
+                );
+              }
+              return null;
+            })}
           </View>
         </View>
 
@@ -372,7 +495,7 @@ export default function Notifications() {
         {items.length === 0 && (
           <View style={{ paddingTop: 80, alignItems: "center", paddingHorizontal: 32 }}>
             <MaterialIcons name="notifications-none" size={48} color="#D1D5DB" />
-            <Text style={{ fontSize: 16, fontWeight: "600", color: "#111827", marginTop: 16 }}>You're all caught up</Text>
+            <Text style={{ fontSize: 16, fontWeight: "600", color: "#111827", marginTop: 16 }}>You are all caught up</Text>
             <Text style={{ fontSize: 14, color: "#6B7280", marginTop: 6, textAlign: "center" }}>No detection alerts right now.</Text>
           </View>
         )}
@@ -381,7 +504,7 @@ export default function Notifications() {
           <View style={{ paddingTop: 80, alignItems: "center", paddingHorizontal: 32 }}>
             <MaterialIcons name="notifications-none" size={40} color="#D1D5DB" />
             <Text style={{ fontSize: 15, fontWeight: "600", color: "#111827", marginTop: 14 }}>
-              {viewMode === "unread" ? "You're all caught up" : "No read notifications yet"}
+              {viewMode === "unread" ? "You are all caught up" : "No read notifications yet"}
             </Text>
             {viewMode === "unread" && (
               <Text style={{ fontSize: 13, color: "#6B7280", marginTop: 6, textAlign: "center" }}>

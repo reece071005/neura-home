@@ -116,15 +116,14 @@ export async function deleteTrainingPreferences(room: string) {
 }
 
 // Train model manually
-export async function trainRoomModel(room: string) {
-    const body = { room };
-    console.log('📤 [trainRoomModel] Request:', { url: '/ai/training/run', body });
+export async function trainRoomModel(room: string, days: number = 1) {
+    const url = `/ai/train-room-xgb?room=${encodeURIComponent(room)}&days=${days}`;
+    console.log('📤 [trainRoomModel] Request:', url);
 
     try {
-        const response = await api<{ ok: boolean }>(`/ai/training/run`, {
+        const response = await api<{ ok: boolean }>(url, {
             method: "POST",
             auth: true,
-            body,
         });
         console.log('📥 [trainRoomModel] Response:', response);
         return response;

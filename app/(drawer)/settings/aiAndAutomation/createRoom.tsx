@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from "react";
 
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, Switch, View } from "react-native";
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 
@@ -24,9 +24,6 @@ type DialogState = {
 };
 
 const DIALOG_HIDDEN: DialogState = { visible: false, title: "" };
-const TRAINING_FREQUENCIES = ["Daily", "Weekly", "Monthly"] as const;
-type TrainingFrequency = (typeof TRAINING_FREQUENCIES)[number];
-
 //Device kinds
 const KIND_LABEL: Record<ApiDevice["kind"], string> = {
   light: "Lights",
@@ -39,57 +36,6 @@ const KIND_LABEL: Record<ApiDevice["kind"], string> = {
   sensor: "Sensors",
   binary_sensor: "Sensors",
 };
-
-function Row({
-  title,
-  subtitle,
-  right,
-  isLast,
-  onPress,
-}: {
-  title: string;
-  subtitle?: string | null;
-  right?: React.ReactNode;
-  isLast?: boolean;
-  onPress?: () => void;
-}) {
-  const inner = (
-    <View className="flex-row items-center justify-between">
-      <View className="flex-1 pr-3">
-        <Text className="text-subtext text-black" numberOfLines={1}>
-          {title}
-        </Text>
-        {!!subtitle && (
-          <Text className="text-hint text-textSecondary mt-1" numberOfLines={1}>
-            {subtitle}
-          </Text>
-        )}
-      </View>
-      {right}
-    </View>
-  );
-
-  if (onPress) {
-    return (
-      <Pressable
-        onPress={onPress}
-        className={`px-4 py-4 ${!isLast ? "border-b border-gray-200" : ""}`}
-        style={({ pressed }) => ({
-          opacity: pressed ? 0.7 : 1,
-          backgroundColor: pressed ? "#F9FAFB" : "white",
-        })}
-      >
-        {inner}
-      </Pressable>
-    );
-  }
-
-  return (
-    <View className={`px-4 py-4 ${!isLast ? "border-b border-gray-200" : ""}`}>
-      {inner}
-    </View>
-  );
-}
 
 function grouped(devices: ApiDevice[]): [string, ApiDevice[]][] {
   const map = new Map<string, ApiDevice[]>();
@@ -175,12 +121,6 @@ export default function CreateRoomScreen() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogState>(DIALOG_HIDDEN);
-
-  //AI mode Toggle
-  const [aiEnabled, setAiEnabled] = useState(false);
-  const [autoTraining, setAutoTraining] = useState(false);
-  const [trainingFrequency, setTrainingFrequency] = useState<TrainingFrequency>("Weekly");
-  const [lastTrainedAt, setLastTrainedAt] = useState<string | null>(null);
 
   const nameInputRef = useRef<TextInput>(null);
 
@@ -542,36 +482,38 @@ export default function CreateRoomScreen() {
             </SectionCard>
           )}
 
-          {/* AI behaviour */}
-          <SectionCard title="AI behaviour">
-            <Pressable
-              onPress={() => {
-                router.push({
-                  pathname: "/settings/aiAndAutomation/aiPreferences",
-                  params: {
-                    roomId: roomId?.toString() ?? "",
-                    room: roomName ?? "",
-                  },
-                });
-              }}
-              className="px-4 py-4 flex-row items-center justify-between"
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <View className="flex-1">
-                <Text className="text-subtext text-black">
-                  AI behaviour
-                </Text>
+          {/* AI behaviour - only show in view mode for an existing room */}
+          {isEditMode && !isEditing && (
+            <SectionCard title="AI behaviour">
+              <Pressable
+                onPress={() => {
+                  router.push({
+                    pathname: "/settings/aiAndAutomation/aiPreferences",
+                    params: {
+                      roomId: roomId?.toString() ?? "",
+                      room: roomName ?? "",
+                    },
+                  });
+                }}
+                className="px-4 py-4 flex-row items-center justify-between"
+                style={({ pressed }) => ({
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <View className="flex-1">
+                  <Text className="text-subtext text-black">
+                    AI behaviour
+                  </Text>
 
-                <Text className="text-hint text-textSecondary mt-1">
-                  Configure AI automation and training
-                </Text>
-              </View>
+                  <Text className="text-hint text-textSecondary mt-1">
+                    Configure AI automation and training
+                  </Text>
+                </View>
 
-              <Text style={{ color: "#9CA3AF", fontSize: 18 }}>›</Text>
-            </Pressable>
-          </SectionCard>
+                <Text style={{ color: "#9CA3AF", fontSize: 18 }}>›</Text>
+              </Pressable>
+            </SectionCard>
+          )}
 
           {/* Device picker */}
           {isEditing && (
