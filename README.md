@@ -12,7 +12,7 @@ An AI-driven smart home platform that learns user routines from time-series sens
     Website
   </a>
   &nbsp;&nbsp;|&nbsp;&nbsp;
-  <a href="https://youtube.com/...">
+  <a href="https://www.youtube.com/watch?v=8MGqcfFiD_Q">
     <img src="https://cdn.simpleicons.org/youtube" width="18" style="vertical-align: middle;" />
     Demo Video
   </a>
@@ -75,7 +75,27 @@ The overall system architecture consists of a mobile application frontend, a bac
   Core system intelligence runs locally on the Neura Home Hub, ensuring low-latency control, improved reliability, and enhanced privacy. Optional cloud-based services are used for the large language model that powers the voice assistant, enabling advanced natural language interaction when required.
   
 ## System Architecture
+
 ## Getting Started
-## Installation
-## Usage
-## Tech Stack
+
+The following steps describe how to run the **Neura Home mobile application** in a development environment.  
+The application is built using **React Native and Expo** and communicates with a local **Neura Home Hub backend** running on the same local network.
+
+### Prerequisites
+
+Before running the application, ensure the following tools are installed:
+
+- **Node.js** (v18 or later recommended)
+- **npm** or **yarn**
+- **Expo CLI**
+- **Git**
+- **iOS Simulator (Xcode)** or **Android Emulator (Android Studio)**  
+  OR a physical mobile device with the **Expo Go** application installed.
+
+**Note:** In order to complete onboarding and interact with the system, the following components must be running and connected to the **same local network**:
+
+- A running **[Neura Home Hub backend](https://github.com/reece071005/neura-home-backend)**
+- A **[Home Assistant](https://github.com/home-assistant/core)** instance with connected IoT devices
+- The **mobile device** running the Neura Home application
+
+The mobile application discovers the **Neura Home Hub** over the local network during setup and communicates with **Home Assistant** through the hub. Therefore, the **Hub, Home Assistant instance, and mobile device must all be reachable on the same local network**.
