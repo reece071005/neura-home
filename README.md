@@ -1,50 +1,81 @@
-# Welcome to your Expo app 👋
+<p align="center">
+  <img src="docs/NeuraHomeLogo.png" alt="Project Logo">
+</p>
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+# Neura Home
 
-## Get started
+An AI-driven smart home platform that learns user routines from time-series sensor data, integrates computer vision for environmental awareness, and provides a natural language voice assistant powered by large language models.
 
-1. Install dependencies
+<div align="center">
+  <a href="https://neurahome.me">
+    <img src="https://cdn.simpleicons.org/googlechrome" width="18" style="vertical-align: middle;" />
+    Website
+  </a>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="https://youtube.com/...">
+    <img src="https://cdn.simpleicons.org/youtube" width="18" style="vertical-align: middle;" />
+    Demo Video
+  </a>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="https://www.instagram.com/neurahome42">
+    <img src="https://cdn.simpleicons.org/instagram" width="18" style="vertical-align: middle;" />
+    Instagram
+  </a>
+</div>
 
-   ```bash
-   npm install
-   ```
+**Note:** This repository contains the **mobile frontend application** for the Neura Home system. The backend services and AI components are maintained in a separate repository.
 
-2. Start the app
+- **Backend Repository:** https://github.com/reece071005/neura-home-backend
 
-   ```bash
-   npx expo start
-   ```
+## Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [System Architecture](#system-architecture)
+- [Getting Started](#getting-started)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Tech Stack](#tech-stack)
 
-In the output, you'll find options to open the app in a
+## Overview
+Neura Home is an AI-driven smart home system designed to move beyond standard rule-based automation. Instead of relying solely on manually configured schedules or triggers, the platform learns behavioural patterns from historical smart home data, including device states, sensor activity, and temporal patterns. By analysing this time-series data, the system can identify recurring routines and predict actions that improve automation within the home environment.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+The Neura Home ecosystem combines multiple intelligent components, including behavioural routine prediction, computer vision for environmental awareness and event detection, and a natural language voice assistant powered by a large language model. These components work together to enable context-aware automation and intuitive interaction with the home.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+The overall system architecture consists of a mobile application frontend, a backend API, and several containerised AI services running as microservices on a local Neura Home Hub. The hub integrates with the Home Assistant platform to monitor sensors and control connected IoT devices such as lights, climate systems, blinds, and cameras. This local-first architecture prioritises reliability, privacy, and low-latency control while still allowing optional cloud-based services to extend system capabilities when required.
 
-## Get a fresh project
+## Features
+- **AI Routine Learning**  
+  The system analyses historical smart home data, including device states, sensor activity, and temporal patterns, to identify recurring behavioural routines. These patterns are used to predict and automate future actions within the home, reducing the need for manually configured schedules or rule-based automations.
 
-When you're ready, run:
+- **Configurable AI Behaviour**  
+  Users can enable or disable AI-driven automation on a per-room basis through the mobile application. This allows users to maintain control over where intelligent automation is applied and adjust system behaviour depending on room usage or personal preferences.
 
-```bash
-npm run reset-project
-```
+- **AI Training Control**  
+  The system supports configurable AI training schedules for individual rooms, allowing models to be retrained automatically at defined intervals. Users can also manually trigger retraining when system behaviour needs to be updated or corrected.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- **Computer Vision Monitoring**  
+  Integrated vision services analyse camera feeds to provide environmental awareness within the home. The system can detect activity, monitor spaces, and support intelligent notifications based on visual events.
 
-## Learn more
+- **Resident Recognition and Tracking**  
+  Users can register known faces within the system, allowing the vision service to distinguish between recognised residents and unknown individuals. The system can maintain a last known location for detected residents within the home.
 
-To learn more about developing your project with Expo, look at the following resources:
+- **Voice Assistant with Contextual Queries**  
+  A natural language voice assistant powered by a large language model allows users to interact with the system using spoken commands. In addition to controlling devices, users can ask contextual questions such as where a specific resident was last detected within the home.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- **Mobile Application Interface**  
+  The mobile application provides a central interface for interacting with the system. Users can monitor devices, configure AI behaviour, manage system settings, and interact with the voice assistant.
 
-## Join the community
+- **User Profiles, Roles, and Personalised Dashboards**  
+  The system supports multiple user accounts with role-based permissions, including administrator and standard user roles. Each user can customise their own dashboards by adding, removing, and rearranging widgets, allowing them to prioritise the devices and controls most relevant to their daily use while maintaining appropriate access permissions within the household.
 
-Join our community of developers creating universal apps.
+- **Integration with Smart Home Ecosystems**  
+  Neura Home integrates with the Home Assistant platform to communicate with a wide range of IoT devices, enabling control of lights, climate systems, blinds, sensors, and cameras.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- **Local-First Architecture**  
+  Core system intelligence runs locally on the Neura Home Hub, ensuring low-latency control, improved reliability, and enhanced privacy. Optional cloud-based services are used for the large language model that powers the voice assistant, enabling advanced natural language interaction when required.
+  
+## System Architecture
+## Getting Started
+## Installation
+## Usage
+## Tech Stack
