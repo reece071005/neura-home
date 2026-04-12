@@ -6,7 +6,14 @@ const MAX_PAGE_LIMIT = 20;
 export type AiNotification = {
   id: number;
   message: string;
+  room: string;
+  entity_id: string;
+  notification_type: "suggested" | "executed" | string;
+  action_type: "light_on" | "light_off" | "climate" | "none" | string;
+  meta: Record<string, any>;
   created_at: string;
+  is_read: boolean;
+  read_at: string | null;
 };
 
 export type AiNotificationsResponse = AiNotification[];

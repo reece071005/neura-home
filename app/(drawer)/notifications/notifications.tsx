@@ -144,6 +144,10 @@ function AiNotificationCard({
 }) {
   const onPress = () => {
     onMarkRead(item);
+    router.push({
+      pathname: "/notifications/aiNotificationDetail",
+      params: { id: String(item.id) },
+    });
   };
 
   return (
@@ -245,6 +249,14 @@ export default function Notifications() {
         getAiNotifications(0, PAGE_SIZE),
       ]);
 
+      console.log('=== AI NOTIFICATIONS RESPONSE ===');
+      console.log('Count:', ai.length);
+      console.log('Full response:', JSON.stringify(ai, null, 2));
+      if (ai.length > 0) {
+        console.log('First AI notification:', JSON.stringify(ai[0], null, 2));
+      }
+      console.log('=================================');
+
       const merged: CombinedNotification[] = [
         ...vision.map((v) => ({ ...v, source: "vision" as const })),
         ...ai.map((a) => ({ ...a, source: "ai" as const })),
@@ -277,6 +289,12 @@ export default function Notifications() {
         getVisionNotifications(items.length, PAGE_SIZE),
         getAiNotifications(items.length, PAGE_SIZE),
       ]);
+
+      console.log('=== LOAD MORE - AI NOTIFICATIONS ===');
+      console.log('Skip:', items.length);
+      console.log('Count:', ai.length);
+      console.log('AI data:', JSON.stringify(ai, null, 2));
+      console.log('====================================');
 
       const newMerged: CombinedNotification[] = [
         ...vision.map((v) => ({ ...v, source: "vision" as const })),
