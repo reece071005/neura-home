@@ -3,6 +3,7 @@ import { Text, Pressable, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { setHubBaseUrl } from "@/lib/storage/hubStore";
+import {getHomeAssistantConfig} from "@/lib/api/hub/homeAssistant";
 
 import NeuraHubIcon from "@/assets/illustrations/neuraHubIcon.svg";
 
@@ -12,20 +13,29 @@ const HubFound = () => {
     const [configured, setConfigured] = useState<boolean | null>(null);
 
     useEffect(() => {
-        const checkHub = async () => {
-            try {
-                const res = await fetch(`${ip}/health`);
-                const data = await res.json();
+      const checkHub = async () => {
+        try {
+          const data = await getHomeAssistantConfig();
 
-                //setConfigured(data?.configured ?? true);
-                setConfigured(true);
+          setConfigured(!!data?.url);
 
-            } catch (err) {
-                setConfigured(true);
-            }
-        };
+        } catch (err: any) {
 
-        checkHub();
+          const message = String(err?.message ?? "");
+
+          // If backend says authentication required
+          // it means HA IS already configured
+          if (message.toLowerCase().includes("authentication required")) {
+            setConfigured(true);
+            return;
+          }
+
+          // Otherwise assume not configured
+          setConfigured(false);
+        }
+      };
+
+      checkHub();
     }, []);
 
     const handlePress = async () => {

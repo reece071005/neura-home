@@ -6,6 +6,7 @@ import {
   ScrollView,
   Switch,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
@@ -16,15 +17,13 @@ import GradientButton from "@/components/GradientButton";
 import {
   getRoomAiPreferences,
   setRoomAiPreferences,
-  deleteRoomAiPreferences,
   getTrainingPreferences,
   setTrainingPreferences,
-  deleteTrainingPreferences,
   getTrainingReadiness,
   trainRoomModel,
 } from "@/lib/api/ai/aiTraining";
 
-type TrainingFrequency = "manual" | "daily" | "weekly" | "monthly";
+type TrainingFrequency = "daily" | "weekly" | "monthly";
 
 const FREQUENCIES: TrainingFrequency[] = [
   "daily",
@@ -53,6 +52,8 @@ export default function AiPreferencesScreen() {
   const [canTrain, setCanTrain] = useState(false);
 
   const [dialogVisible, setDialogVisible] = useState(false);
+  const [isTraining, setIsTraining] = useState(false);
+  const [trainingError, setTrainingError] = useState<string | null>(null);
 
   // Calculate days remaining
   const daysRemaining = Math.max(0, daysRequired - daysCollected);
@@ -90,7 +91,6 @@ export default function AiPreferencesScreen() {
         const readiness = await getTrainingReadiness(room);
         console.log("Training readiness", readiness);
 
-        // Use the new field names from the API
         setCanTrain(readiness.ready);
         setDaysCollected(readiness.days_available);
         setDaysRequired(readiness.min_days_required);
@@ -125,21 +125,11 @@ export default function AiPreferencesScreen() {
     if (!room) return;
 
     try {
-      if (aiEnabled) {
-        await setRoomAiPreferences(room, true);
-      } else {
-        await deleteRoomAiPreferences(room);
-      }
+      // Always save AI preferences with current enabled state
+      await setRoomAiPreferences(room, aiEnabled);
 
-      if (autoTraining) {
-        await setTrainingPreferences(
-          room,
-          true,
-          trainingFrequency
-        );
-      } else {
-        await deleteTrainingPreferences(room);
-      }
+      // Always save training preferences with current enabled state and frequency
+      await setTrainingPreferences(room, autoTraining, trainingFrequency);
     } catch (err) {
       console.log("Save failed", err);
     }
@@ -152,22 +142,31 @@ export default function AiPreferencesScreen() {
   ----------------------------- */
 
   const trainNow = async () => {
-    if (!canTrain || !room) return;
+    if (!canTrain || !room || isTraining) return;
+
+    setIsTraining(true);
+    setTrainingError(null);
 
     try {
       await trainRoomModel(room);
 
       const now = new Date();
-
       const formatted = `${now.toLocaleDateString()} ${now.toLocaleTimeString(
         [],
         { hour: "2-digit", minute: "2-digit" }
       )}`;
 
       setLastTrainedAt(formatted);
+      setIsTraining(false);
       setDialogVisible(true);
     } catch (err) {
       console.log("Training failed", err);
+      setIsTraining(false);
+      setTrainingError(
+        err instanceof Error
+          ? err.message
+          : "Training failed. Please try again later."
+      );
     }
   };
 
@@ -342,16 +341,41 @@ export default function AiPreferencesScreen() {
           <View className="px-4 py-4">
 
             <GradientButton
-              title={canTrain ? "Train model now" : "Collecting data..."}
+              title={
+                isTraining
+                  ? "Training in progress..."
+                  : canTrain
+                    ? "Train model now"
+                    : "Collecting data..."
+              }
               onPress={trainNow}
-              disabled={!canTrain}
+              disabled={!canTrain || isTraining}
             />
 
-            <Text className="text-hint text-textSecondary mt-3">
-              {canTrain
-                ? "Retraining may take several minutes depending on available data."
-                : `Training available after ${daysRemaining} more days.`}
-            </Text>
+            {isTraining && (
+              <View className="flex-row items-center justify-center mt-3">
+                <ActivityIndicator size="small" color="#3B82F6" />
+                <Text className="text-hint text-blue-600 ml-2">
+                  Training model, please wait...
+                </Text>
+              </View>
+            )}
+
+            {trainingError && (
+              <View className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+                <Text className="text-hint text-red-800">
+                  ⚠️ {trainingError}
+                </Text>
+              </View>
+            )}
+
+            {!isTraining && !trainingError && (
+              <Text className="text-hint text-textSecondary mt-3">
+                {canTrain
+                  ? "Retraining may take several minutes depending on available data."
+                  : `Training available after ${daysRemaining} more days.`}
+              </Text>
+            )}
 
           </View>
 
@@ -361,8 +385,8 @@ export default function AiPreferencesScreen() {
 
       <ConfirmDialog
         visible={dialogVisible}
-        title="Training started"
-        message="Neura is retraining the model now."
+        title="Training completed"
+        message="Neura has successfully retrained the model."
         confirmText="OK"
         onConfirm={() => setDialogVisible(false)}
         onCancel={() => setDialogVisible(false)}

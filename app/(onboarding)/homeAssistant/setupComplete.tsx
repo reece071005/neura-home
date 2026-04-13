@@ -38,13 +38,13 @@ export default function SetupComplete() {
             </Text>
 
             <View className="mt-2 gap-2">
-              <Text className="text-textSecondary text-body">
+              <Text className="text-textSecondary text-body font-semibold">
                 • Open your dashboard and add devices
               </Text>
-              <Text className="text-textSecondary text-body">
+              <Text className="text-textSecondary text-body font-semibold">
                 • Connect Home Assistant anytime from Settings
               </Text>
-              <Text className="text-textSecondary text-body">
+              <Text className="text-textSecondary text-body font-semibold">
                 • Enable AI per room when you’re ready
               </Text>
             </View>

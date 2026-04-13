@@ -20,6 +20,7 @@ import MdiIcon from "@/components/MdiIcon";
 import DashboardItemRow from "@/components/editDashboard/DashboardItemRow";
 import DashboardSettingsSheet from "@/components/editDashboard/DashboardSettingsSheet";
 import AddEditModal from "@/components/editDashboard/AddEditModal";
+import EditDashboardEmptyState from "@/components/editDashboard/EditDashboardEmptyState";
 
 // ─── Pill button ─────────────────────────────────────────────────────────────
 function PillButton({
@@ -189,18 +190,22 @@ export default function EditDashboard() {
         </View>
       </View>
 
-      {/* Draggable list */}
-      <DraggableFlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        onDragEnd={({ data }) => {
-          requestAnimationFrame(() => {
-            InteractionManager.runAfterInteractions(() => setItems(data));
-          });
-        }}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 95, paddingTop: 16 }}
-      />
+      {/* Content: Empty state or Draggable list */}
+      {items.length === 0 ? (
+        <EditDashboardEmptyState onPressAdd={openAdd} />
+      ) : (
+        <DraggableFlatList
+          data={items}
+          keyExtractor={(item) => item.id}
+          onDragEnd={({ data }) => {
+            requestAnimationFrame(() => {
+              InteractionManager.runAfterInteractions(() => setItems(data));
+            });
+          }}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 95, paddingTop: 16 }}
+        />
+      )}
 
       {/* Add / Edit Widget Modal */}
       <AddEditModal

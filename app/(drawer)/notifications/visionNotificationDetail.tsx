@@ -11,16 +11,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import {
-  getCachedVisionNotification,
-  getImageUri,
-  getVisionNotificationById,
-  VisionNotification,
-} from "@/lib/api/visionNotifications";
+import { getCachedVisionNotification, getImageUri, getVisionNotificationById, VisionNotification } from "@/lib/api/notifications/visionNotifications";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-/* ---------------- Helpers ---------------- */
+//Helpers
 
 const formatCameraName = (name?: string) => {
   if (!name) return "Unknown Camera";
@@ -44,8 +39,7 @@ const formatFullDate = (iso: string) => {
   });
 };
 
-/* ---------------- Detail Row ---------------- */
-
+//Detail Row
 function DetailRow({
   icon,
   label,

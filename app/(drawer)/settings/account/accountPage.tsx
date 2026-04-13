@@ -194,7 +194,7 @@ export default function AccountPage() {
                 <View className="mt-3">
                   <OutlineButton
                     title="Reset password"
-                    onPress={() => router.push("/(drawer)/resetPassword")}
+                    onPress={() => router.push("/settings/account/resetPassword")}
                   />
                 </View>
               </View>

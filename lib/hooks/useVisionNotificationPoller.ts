@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { getVisionNotifications, VisionNotification } from "@/lib/api/visionNotifications";
+import { getVisionNotifications, VisionNotification } from "@/lib/api/notifications/visionNotifications";
 import { sendLocalNotification } from "@/services/pushNotifications";
 import { getToken } from "@/lib/storage/token";
 import { SessionExpiredError } from "@/lib/api/client";

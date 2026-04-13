@@ -16,7 +16,7 @@ import * as mdi from "@mdi/js";
 import MdiIcon from "@/components/MdiIcon";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
-import Plus_Icon from "@/assets/icons/Plus_Icon.svg";
+import Plus_Icon from "@/assets/illustrations/customMaterialIcons/outline/gradientPlusOutline.svg";
 
 import { adminAddUser, adminDeleteUser, fetchAdminUsers, UserResponse } from "@/lib/api/admin";
 import { getUserProfile, UserProfile, UserRole } from "@/lib/api/auth/getUserProfile";

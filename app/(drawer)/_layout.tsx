@@ -32,19 +32,6 @@ function CustomDrawerContent(props: any) {
                     className="flex-row items-center text-center"
                     onPress={() => {
                         props.navigation.closeDrawer();
-                        router.push("/(drawer)/automations");
-                    }}
-                >
-                    <TabIcon name="automations" size={30} />
-                    <Text className="text-textPrimary font-medium text-button pl-4">
-                        Automations
-                    </Text>
-                </Pressable>
-
-                <Pressable
-                    className="flex-row items-center text-center"
-                    onPress={() => {
-                        props.navigation.closeDrawer();
                         router.push("/notifications/notifications");
                     }}
                 >
@@ -159,6 +146,13 @@ export default function DrawerLayout() {
             />
             <Drawer.Screen
                 name="notifications/visionNotificationDetail"
+                options={{
+                    drawerItemStyle: { display: "none" },
+                    headerShown: false,
+                }}
+            />
+            <Drawer.Screen
+                name="notifications/aiNotificationDetail"
                 options={{
                     drawerItemStyle: { display: "none" },
                     headerShown: false,
