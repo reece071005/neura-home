@@ -1,4 +1,4 @@
-// src/lib/api/deviceControllers/fan.ts
+// fan.ts
 import { api } from "@/lib/api/client";
 
 type FanPayload = {

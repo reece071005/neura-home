@@ -1,10 +1,11 @@
+//hubManualAddress.tsx
 import { Text, View, Platform, KeyboardAvoidingView } from "react-native";
 import { router } from "expo-router";
 import React, { useState } from "react";
 
 import GradientButton from "@/components/general/GradientButton";
 import GradientTextInput from "@/components/general/GradientTextInput";
-import HubSetupIllustration from "@/assets/illustrations/manualIP.svg";
+import HubSetupIllustration from "@/assets/illustrations/onboarding/manualIP.svg";
 
 const HubSetup = () => {
   const [ip, setIp] = useState("");

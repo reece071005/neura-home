@@ -5,7 +5,6 @@ export type ClimateHvacMode = "heat" | "cool" | "heat_cool" | "auto" | "off";
 
 export type ClimatePayload = {
   entity_id: string;
-  // your backend supports "on"/"off" too
   state?: "on" | "off";
   temperature?: number; // °C
   hvac_mode?: ClimateHvacMode;

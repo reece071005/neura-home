@@ -1,10 +1,11 @@
+// haNotFound.tsx
 import { StyleSheet, Text, View } from "react-native";
 import { router, Link } from "expo-router";
 import React from "react";
 
 import GradientButton from "@/components/general/GradientButton";
 
-import HubNotFoundIllustration from "@/assets/illustrations/hubNotFound.svg";
+import HubNotFoundIllustration from "@/assets/illustrations/onboarding/hubNotFound.svg";
 
 const HaNotFound = () => {
     return (

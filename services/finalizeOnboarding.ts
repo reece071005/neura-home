@@ -15,7 +15,6 @@ export type FinalizeOnboardingResult = {
 };
 
 function normalizeHaUrl(url: string) {
-  // trims + removes trailing slashes
   return url.trim().replace(/\/+$/, "");
 }
 

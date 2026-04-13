@@ -1,20 +1,18 @@
+// SmallGenericTile.tsx
 import React, { useMemo } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import Card from "@/components/dashboard/Card";
 
 type Props = {
   title: string;
 
-  // optional “state”
-  subtitle?: string;          // e.g. "Idle", "Unavailable", "72%"
-  isActive?: boolean;         // if you know on/off-ish state
+  subtitle?: string;
+  isActive?: boolean;
 
-  // configurable icon (later user picks)
   iconName?: React.ComponentProps<typeof MaterialIcons>["name"];
 
   onPress?: () => void;
-  onMenuPress?: () => void;
   showBlueBorder?: boolean;
 };
 
@@ -24,7 +22,6 @@ export default function SmallGenericTile({
   isActive,
   iconName = "devices-other",
   onPress,
-  onMenuPress,
   showBlueBorder = false,
 }: Props) {
   const iconColor = useMemo(() => {
@@ -59,13 +56,6 @@ export default function SmallGenericTile({
           <Text numberOfLines={1} className="text-subtext font-medium" style={{ color: subColor }}>
             {label}
           </Text>
-        </View>
-
-        {/* Menu (absolute so it never pushes text) */}
-        <View className="absolute right-0 top-0 bottom-0 w-[28px] items-end justify-center">
-          <Pressable onPress={onMenuPress} hitSlop={10}>
-            <MaterialIcons name="more-vert" size={24} color="#111" />
-          </Pressable>
         </View>
       </View>
     </Card>

@@ -1,3 +1,4 @@
+//resetPassword.tsx
 import React, { useState } from "react";
 import { Text, View, Platform, Pressable } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";

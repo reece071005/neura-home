@@ -1,3 +1,4 @@
+//rooms.ts
 import { api } from "@/lib/api/client";
 
 export type RoomDto = {

@@ -1,11 +1,6 @@
+// LargeClimateTile.tsx
 import React, { useMemo, useRef, useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  PanResponder,
-  LayoutChangeEvent,
-} from "react-native";
+import {View, Text, Pressable, PanResponder, LayoutChangeEvent } from "react-native";
 
 import clsx from "clsx";
 import Svg, { Path, Circle } from "react-native-svg";
@@ -25,10 +20,8 @@ type Props = {
   maxTemp?: number;
   step?: number;
 
-  onChangeSetTemp: (t: number) => void; // commit once on release
+  onChangeSetTemp: (t: number) => void;
   onChangeMode: (m: HvacMode) => void;
-
-  onMenuPress?: () => void;
   showBlueBorder?: boolean;
 };
 
@@ -97,7 +90,6 @@ export default function LargeClimateTile({
   step = 0.5,
   onChangeSetTemp,
   onChangeMode,
-  onMenuPress,
   showBlueBorder = false,
 }: Props) {
   const ACTIVE = modeColor(mode);
@@ -232,13 +224,6 @@ export default function LargeClimateTile({
       )}
     >
       <View onLayout={onLayout} className="flex-1 pt-1.5 items-center">
-        {/* menu */}
-        <View style={{ position: "absolute", top: 1, right: 1, zIndex: 10 }}>
-          <Pressable onPress={onMenuPress} hitSlop={10}>
-            <MaterialIcons name="more-vert" size={26} />
-          </Pressable>
-        </View>
-
         {/* dial */}
         <View
           style={{

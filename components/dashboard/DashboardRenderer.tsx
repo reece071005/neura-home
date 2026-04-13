@@ -118,7 +118,6 @@ export function RenderTile({
             colorTemp={colorTemp}
             onChange={(next) => onChangeLargeLight(entityId, next)}
             onCommit={() => onCommitLargeLight(entityId)}
-            onMenuPress={() => console.log("menu")}
             showBlueBorder
           />
         );

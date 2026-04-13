@@ -5,7 +5,7 @@ export type UserResponse = {
     email: string;
     username: string;
     is_active: boolean;
-    created_at: string; // ISO string
+    created_at: string;
     role: "admin" | "user";
 };
 

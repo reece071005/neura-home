@@ -1,10 +1,3 @@
-/**
- * Dashboard layout and widget type defintions
- *
- * This file defines the structural model for how the dashboard
- * is composed and rendered.
- */
-
 //Visual size of the widgets on the dashboard grid
 export type Variant = "small" | "large";
 

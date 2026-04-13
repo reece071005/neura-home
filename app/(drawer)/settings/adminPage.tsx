@@ -1,3 +1,4 @@
+//adminPage.tsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Alert,
@@ -108,10 +109,8 @@ const AdminPage = () => {
             const aIsMe = me && a.id === me.id ? 1 : 0;
             const bIsMe = me && b.id === me.id ? 1 : 0;
 
-            // 1) Me first
             if (aIsMe !== bIsMe) return bIsMe - aIsMe;
 
-            // 2) Then newest first
             return a.created_at < b.created_at ? 1 : -1;
         });
 

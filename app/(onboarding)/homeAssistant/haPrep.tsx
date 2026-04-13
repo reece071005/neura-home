@@ -1,9 +1,10 @@
+// haPrep.tsx
 import { StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import React from "react";
 
 import GradientButton from "@/components/general/GradientButton";
-import HubSetupIllustration from "@/assets/illustrations/hubSetup.svg";
+import HubSetupIllustration from "@/assets/illustrations/onboarding/hubSetup.svg";
 
 const HaPrep = () => {
     return (

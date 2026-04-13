@@ -1,3 +1,4 @@
+// haSearch.tsx
 import { Image, Pressable, Text, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useRef } from "react";

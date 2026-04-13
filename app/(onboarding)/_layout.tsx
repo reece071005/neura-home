@@ -1,3 +1,4 @@
+// _layout.tsx
 import React from "react";
 import { Pressable, View } from "react-native";
 import { Stack, router, usePathname } from "expo-router";

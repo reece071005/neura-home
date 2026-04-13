@@ -1,3 +1,4 @@
+// LargeLightTile.tsx
 import React, { useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, PanResponder, LayoutChangeEvent } from "react-native";
 import Svg, { Path, Circle } from "react-native-svg";

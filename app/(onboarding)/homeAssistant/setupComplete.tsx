@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import GradientButton from "@/components/general/GradientButton";
 
-import SetupCompleteIllustration from "@/assets/illustrations/setupComplete.svg";
+import SetupCompleteIllustration from "@/assets/illustrations/onboarding/setupComplete.svg";
 
 export default function SetupComplete() {
   return (

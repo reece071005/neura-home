@@ -1,8 +1,3 @@
-/**
- * Edit Dashboard type defintions
- *
- * This file defines the types for the dashboard edit page.
- */
 import * as mdi from "@mdi/js";
 import type {ApiDevice} from "@/lib/api/devices";
 import type {TileKind, WidgetSize} from "@/lib/storage/dashboardWidgetStore";

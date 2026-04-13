@@ -14,7 +14,7 @@ export function useHydrateDashboardsFromDb() {
   const hasHydrated = useDashboardWidgetsStore((s) => s.hasHydrated);
 
   useEffect(() => {
-    if (!hasHydrated) return; // wait until AsyncStorage rehydrate completes
+    if (!hasHydrated) return;
 
     let mounted = true;
     const startSnapshot = JSON.stringify({
@@ -55,7 +55,6 @@ export function useHydrateDashboardsFromDb() {
           };
         });
       } catch (e) {
-        // optional log
       }
     })();
 

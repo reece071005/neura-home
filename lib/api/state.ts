@@ -1,9 +1,9 @@
-// lib/api/state.ts
+// state.ts
 import { api } from "@/lib/api/client";
 
 export type HAState = {
     entity_id: string;
-    state: string; // "on"/"off"/etc
+    state: string;
     last_changed?: string;
     last_updated?: string;
 };

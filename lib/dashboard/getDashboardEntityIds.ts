@@ -1,9 +1,5 @@
 import type { DashboardRow } from "@/lib/dashboard/dashboardTypes";
 
-/**
- * Extracts all entity IDs used in the dashboard layout.
- * This allows polling and state hooks to only track relevant entities.
- */
 export function getDashboardEntityIds(layout: DashboardRow[]): string[] {
     const ids = new Set<string>();
 

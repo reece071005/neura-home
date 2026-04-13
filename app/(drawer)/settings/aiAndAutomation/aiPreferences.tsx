@@ -1,3 +1,4 @@
+// aiPreferences.tsx
 import React, { useCallback, useEffect, useState } from "react";
 import {
   SafeAreaView,
@@ -27,11 +28,7 @@ import { getModelSummary } from "@/lib/api/ai/aiGetSummary";
 
 type TrainingFrequency = "daily" | "weekly" | "monthly";
 
-const FREQUENCIES: TrainingFrequency[] = [
-  "daily",
-  "weekly",
-  "monthly",
-];
+const FREQUENCIES: TrainingFrequency[] = ["daily", "weekly", "monthly"];
 
 export default function AiPreferencesScreen() {
   const { room, roomId, id } = useLocalSearchParams<{
@@ -124,7 +121,6 @@ export default function AiPreferencesScreen() {
 
     try {
       const readiness = await getTrainingReadiness(room);
-      console.log("Training readiness", readiness);
 
       setCanTrain(readiness.ready);
       setDaysCollected(readiness.days_available);
@@ -202,7 +198,7 @@ export default function AiPreferencesScreen() {
     setTrainingFrequency(next);
   };
 
-  //UI
+  //Main Screen
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
 

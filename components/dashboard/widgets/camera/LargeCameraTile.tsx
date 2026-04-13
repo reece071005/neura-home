@@ -1,3 +1,4 @@
+//LargeCameraTile.tsx
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Image, Modal } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -157,7 +158,7 @@ export default function LargeCameraTile({ title, cameraEntity, onMenuPress }: Pr
                           {lastUpdated ? `Updated: ${lastUpdated.toLocaleTimeString()}` : " "}
                       </Text>
 
-                      {/* Image area (responsive 16:9) */}
+                      {/* Image area */}
                       <View
                           style={{
                               width: "100%",

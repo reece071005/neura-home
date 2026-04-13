@@ -1,4 +1,4 @@
-// lib/api/auth/getUserProfile.ts
+// getUserProfile.ts
 import { api } from "@/lib/api/client";
 
 export type UserRole = "admin" | "user" | string;

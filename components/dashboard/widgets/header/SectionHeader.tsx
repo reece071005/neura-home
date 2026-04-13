@@ -1,10 +1,9 @@
-// components/ui/SectionHeaderRow.tsx
+//SectionHeaderRow.tsx
 import React from "react";
 import { View, Text } from "react-native";
 
 //Icons
 import MdiIcon from "@/components/general/MdiIcon"; // your custom SVG wrapper
-import * as mdi from "@mdi/js";
 
 type Props = {
   title: string;

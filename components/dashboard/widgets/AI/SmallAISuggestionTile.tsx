@@ -1,3 +1,4 @@
+//SmallAISuggestionTile.tsx
 import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import Card from "@/components/dashboard/Card";

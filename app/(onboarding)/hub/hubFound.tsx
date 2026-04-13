@@ -1,3 +1,4 @@
+//hubFound.tsx
 import React, { useEffect, useState } from "react";
 import { Text, Pressable, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -5,7 +6,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { setHubBaseUrl } from "@/lib/storage/hubStore";
 import {getHomeAssistantConfig} from "@/lib/api/hub/homeAssistant";
 
-import NeuraHubIcon from "@/assets/illustrations/neuraHubIcon.svg";
+import NeuraHubIcon from "@/assets/illustrations/onboarding/neuraHubIcon.svg";
 
 const HubFound = () => {
     const { id, name, ip } = useLocalSearchParams();

@@ -1,3 +1,4 @@
+//haToken.tsx
 import { Text, View, Platform, Linking, KeyboardAvoidingView, ScrollView } from "react-native";
 import { router, Link } from "expo-router";
 import React, { useState } from "react";
@@ -7,7 +8,7 @@ import { finalizeOnboarding } from "@/services/finalizeOnboarding";
 
 import GradientButton from "@/components/general/GradientButton";
 import GradientTextInput from "@/components/general/GradientTextInput";
-import SignInIllustration from "@/assets/illustrations/signIn.svg";
+import SignInIllustration from "@/assets/illustrations/onboarding/signIn.svg";
 
 const HaLogin = () => {
   const [token, setToken] = useState("");

@@ -58,16 +58,16 @@ export function useVoiceAssistant() {
     return event.message?.trim() || "Couldn't process speech. Please try again.";
   }
 
-  // ─── Speech recognition event listeners ──────────────────────────────────
+  // Speech recognition event listeners
 
-  // Live interim results — updates "Heard:" in real time while user speaks
+  // Live interim results, updates in real time while user speaks
   useSpeechRecognitionEvent("result", (event) => {
     const transcript = event.results[0]?.transcript ?? "";
     transcriptRef.current = transcript;
     if (isMountedRef.current) setLastText(transcript);
   });
 
-  // Recognition ended — fire the command with the final transcript
+  // Recognition ended fire the command with the final transcript
   useSpeechRecognitionEvent("end", async () => {
     if (isMountedRef.current) setIsRecording(false);
 
@@ -94,7 +94,7 @@ export function useVoiceAssistant() {
     }
   });
 
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
+  // Lifecycle
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -123,7 +123,7 @@ export function useVoiceAssistant() {
     };
   }, []);
 
-  // ─── Playback helpers ─────────────────────────────────────────────────────
+  // Playback helpers
 
   async function stopPlayback() {
     const p = playbackRef.current;
@@ -230,8 +230,7 @@ export function useVoiceAssistant() {
     lastTtsFileRef.current = fileUri;
   }
 
-  // ─── Core command sender (shared by voice + text paths) ──────────────────
-
+  // Core command sender
   async function _sendCommand(text: string, options?: { playback?: boolean }) {
     const playbackAssistantTts = options?.playback ?? true;
     const q = text.trim();
@@ -275,7 +274,7 @@ export function useVoiceAssistant() {
     }
   }
 
-  // ─── Public API ───────────────────────────────────────────────────────────
+  // Public API
 
   async function startRecording() {
     const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
@@ -292,21 +291,18 @@ export function useVoiceAssistant() {
 
     ExpoSpeechRecognitionModule.start({
       lang: "en-US",
-      interimResults: true,           // live transcript updates in "Heard:" field
-      requiresOnDeviceRecognition: true, // Apple on-device SFSpeechRecognizer, no server
+      interimResults: true,
+      requiresOnDeviceRecognition: true,
       addsPunctuation: true,
     });
 
     if (isMountedRef.current) setIsRecording(true);
   }
 
-  // Called by VoiceAssistant on onPressOut — stops recognition, "end" event fires the command
   async function stopAndSend(_options?: { executeCommand?: boolean; playback?: boolean }) {
     ExpoSpeechRecognitionModule.stop();
-    // "end" event listener above handles the rest
   }
 
-  // Called by the keyboard sheet — same backend route, no STT involved
   async function sendTextCommand(text: string) {
     if (isMountedRef.current) setRecognitionError("");
     return _sendCommand(text, { playback: true });

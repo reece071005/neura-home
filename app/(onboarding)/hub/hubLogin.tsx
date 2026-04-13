@@ -1,3 +1,4 @@
+//hubLogin.tsx
 import { Text, View, Platform, KeyboardAvoidingView, ScrollView } from 'react-native'
 import { router } from "expo-router";
 import React, { useState } from 'react'
@@ -7,7 +8,7 @@ import {login} from "@/lib/api/auth";
 import GradientButton from "@/components/general/GradientButton";
 import GradientTextInput from "@/components/general/GradientTextInput";
 
-import SignInIllustration from "@/assets/illustrations/signIn.svg";
+import SignInIllustration from "@/assets/illustrations/onboarding/signIn.svg";
 
 const HubSetup = () => {
     const [password, setPassword] = useState("");

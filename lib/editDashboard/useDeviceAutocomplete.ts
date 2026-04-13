@@ -1,4 +1,4 @@
-// lib/editDashboard/useDeviceAutocomplete.ts
+// useDeviceAutocomplete.ts
 import { useEffect, useMemo, useState } from "react";
 
 import { listDevices, type ApiDevice } from "@/lib/api/devices";
