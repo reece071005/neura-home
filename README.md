@@ -77,6 +77,14 @@ The overall system architecture consists of a mobile application frontend, a bac
   
 ## System Architecture
 
+Neura Home follows a local-first architecture designed to provide reliable, low-latency smart home control while maintaining strong privacy guarantees.
+
+The diagram below illustrates the high-level architecture of the Neura Home system.
+
+<p align="center">
+  <img src="docs/HighLevelSystemArchitecture.png" alt="Neura Home System Architecture" width="600">
+</p>
+
 ## Getting Started
 
 The following steps describe how to run the **Neura Home mobile application** in a development environment.  
@@ -203,7 +211,7 @@ These notifications inform the user when actions such as device adjustments or e
 
 Notifications can include information such as:
 
-- The devices and room was affected
+- The devices and rooms affected
 - The time the action occurred
 - The confidence of the model
 
