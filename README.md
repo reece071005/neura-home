@@ -26,11 +26,11 @@ An AI-driven smart home platform that learns user routines from time-series sens
     📄 Final Project Report
   </a>
   &nbsp;&nbsp;|&nbsp;&nbsp;
-  <a href="docs/NeuraHomeTechnicalPoster.pdf">
+  <a href="/docs/NeuraHomeTechnicalPoster.png">
     🧠 Technical Poster
   </a>
   &nbsp;&nbsp;|&nbsp;&nbsp;
-  <a href="docs/NeuraHomeMarketingPoster.pdf">
+  <a href="/docs/NeuraHomeMarketingPoster.png">
     🎨 Marketing Poster
   </a>
 </div>
