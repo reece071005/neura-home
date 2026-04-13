@@ -1,3 +1,4 @@
+// aiAndAutomation.tsx
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {Text, Pressable, View, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
@@ -277,10 +278,9 @@ export default function AiAutomationPage() {
                                     />
                                 )
                               }
-                                  // TODO: Figure out the function of this
-                                  onPress={() => router.push(`/(drawer)/ai/cameras/${cam.id}`)}
                               />
                           ))}
+
                         </View>
                         <View className="px-4 py-4">
                           <GradientButton
@@ -341,34 +341,11 @@ export default function AiAutomationPage() {
                               onPress={() => router.push("/settings/aiAndAutomation/createRoom")}
                           />
                           <Text className="mt-3 text-hint text-textSecondary">
-                            Example: "Bedroom" can be more conservative, while "Living room" can be more proactive.
+                            Example: "Bedroom" may need to be retrained, while "Living Room" does not.
                           </Text>
                         </View>
                       </>
                   )}
-                </SectionCard>
-
-                {/* Safety context */}
-                <SectionCard title="Safety">
-                  <View className="px-4 py-4">
-                    <Text className="text-hint text-textSecondary">
-                      AI actions will only trigger when occupancy/motion is detected in that room, based
-                      on your current system rules.
-                    </Text>
-
-                    <View className="mt-3">
-                      <Pressable
-                          // TODO: Change this link
-                          onPress={() => router.push("/(drawer)/ai/about")}
-                          hitSlop={10}
-                          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-                      >
-                        <Text style={{ color: "#111827", fontWeight: "600" }}>
-                          Learn how AI works
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </View>
                 </SectionCard>
               </>
           )}

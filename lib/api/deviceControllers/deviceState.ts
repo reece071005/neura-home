@@ -1,5 +1,4 @@
-// lib/api/deviceState.ts
-
+// deviceState.ts
 import { api } from "@/lib/api/client";
 
 export interface LightDeviceAttributes {

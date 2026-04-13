@@ -1,3 +1,4 @@
+//SmallLightTile.tsx
 import React, { useMemo, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import Card from "@/components/dashboard/Card";
@@ -56,7 +57,7 @@ export default function SmallLightTile({
       await setLight({ entity_id: entityId, state: nextState });
       setOptimisticOn(null);
     } catch (err) {
-      console.log("❌ setLight failed", err);
+      console.log("setLight failed", err);
       setOptimisticOn(null);
     } finally {
       setPending(false);

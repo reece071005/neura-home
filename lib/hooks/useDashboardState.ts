@@ -1,11 +1,3 @@
-/**
- * Dashboard device state hook
- *
- * - Fetches current Home Assistant state
- * - Converts raw HA data into UI-friendly maps
- * - Keeps the dashboard in sync via polling
- */
-
 import React from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { getCurrentState } from "@/lib/api/state";
@@ -16,7 +8,7 @@ type Maps = {
   lightOnMap: Record<string, boolean>;
   lightValues: Record<string, number>;
   lightColorMap: Record<string, [number, number, number]>;
-  lightTempMap: Record<string, number>; // Kelvin  // ← NEW: rgb_color from HA
+  lightTempMap: Record<string, number>;
   climateSetTempMap: Record<string, number>;
   climateModeMap: Record<string, UiHvacMode>;
   fanPctMap: Record<string, number>;
@@ -68,7 +60,7 @@ export function useDashboardState(dashboardEntityIds: string[]) {
       const domain = s.entity_id.split(".")[0];
       const attrs = s.attributes ?? {};
 
-      // LIGHT
+      // Light
       if (domain === "light") {
         const on = s.state === "on";
         next.lightOnMap[s.entity_id] = on;
@@ -79,7 +71,6 @@ export function useDashboardState(dashboardEntityIds: string[]) {
           next.lightValues[s.entity_id] = Math.max(0, Math.min(1, attrs.brightness / 255));
         }
 
-        // rgb_color is [r, g, b] 0-255 when the light supports colour
         if (
           on &&
           Array.isArray(attrs.rgb_color) &&
@@ -94,7 +85,7 @@ export function useDashboardState(dashboardEntityIds: string[]) {
         }
       }
 
-      // CLIMATE
+      // Climate
       if (domain === "climate") {
         if (typeof attrs.temperature === "number") {
           next.climateSetTempMap[s.entity_id] = attrs.temperature;
@@ -104,7 +95,7 @@ export function useDashboardState(dashboardEntityIds: string[]) {
         if (mode) next.climateModeMap[s.entity_id] = mode;
       }
 
-      // FAN
+      // Fan
       if (domain === "fan") {
         next.fanPctMap[s.entity_id] =
           typeof attrs.percentage === "number"
@@ -112,14 +103,14 @@ export function useDashboardState(dashboardEntityIds: string[]) {
             : s.state === "on" ? 100 : 0;
       }
 
-      // COVER
+      // Cover
       if (domain === "cover") {
         if (typeof attrs.current_position === "number") {
           next.coverPosMap[s.entity_id] = attrs.current_position;
         }
       }
 
-      // SENSOR — binary_sensor (presence, motion, occupancy)
+      // Sensor
       if (domain === "binary_sensor") {
         next.presenceMap[s.entity_id] = s.state === "on";
       }

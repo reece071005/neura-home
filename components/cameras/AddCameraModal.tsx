@@ -1,3 +1,4 @@
+// AddCameraModal.tsx
 import React, { useMemo, useState } from "react";
 import {
   View,
@@ -12,7 +13,6 @@ import {
 } from "react-native";
 
 import { AvailableCamera } from "@/lib/api/devices";
-
 
 type Props = {
   visible: boolean;

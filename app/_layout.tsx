@@ -1,3 +1,4 @@
+//_layout.tsx
 import { Stack, useRouter } from "expo-router";
 import { useFonts } from "expo-font";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -70,7 +71,6 @@ export default function RootLayout() {
       </View>
     );
   }
-
 
   return (
       //Global Hub Reconnect Banner

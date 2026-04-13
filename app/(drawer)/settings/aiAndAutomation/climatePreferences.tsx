@@ -1,3 +1,4 @@
+// climatePreferences.tsx
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { Alert, Text, View, ScrollView, Switch, TextInput, Pressable, Platform, Modal } from "react-native";

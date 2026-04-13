@@ -9,7 +9,7 @@ type RequestOptions = {
     method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
     headers?: Record<string, string>;
     body?: any;
-    auth?: boolean; // Bearer token
+    auth?: boolean;
     form?: boolean;
     multipart?: boolean;
 };
@@ -38,7 +38,6 @@ export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T
 
     const finalHeaders: Record<string, string> = { ...(headers ?? {}) };
 
-    // Attach token if required
     if (auth) {
         const token = await getToken();
         if (token) finalHeaders.Authorization = `Bearer ${token}`;
@@ -51,7 +50,7 @@ export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T
             finalHeaders["Content-Type"] = "application/x-www-form-urlencoded";
             finalBody = body instanceof URLSearchParams ? body.toString() : String(body);
         } else if (multipart) {
-            finalBody = body; // body is a FormData instance
+            finalBody = body;
         } else {
             finalHeaders["Content-Type"] = "application/json";
             finalBody = JSON.stringify(body);
@@ -117,7 +116,6 @@ export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T
         });
     }
 
-    // Safer parsing: works even if backend returns non-JSON
     useConnectionState.getState().setReconnecting(false);
 
     const rawText = await res.text();
@@ -128,7 +126,6 @@ export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T
         data = { detail: rawText };
     }
 
-    // If token is invalid / expired, trigger global logout + redirect
     if (res.status === 401 && auth) {
         const detail = String(data?.detail ?? "");
         const msg = detail.toLowerCase();

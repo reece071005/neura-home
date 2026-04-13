@@ -1,8 +1,9 @@
+//haFound.tsx
 import React from "react";
 import { Text, Pressable, View, ScrollView } from "react-native";
 import { router } from "expo-router";
 
-import NeuraHubIcon from "@/assets/illustrations/neuraHubIcon.svg";
+import NeuraHubIcon from "@/assets/illustrations/onboarding/neuraHubIcon.svg";
 import { getDiscoveredInstances } from "@/lib/storage/onboardingStore";
 import { setOnboardingHA } from "@/lib/storage/onboardingStore";
 

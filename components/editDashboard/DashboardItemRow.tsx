@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import type { RenderItemParams } from "react-native-draggable-flatlist";
 
 import type { DashboardItem, WidgetSize } from "@/lib/storage/dashboardWidgetStore";
+import { SUPPORTED_SIZES_BY_KIND } from "@/lib/editDashboard/dashboardTypes";
 
 type Props = {
   item: DashboardItem;
@@ -70,6 +71,8 @@ export default function DashboardItemRow({
   }
 
   // TILE ITEM
+  const availableSizes = SUPPORTED_SIZES_BY_KIND[item.kind] ?? ["small"];
+
   return (
     <Pressable
       onLongPress={drag}
@@ -103,15 +106,27 @@ export default function DashboardItemRow({
         <View className="flex-row" style={{ gap: 8 }}>
           {sizeOptions.map((s) => {
             const active = item.size === s;
+            const supported = availableSizes.includes(s);
             return (
               <Pressable
                 key={s}
-                onPress={() => onUpdate(item.id, { size: s })}
+                disabled={!supported}
+                onPress={() => {
+                  if (!supported) return;
+                  onUpdate(item.id, { size: s });
+                }}
                 className={`px-3 py-2 rounded-full border ${
-                  active ? "bg-black border-black" : "bg-white border-gray-300"
+                  active
+                    ? "bg-black border-black"
+                    : supported
+                    ? "bg-white border-gray-300"
+                    : "bg-gray-100 border-gray-200"
                 }`}
+                style={({ pressed }) => ({ opacity: pressed && supported ? 0.8 : 1 })}
               >
-                <Text className={active ? "text-white" : "text-black"}>{s}</Text>
+                <Text className={active ? "text-white" : supported ? "text-black" : "text-gray-400"}>
+                  {s}
+                </Text>
               </Pressable>
             );
           })}
@@ -128,4 +143,3 @@ export default function DashboardItemRow({
     </Pressable>
   );
 }
-

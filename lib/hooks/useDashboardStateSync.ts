@@ -18,7 +18,7 @@ export type DashboardStateV2 = {
 export function useDashboardStateSync(opts?: { debounceMs?: number }) {
   const debounceMs = opts?.debounceMs ?? 800;
 
-  // --- pull the *full* dashboard state from store ---
+  // pull the dashboard state from store
   const dashboards = useDashboardWidgetsStore((s) => s.dashboards);
   const activeDashboardId = useDashboardWidgetsStore((s) => s.activeDashboardId);
   const layoutsById = useDashboardWidgetsStore((s) => s.layoutsById);
@@ -48,13 +48,12 @@ export function useDashboardStateSync(opts?: { debounceMs?: number }) {
 
   const payloadJson = useMemo(() => JSON.stringify(payload), [payload]);
 
-  // Baseline current local state; initial hydration is handled by useHydrateDashboardsFromDb.
   useEffect(() => {
     lastSavedRef.current = payloadJson;
     setStatus("idle");
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  // -------- Debounced autosave on change --------
+  // Debounced autosave on change
   useEffect(() => {
     if (hydratingRef.current) return;
 
@@ -83,7 +82,6 @@ export function useDashboardStateSync(opts?: { debounceMs?: number }) {
     };
   }, [payloadJson, payload, debounceMs]);
 
-  // -------- Flush pending save on background --------
   useEffect(() => {
     const sub = AppState.addEventListener("change", (next) => {
       if (next !== "background") return;

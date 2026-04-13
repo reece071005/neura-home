@@ -1,3 +1,4 @@
+// hubNewAccount.tsx
 import React, { useState } from "react";
 import { Text, View, Platform, KeyboardAvoidingView, ScrollView } from "react-native";
 import { router } from "expo-router";
@@ -6,7 +7,7 @@ import { setOnboardingAccount } from "@/lib/storage/onboardingStore";
 
 import GradientButton from "@/components/general/GradientButton";
 import GradientTextInput from "@/components/general/GradientTextInput";
-import SignInIllustration from "@/assets/illustrations/signIn.svg";
+import SignInIllustration from "@/assets/illustrations/onboarding/signIn.svg";
 
 const HubNewAccount = () => {
   const [username, setUsername] = useState("");

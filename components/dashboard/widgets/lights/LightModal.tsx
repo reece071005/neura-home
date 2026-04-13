@@ -1,23 +1,5 @@
-/**
- * LightModal.tsx
- *
- * Light control bottom-sheet with two switchable panels:
- *
- *   [Colour]  — SV square + hue strip + colour presets
- *   [Temp]    — warm→cool Kelvin strip + white tone presets
- *
- * Shared across both panels:
- *   - Brightness strip
- *   - Apply / X / revert behaviour (unchanged from before)
- */
-
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+// LightModal.tsx
+import React, { useCallback, useEffect, useMemo, useRef, useState,} from "react";
 import {
   Animated,
   Dimensions,
@@ -28,17 +10,11 @@ import {
   Text,
   View,
 } from "react-native";
-import Svg, {
-  Defs,
-  LinearGradient as SvgLinearGradient,
-  Rect,
-  Stop,
-} from "react-native-svg";
+import Svg, {Defs, LinearGradient as SvgLinearGradient, Rect, Stop,} from "react-native-svg";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getDeviceState, parseLightCapabilities, type LightCapabilities } from "@/lib/api/deviceControllers/deviceState";
 
-/* ─────────────────────────── helpers ─────────────────────────────────────── */
-
+// helpers
 function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
 }
@@ -69,11 +45,7 @@ function hsvToRgb255(h: number, s: number, v: number): RgbColor {
   return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
 }
 
-/**
- * Convert a colour temperature in Kelvin to an approximate RGB.
- * Range we use: 2000 K (warm/amber) → 6500 K (cool/blue-white).
- * Algorithm: Tanner Helland's approximation.
- */
+// Convert a colour temperature in Kelvin to an approximate RGB
 function kelvinToRgb(kelvin: number): [number, number, number] {
   const t = clamp(kelvin, 1000, 40000) / 100;
   let r: number, g: number, b: number;
@@ -99,13 +71,10 @@ function kelvinToCss(kelvin: number) {
   return `rgb(${r},${g},${b})`;
 }
 
-/** Map 0-1 slider position → Kelvin using a fixed 2000–6500 range.
- *  Only used for initial state before capabilities are fetched. */
 const KELVIN_MIN = 2000;
 const KELVIN_MAX = 6500;
 
-/* ─────────────────────────── types ───────────────────────────────────────── */
-
+// Types
 export interface RgbColor { r: number; g: number; b: number }
 export interface HsvColor { h: number; s: number; v: number }
 type PanelMode = "colour" | "temp";
@@ -115,8 +84,8 @@ interface Props {
   title: string;
   entityId: string;
   initialColor?: HsvColor;
-  initialBrightness?: number;       // 0-255
-  initialColorTemp?: number;        // Kelvin, e.g. 2700
+  initialBrightness?: number;
+  initialColorTemp?: number;
   onClose: () => void;
   onCommit: (color: RgbColor, brightness: number) => void;
   onCommitTemp: (kelvin: number, brightness: number) => void;
@@ -126,8 +95,7 @@ interface Props {
   onRevertTemp: (kelvin: number, brightness: number) => void;
 }
 
-/* ─────────────────────────── layout constants ────────────────────────────── */
-
+// layout constants
 const SCREEN_W = Dimensions.get("window").width;
 const H_PAD = 24;
 const CONTENT_W = SCREEN_W - H_PAD * 2;
@@ -143,7 +111,7 @@ const ICON_SIZE = 16;
 const ROW_GAP = 12;
 const STRIP_W = CONTENT_W - ICON_SIZE - ROW_GAP;
 
-/* ─────────────────────────── SV Square ───────────────────────────────────── */
+// SV Square
 
 const SvSquare = React.memo(function SvSquare({
   hue, width, height,
@@ -167,7 +135,7 @@ const SvSquare = React.memo(function SvSquare({
   );
 });
 
-/* ─────────────────────────── Hue Strip ───────────────────────────────────── */
+// Hue Strip
 
 const HUE_STOPS = 12;
 const HueStrip = React.memo(function HueStrip({ width, height }: { width: number; height: number }) {
@@ -185,9 +153,7 @@ const HueStrip = React.memo(function HueStrip({ width, height }: { width: number
   );
 });
 
-/* ─────────────────────────── Kelvin Strip ────────────────────────────────── */
-
-// Sample a handful of Kelvin values across the range for the gradient
+// Kelvin Strip
 const KELVIN_GRAD_STOPS = [2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500];
 
 const KelvinStrip = React.memo(function KelvinStrip({ width, height }: { width: number; height: number }) {
@@ -209,8 +175,7 @@ const KelvinStrip = React.memo(function KelvinStrip({ width, height }: { width: 
   );
 });
 
-/* ─────────────────────────── Generic Strip Slider ────────────────────────── */
-
+// Generic Strip Slider
 function StripSlider({
   value, width, onChange, onRelease, children,
 }: {
@@ -271,8 +236,7 @@ function StripSlider({
   );
 }
 
-/* ─────────────────────────── Mode Toggle ────────────────────────────────── */
-
+// Mode Toggle
 function ModeToggle({ mode, onChange }: { mode: PanelMode; onChange: (m: PanelMode) => void }) {
   return (
     <View style={styles.toggleContainer}>
@@ -309,8 +273,7 @@ function ModeToggle({ mode, onChange }: { mode: PanelMode; onChange: (m: PanelMo
   );
 }
 
-/* ─────────────────────────── Main Component ──────────────────────────────── */
-
+// Main Component
 export default function LightModal({
   visible,
   title,
@@ -344,33 +307,31 @@ export default function LightModal({
       .then((state) => {
         const caps = parseLightCapabilities(state);
         setCapabilities(caps);
-        // Auto-select the only available panel if device doesn't support both
         if (!caps.hasColor && caps.hasTemp) setPanelMode("temp");
         if (caps.hasColor && !caps.hasTemp) setPanelMode("colour");
       })
       .catch(() => {
-        // If fetch fails, leave defaults (show both panels — safe fallback)
       });
   }, [visible, entityId]);
 
-  /* ── Colour state ───────────────────────────────────────────────────────── */
+  // Colour state
   const [hsv, setHsv] = useState<HsvColor>(initialColor);
   const hsvRef = useRef(hsv);
   hsvRef.current = hsv;
 
-  /* ── Temp state (0-1 slider, mapped to Kelvin) ──────────────────────────── */
+  // Temp state (0-1 slider, mapped to Kelvin)
   const [tempSlider, setTempSlider] = useState(() =>
     clamp((initialColorTemp - 2000) / (6500 - 2000), 0, 1)
   );
   const tempSliderRef = useRef(tempSlider);
   tempSliderRef.current = tempSlider;
 
-  /* ── Brightness (shared) ────────────────────────────────────────────────── */
+  // Brightness
   const [brightness, setBrightness] = useState(initialBrightness / 255);
   const brightnessRef = useRef(brightness);
   brightnessRef.current = brightness;
 
-  /* ── Snapshot for revert ────────────────────────────────────────────────── */
+  // Snapshot for revert
   const snapshotRef = useRef({
     hsv: initialColor,
     tempSlider: clamp((initialColorTemp - KELVIN_MIN) / (KELVIN_MAX - KELVIN_MIN), 0, 1),
@@ -400,7 +361,7 @@ export default function LightModal({
     }
   }, [visible]);
 
-  /* ── Animation ──────────────────────────────────────────────────────────── */
+  // Animation
   const slideY = useRef(new Animated.Value(600)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
 
@@ -418,7 +379,7 @@ export default function LightModal({
     }
   }, [visible, slideY, backdropOpacity]);
 
-  /* ── SV square pan ──────────────────────────────────────────────────────── */
+  // SV square pan
   const firePreviewRef = useRef(() => {});
 
   const svPan = useMemo(() => PanResponder.create({
@@ -438,7 +399,7 @@ export default function LightModal({
     onPanResponderTerminate: () => firePreviewRef.current(),
   }), []);
 
-  /* ── Derived ────────────────────────────────────────────────────────────── */
+  // Derived
   const kelvinMin = capabilities.minKelvin;
   const kelvinMax = capabilities.maxKelvin;
   const kelvin = Math.round(kelvinMin + tempSlider * (kelvinMax - kelvinMin));
@@ -446,8 +407,6 @@ export default function LightModal({
   function kelvinToSliderDynamic(k: number) { return (k - kelvinMin) / (kelvinMax - kelvinMin); }
   const kelvinRgb = kelvinToRgb(kelvin);
 
-  // Preview colour shown in the apply button / footer:
-  // In colour mode → HSV colour, in temp mode → Kelvin approximation
   const previewCss = panelMode === "colour"
     ? hsvToCss(hsv.h, hsv.s, hsv.v)
     : `rgb(${kelvinRgb[0]},${kelvinRgb[1]},${kelvinRgb[2]})`;
@@ -455,7 +414,7 @@ export default function LightModal({
   const svKnobX = hsv.s * PICKER_W;
   const svKnobY = (1 - hsv.v) * SV_H;
 
-  /* ── Fire preview (called on finger-up) ─────────────────────────────────── */
+  // Fire preview (called on finger-up)
   const firePreview = useCallback(() => {
     if (panelMode === "colour") {
       onPreview(
@@ -470,10 +429,9 @@ export default function LightModal({
     }
   }, [panelMode, onPreview, onPreviewTemp]);
 
-  // Keep the ref current so svPan (created once) always fires the latest version
   firePreviewRef.current = firePreview;
 
-  /* ── Apply ──────────────────────────────────────────────────────────────── */
+  // Apply
   const handleApply = useCallback(() => {
     if (panelMode === "colour") {
       onCommit(hsvToRgb255(hsv.h, hsv.s, hsv.v), Math.round(brightness * 255));
@@ -483,7 +441,7 @@ export default function LightModal({
     onClose();
   }, [panelMode, hsv, tempSlider, brightness, onCommit, onCommitTemp, onClose]);
 
-  /* ── Dismiss / revert ───────────────────────────────────────────────────── */
+  // Dismiss / revert
   const handleDismiss = useCallback(() => {
     const snap = snapshotRef.current;
     if (snap.panelMode === "colour") {
@@ -494,12 +452,11 @@ export default function LightModal({
     onClose();
   }, [onRevert, onRevertTemp, onClose]);
 
-  /* ── Stable slider callbacks ────────────────────────────────────────────── */
   const onHueChange = useCallback((h: number) => setHsv((p) => ({ ...p, h })), []);
   const onBrightnessChange = useCallback((v: number) => setBrightness(v), []);
   const onTempChange = useCallback((v: number) => setTempSlider(v), []);
 
-  /* ── Colour presets ─────────────────────────────────────────────────────── */
+  // Colour presets
   const COLOR_PRESETS: HsvColor[] = [
     { h: 0,    s: 0,   v: 1   },
     { h: 0.08, s: 0.5, v: 1   },
@@ -516,7 +473,7 @@ export default function LightModal({
     onPreview(hsvToRgb255(p.h, p.s, p.v), Math.round(brightnessRef.current * 255));
   }, [onPreview]);
 
-  /* ── Temp presets (Kelvin values) ───────────────────────────────────────── */
+  // Temp presets (Kelvin values)
   const TEMP_PRESETS = [
     { k: 2200, label: "Candle" },
     { k: 2700, label: "Warm" },
@@ -532,9 +489,7 @@ export default function LightModal({
     onPreviewTemp(k, Math.round(brightnessRef.current * 255));
   }, [onPreviewTemp, capabilities.minKelvin, capabilities.maxKelvin]);
 
-  /* ── Apply button text + border contrast ────────────────────────────────── */
-  // Use relative luminance so very light colours (cool white, pale tints) always
-  // get a dark label and a visible border, regardless of mode.
+  // Apply button text + border contrast
   const previewRgb = panelMode === "colour"
     ? hsvToRgb255(hsv.h, hsv.s, hsv.v)
     : { r: kelvinRgb[0], g: kelvinRgb[1], b: kelvinRgb[2] };
@@ -545,7 +500,7 @@ export default function LightModal({
   const isLight = luminance > 0.35;
 
   const applyTextColor = isLight ? "#111" : "#fff";
-  // Add a subtle border when the button is too close to the white sheet background
+
   const applyBorderStyle = isLight
     ? { borderWidth: 1.5, borderColor: "rgba(0,0,0,0.15)" }
     : {};
@@ -587,12 +542,12 @@ export default function LightModal({
 
         <View style={styles.body}>
 
-          {/* ── Mode toggle — only shown if device supports both ── */}
+          {/*Mode toggle, only shown if a device supports both  */}
           {capabilities.hasColor && capabilities.hasTemp && (
             <ModeToggle mode={panelMode} onChange={setPanelMode} />
           )}
 
-          {/* ══════════════════ COLOUR PANEL ══════════════════ */}
+          {/*Colour panel */}
           {panelMode === "colour" && (
             <>
               {/* SV square */}
@@ -661,7 +616,7 @@ export default function LightModal({
             </>
           )}
 
-          {/* ── Brightness strip (shared) ── */}
+          {/* Brightness strip */}
           <View style={styles.sliderRow}>
             <MaterialIcons name="brightness-6" size={ICON_SIZE} color="#bbb" />
             <StripSlider value={brightness} width={STRIP_W} onChange={onBrightnessChange} onRelease={firePreview}>
@@ -677,7 +632,7 @@ export default function LightModal({
             </StripSlider>
           </View>
 
-          {/* ── Footer ── */}
+          {/* Footer */}
           <View style={styles.footer}>
             <View style={[styles.preview, { backgroundColor: previewCss }]} />
             <Text style={styles.footerLabel}>
@@ -699,8 +654,7 @@ export default function LightModal({
   );
 }
 
-/* ─────────────────────────── styles ──────────────────────────────────────── */
-
+// styles
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -748,7 +702,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
 
-  /* ── Mode toggle ── */
+  //  Mode toggle
   toggleContainer: {
     flexDirection: "row",
     backgroundColor: "#f0f0f0",
@@ -782,7 +736,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  /* ── Colour panel ── */
+  // Colour panel
   svWrapper: {
     width: PICKER_W,
     height: SV_H,
@@ -820,7 +774,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  /* ── Temp panel ── */
+  // Temp panel
   kelvinLabel: {
     textAlign: "center",
     fontSize: 13,
@@ -853,7 +807,7 @@ const styles = StyleSheet.create({
     color: "rgba(0,0,0,0.55)",
   },
 
-  /* ── Shared ── */
+  // Shared
   sliderRow: {
     width: CONTENT_W,
     flexDirection: "row",

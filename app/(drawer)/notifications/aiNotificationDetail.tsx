@@ -1,11 +1,6 @@
+//aiNotificationDetail.tsx
 import React, { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import {ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -26,7 +21,6 @@ const formatFullDate = (iso: string) => {
 };
 
 const formatEntityId = (entityId: string) => {
-  // Convert "light.master_bedroom" to "Light - Master Bedroom"
   const [domain, ...nameParts] = entityId.split(".");
   const name = nameParts
     .join(".")
@@ -133,8 +127,7 @@ function MetaDataSection({ meta }: { meta: Record<string, any> }) {
   );
 }
 
-/* ---------------- Screen ---------------- */
-
+// Screen
 export default function AiNotificationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const notificationId = id ? Number(id) : NaN;
@@ -303,42 +296,13 @@ export default function AiNotificationDetail() {
 
           {/* Meta data */}
           <MetaDataSection meta={notification.meta} />
-
-          {/* Action button */}
-          {notification.room && (
-            <Pressable
-              onPress={() => {
-                // Navigate to the specific room - you'll need to implement this route
-                router.push({
-                  pathname: "/(drawer)/(tabs)/home",
-                  params: { room: notification.room },
-                });
-              }}
-              style={({ pressed }) => ({
-                marginTop: 28,
-                backgroundColor: pressed ? "#4F46E5" : "#6366F1",
-                borderRadius: 14,
-                paddingVertical: 15,
-                alignItems: "center",
-                flexDirection: "row",
-                justifyContent: "center",
-                gap: 8,
-              })}
-            >
-              <MaterialIcons name="meeting-room" size={18} color="white" />
-              <Text style={{ fontSize: 15, fontWeight: "700", color: "white" }}>
-                View {notification.room}
-              </Text>
-            </Pressable>
-          )}
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* ---------------- Back header ---------------- */
-
+// Back header
 function Header({ title = "Back" }: { title?: string }) {
   return (
     <View

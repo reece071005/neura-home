@@ -1,3 +1,4 @@
+//uploadFace.tsx
 import React, { useMemo, useRef, useState } from "react";
 import { router } from "expo-router";
 import { View, Text, Pressable, Image, Dimensions, ActivityIndicator } from "react-native";
@@ -22,21 +23,14 @@ export default function FaceCaptureScreen() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-
-
-  /**
-   * NEW SIZING
-   * Much bigger + proper oval shape
-   */
   const ovalWidth = useMemo(() => {
-    return Math.round(SCREEN_W * 0.82); // BIG — fills most width
+    return Math.round(SCREEN_W * 0.82);
   }, []);
 
   const ovalHeight = useMemo(() => {
-    return Math.round(ovalWidth * 1.28); // taller for face framing
+    return Math.round(ovalWidth * 1.28);
   }, [ovalWidth]);
 
-  // PERFECT CENTERING
   const ovalTop = useMemo(() => {
     if (!cameraHeight) return 0;
     return Math.round((cameraHeight - ovalHeight) / 2);
@@ -99,7 +93,7 @@ export default function FaceCaptureScreen() {
           setUploading(true);
           setUploadError(null);
           await addUserFace({ photoUri });
-          setPhotoUri(null); // ← reset before leaving
+          setPhotoUri(null);
           router.replace("/settings/account/accountPage");
       } catch (e: any) {
           setUploadError(e.message ?? "Upload failed. Please try again.");
@@ -130,7 +124,6 @@ export default function FaceCaptureScreen() {
             <CameraView ref={cameraRef} style={{ flex: 1 }} facing="front" />
           )}
 
-          {/* BIG CENTERED OVAL GUIDE */}
           {!photoUri && (
             <View
               pointerEvents="none"
@@ -143,14 +136,9 @@ export default function FaceCaptureScreen() {
                 flex: 1
               }}
             >
-              {/* TOP DIM */}
               <View style={{height: ovalTop, backgroundColor: "rgba(0,0,0,0.6)"}} />
-
-              {/* MIDDLE */}
               <View style={{ flexDirection: "row", height: ovalHeight}}>
                 <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)" }} />
-
-                {/* OVAL */}
                 <View
                   style={{
                     width: ovalWidth,
@@ -163,14 +151,9 @@ export default function FaceCaptureScreen() {
                     shadowRadius: 12,
                   }}
                 />
-
                 <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)" }} />
               </View>
-
-              {/* BOTTOM DIM */}
               <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)" }} />
-
-              {/* TEXT */}
               <View
                 style={{
                   position: "absolute",

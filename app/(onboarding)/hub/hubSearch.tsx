@@ -1,3 +1,4 @@
+//hubSearch.tsx
 import {Image, Pressable, Text, View} from 'react-native';
 import {router, useFocusEffect, useLocalSearchParams } from "expo-router"
 import React, { useCallback, useRef } from 'react';
@@ -44,9 +45,7 @@ const HubSearch = () => {
         }, remaining);
       };
 
-      // If manual IP provided
       if (manualIpValue) {
-
         const checkManual = async () => {
 
           const hub = await checkHubAddress(String(manualIpValue));

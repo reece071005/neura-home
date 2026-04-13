@@ -2,7 +2,7 @@ import { api } from "@/lib/api/client";
 
 type CoverPayload = {
     entity_id: string;
-    position: number; // 0–100
+    position: number;
 };
 
 type CoverResponse = {

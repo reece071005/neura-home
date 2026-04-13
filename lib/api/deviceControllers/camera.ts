@@ -3,11 +3,9 @@ import { api } from "@/lib/api/client";
 import {listDevices} from "@/lib/api/devices";
 
 function arrayBufferToBase64(buffer: ArrayBuffer) {
-  // React Native: convert bytes -> base64 without Node Buffer
   const bytes = new Uint8Array(buffer);
   let binary = "";
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  // global btoa exists in RN
   return btoa(binary);
 }
 
@@ -24,14 +22,9 @@ export async function getCameraSnapshotDataUri(camera_entity: string) {
   const buf = await res.arrayBuffer();
   const b64 = arrayBufferToBase64(buf);
 
-  // return a renderable <Image uri>
   return `data:${contentType};base64,${b64}`;
 }
 
-/**
- * If later you make the backend accept token in query param,
- * you can use this instead and skip base64:
- */
 export async function getCameraSnapshotUrl(camera_entity: string) {
   return `${BASE_URL}/homecontrollers/camera-snapshot?camera_entity=${encodeURIComponent(camera_entity)}`;
 }
@@ -51,7 +44,7 @@ export async function getAvailableCameras(): Promise<AvailableCamera[]> {
       id: d.entity_id,
       name: d.name,
       area: d.area ?? null,
-      source: null, // not provided by this endpoint
+      source: null,
     }));
 }
 

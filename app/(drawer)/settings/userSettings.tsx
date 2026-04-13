@@ -1,3 +1,4 @@
+//userSettings.tsx
 import React, {useEffect, useState} from "react";
 import { Alert, Linking, Text, View, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

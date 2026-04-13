@@ -24,7 +24,6 @@ import type { RgbColor } from "@/components/dashboard/widgets/lights/LightModal"
 const GAP = 8;
 
 export default function DashboardScreen() {
-  const aiRoom = "Master Bedroom";
   // Layout
   const items = useDashboardWidgetsStore((s) => s.items);
 
@@ -32,6 +31,26 @@ export default function DashboardScreen() {
   const isEmpty = layout.length === 0;
 
   const dashboardEntityIds = useMemo(() => getDashboardEntityIds(layout), [layout]);
+  const aiRooms = useMemo(() => {
+    const rooms = new Set<string>();
+    for (const row of layout) {
+      if (row.type === "full" && row.item.kind === "ai" && row.item.entityId) {
+        rooms.add(row.item.entityId);
+      }
+      if (row.type === "two") {
+        for (const item of row.items) {
+          if (item.kind === "ai" && item.entityId) rooms.add(item.entityId);
+        }
+      }
+      if (row.type === "split") {
+        if (row.left.kind === "ai" && row.left.entityId) rooms.add(row.left.entityId);
+        for (const item of row.right) {
+          if (item.kind === "ai" && item.entityId) rooms.add(item.entityId);
+        }
+      }
+    }
+    return Array.from(rooms);
+  }, [layout]);
 
   // Live state from backend polling
   const {
@@ -212,16 +231,33 @@ export default function DashboardScreen() {
   };
 
   //Load AI suggestion
-  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+  const [aiSuggestionsByRoom, setAiSuggestionsByRoom] = useState<Record<string, any[]>>({});
 
   useEffect(() => {
     const loadAISuggestions = async () => {
-      try {
-        const res = await getAISuggestions(aiRoom);
+      if (aiRooms.length === 0) {
+        setAiSuggestionsByRoom({});
+        return;
+      }
 
-        if (res.ok) {
-          setAiSuggestions(res.suggestions ?? []);
+      try {
+        const responses = await Promise.all(
+          aiRooms.map((room) =>
+            getAISuggestions(room)
+              .then((res) => ({ room, res }))
+              .catch(() => ({ room, res: null }))
+          )
+        );
+
+        const next: Record<string, any[]> = {};
+        for (const item of responses) {
+          if (item.res?.ok) {
+            next[item.room] = item.res.suggestions ?? [];
+          } else {
+            next[item.room] = [];
+          }
         }
+        setAiSuggestionsByRoom(next);
       } catch (err) {
         console.log("AI suggestions error", err);
       }
@@ -232,7 +268,7 @@ export default function DashboardScreen() {
     const interval = setInterval(loadAISuggestions, 30000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [aiRooms]);
 
   // Render
   return (
@@ -275,8 +311,7 @@ export default function DashboardScreen() {
                 coverPosMap={coverPosMap}
                 onChangeCover={onChangeCover}
                 presenceMap={presenceMap}
-                aiSuggestions={aiSuggestions}
-                room={aiRoom}
+                aiSuggestions={aiSuggestionsByRoom}
               />
             ))
           )}

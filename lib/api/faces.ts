@@ -8,7 +8,7 @@ export type AddFaceResponse = {
 
 export type AddFaceParams = {
     photoUri: string;
-    username?: string; // optional, omit if uploading for yourself
+    username?: string;
 };
 
 export type UserFaceResponse = {

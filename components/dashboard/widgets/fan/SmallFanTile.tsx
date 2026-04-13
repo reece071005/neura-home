@@ -16,9 +16,8 @@ type FanLevel = "off" | "low" | "medium" | "high";
 type Props = {
   title: string;
   entityId: string;
-  percentage?: number; // 0..100
+  percentage?: number;
   onChangePercentage?: (pct: number) => void;
-  onMenuPress?: () => void;
   showBlueBorder?: boolean;
 };
 
@@ -50,7 +49,6 @@ export default function SmallFanTile({
   entityId,
   percentage,
   onChangePercentage,
-  onMenuPress,
   showBlueBorder = false,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -106,13 +104,6 @@ export default function SmallFanTile({
           )}
       >
         <View className="flex-1">
-          {/* top-right menu */}
-          <View style={{ position: "absolute", top: 2, right: 2, zIndex: 20 }}>
-            <Pressable onPress={onMenuPress} hitSlop={10}>
-              <MaterialIcons name="more-vert" size={24} color="#111" />
-            </Pressable>
-          </View>
-
           {/* icon + title */}
           <View className="flex-row items-center">
             <View className="pr-2 pt-1">
@@ -216,4 +207,3 @@ export default function SmallFanTile({
       </Card>
   );
 }
-

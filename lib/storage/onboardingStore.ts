@@ -1,9 +1,3 @@
-/**
- * In-memory store for onboarding data.
- * Nothing is sent to the backend until the final step.
- * Cleared after successful registration.
- */
-
 export type OnboardingData = {
   // Account
   username: string;

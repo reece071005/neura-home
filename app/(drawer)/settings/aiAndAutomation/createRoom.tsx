@@ -1,3 +1,4 @@
+// createRoom.tsx
 import React, { useCallback, useRef, useState } from "react";
 
 import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
@@ -24,6 +25,7 @@ type DialogState = {
 };
 
 const DIALOG_HIDDEN: DialogState = { visible: false, title: "" };
+
 //Device kinds
 const KIND_LABEL: Record<ApiDevice["kind"], string> = {
   light: "Lights",
@@ -62,7 +64,6 @@ function StatusPill({ status, error }: { status: SaveStatus; error?: string | nu
   );
 }
 
-
 function DeviceRow({device, isAdded, isLast, onToggle}: {
   device: ApiDevice;
   isAdded: boolean;
@@ -98,7 +99,6 @@ function DeviceRow({device, isAdded, isLast, onToggle}: {
 
 // Main screen
 export default function CreateRoomScreen() {
-  // If id param is present edit mode is active
   const { id } = useLocalSearchParams<{ id?: string }>();
   const roomId = id ? Number(id) : null;
   const isEditMode = roomId !== null;
@@ -354,7 +354,6 @@ export default function CreateRoomScreen() {
                 const devices = await listDevices();
                 setAllDevices(devices);
               } catch {
-                // non-fatal
               } finally {
                 setDevicesLoading(false);
               }

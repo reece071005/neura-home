@@ -1,6 +1,6 @@
 import {Animated} from 'react-native'
 import React, {useEffect, useRef} from 'react'
-import SpinnerSvg from "@/assets/illustrations/spinner.svg"
+import SpinnerSvg from "@/assets/illustrations/onboarding/spinner.svg"
 
 type SpinnerProps = {
     size?: number;

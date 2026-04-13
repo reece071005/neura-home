@@ -1,3 +1,4 @@
+// Card.tsx
 import React from "react";
 import {View, Pressable} from 'react-native'
 import clsx from "clsx";

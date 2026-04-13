@@ -1,6 +1,6 @@
+// SmallCoverTile.tsx
 import React, { useMemo } from "react";
-import { View, Text, Pressable } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
+import { View, Text } from "react-native";
 import { mdiBlinds } from '@mdi/js';
 
 import Card from "@/components/dashboard/Card";
@@ -11,13 +11,12 @@ const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
 
 type Props = {
   title: string;
-  position?: number;       // 0..100
-  onChangePosition?: (pct: number) => void; // Called when percentage changes
-  onMenuPress?: () => void;
+  position?: number;
+  onChangePosition?: (pct: number) => void;
   showBlueBorder?: boolean;
 };
 
-export default function SmallCoverTile({title, position, onChangePosition, onMenuPress, showBlueBorder = false, }: Props) {
+export default function SmallCoverTile({title, position, onChangePosition, showBlueBorder = false, }: Props) {
   const pct = clamp(Math.round(position ?? 0), 0, 100)
   const isOpen = pct>0;
 
@@ -35,12 +34,6 @@ export default function SmallCoverTile({title, position, onChangePosition, onMen
               ].join(" ")}
       >
         <View className="flex-1">
-          <View style={{ position: "absolute", top: 2, right: 2, zIndex: 10 }}>
-            <Pressable onPress={onMenuPress} hitSlop={10}>
-              <MaterialIcons name="more-vert" size={24} color="#111" />
-            </Pressable>
-          </View>
-
           <View className="flex-row items-center">
             <View className="pr-2 pt-1">
               <MdiIcon path={mdiBlinds} size={30} color={isOpen ? "#4985EE" : "#7A7A7A"} />

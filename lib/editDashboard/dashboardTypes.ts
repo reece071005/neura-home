@@ -1,8 +1,3 @@
-/**
- * Edit Dashboard type defintions
- *
- * This file defines the types for the dashboard edit page.
- */
 import * as mdi from "@mdi/js";
 import type {ApiDevice} from "@/lib/api/devices";
 import type {TileKind, WidgetSize} from "@/lib/storage/dashboardWidgetStore";
@@ -16,16 +11,23 @@ export const kindOptions: TileKind[] = [
     "climate",
     "fan",
     "cover",
-    "lock",
     "camera",
-    "media",
     "sensor",
     "ai",
-    "generic",
 ];
 
 //Tile size Options
 export const sizeOptions: WidgetSize[] = ["small", "large"];
+
+export const SUPPORTED_SIZES_BY_KIND: Record<TileKind, WidgetSize[]> = {
+    light: ["small", "large"],
+    climate: ["large"],
+    fan: ["small"],
+    cover: ["small"],
+    camera: ["large"],
+    sensor: ["small"],
+    ai: ["small"],
+};
 
 //Simple icon picker (expand later)
 export const headerIconOptions: { label: string; iconPath?: string }[] = [
@@ -42,19 +44,7 @@ export const TILEKIND_TO_DEVICEKINDS: Record<TileKind, ApiDevice["kind"][]> = {
     climate: ["climate"],
     fan: ["fan"],
     cover: ["cover"],
-    lock: [], // backend doesn't return lock in ApiDevice.kind yet
     camera: ["camera"],
-    media: ["media_player"],
     sensor: ["binary_sensor", "sensor"],
-    generic: [
-        "light",
-        "fan",
-        "switch",
-        "cover",
-        "climate",
-        "media_player",
-        "camera",
-        "sensor",
-        "binary_sensor",
-    ],
+    ai: [],
 };

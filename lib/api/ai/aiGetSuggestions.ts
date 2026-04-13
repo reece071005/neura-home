@@ -1,3 +1,4 @@
+// aiGetSuggestions.ts
 import { api } from "@/lib/api/client";
 
 export type AISuggestion = {

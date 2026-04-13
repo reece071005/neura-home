@@ -1,3 +1,4 @@
+// aiRunAutomation.ts
 import { api } from "@/lib/api/client";
 
 export type RunAutomationResponse = {
@@ -23,7 +24,7 @@ export async function runAutomation(room: string) {
     return response;
 
   } catch (err) {
-    console.error("❌ [runAutomation] Error:", err);
+    console.error("[runAutomation] Error:", err);
     throw err;
   }
 }

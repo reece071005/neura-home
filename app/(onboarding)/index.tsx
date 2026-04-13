@@ -1,3 +1,4 @@
+// index.tsx
 import {View} from "react-native";
 import { useRouter } from "expo-router";
 import WhiteButton from "@/components/general/WhiteButton";

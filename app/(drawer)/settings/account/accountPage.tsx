@@ -1,15 +1,8 @@
+//accountPage.tsx
 import React, { useState, useCallback, useMemo } from "react";
 import { router, useFocusEffect } from "expo-router";
 
-import {
-  Text,
-  Pressable,
-  View,
-  Image,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import { Text, Pressable, View, Image, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import GradientButton from "@/components/general/GradientButton";

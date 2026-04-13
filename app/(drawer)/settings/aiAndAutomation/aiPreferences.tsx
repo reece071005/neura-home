@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+// aiPreferences.tsx
+import React, { useCallback, useEffect, useState } from "react";
 import {
   SafeAreaView,
   View,
@@ -23,13 +24,11 @@ import {
   trainRoomModel,
 } from "@/lib/api/ai/aiTraining";
 
+import { getModelSummary } from "@/lib/api/ai/aiGetSummary";
+
 type TrainingFrequency = "daily" | "weekly" | "monthly";
 
-const FREQUENCIES: TrainingFrequency[] = [
-  "daily",
-  "weekly",
-  "monthly",
-];
+const FREQUENCIES: TrainingFrequency[] = ["daily", "weekly", "monthly"];
 
 export default function AiPreferencesScreen() {
   const { room, roomId, id } = useLocalSearchParams<{
@@ -55,57 +54,94 @@ export default function AiPreferencesScreen() {
   const [isTraining, setIsTraining] = useState(false);
   const [trainingError, setTrainingError] = useState<string | null>(null);
 
+  const [modelSummary, setModelSummary] = useState<any | null>(null);
+  const [showMetricsInfo, setShowMetricsInfo] = useState(false);
+
   // Calculate days remaining
   const daysRemaining = Math.max(0, daysRequired - daysCollected);
 
   const progressPercentage =
     daysRequired > 0 ? Math.min(100, (daysCollected / daysRequired) * 100) : 0;
 
-  /* -----------------------------
-     LOAD DATA
-  ----------------------------- */
+  // Performance colour helper
+  const getPerformanceColor = (model: any) => {
+    if (!model?.trained) return "#9CA3AF";
 
-  useEffect(() => {
-    const load = async () => {
-      if (!room) return;
+    if (model.metrics?.accuracy !== undefined) {
+      const acc = model.metrics.accuracy;
+      if (acc >= 0.8) return "#22C55E";
+      if (acc >= 0.6) return "#F59E0B";
+      return "#EF4444";
+    }
 
-      try {
-        const aiPrefs = await getRoomAiPreferences(room);
-        setAiEnabled(aiPrefs.preferences.enabled);
-      } catch (err) {
-        console.log("Room AI prefs load error", err);
+    if (model.metrics?.rmse !== undefined) {
+      if (model.metrics.rmse <= 1) return "#22C55E";
+      if (model.metrics.rmse <= 3) return "#F59E0B";
+      return "#EF4444";
+    }
+
+    return "#9CA3AF";
+  };
+
+  const formatLastTrained = (value: string | null) => {
+    if (!value) return "Not trained yet";
+
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return `${parsed.toLocaleDateString()} ${parsed.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    }
+
+    return value.replace("T", " ").replace(/:\d{2}(?:\.\d+)?(?:Z)?$/, "");
+  };
+
+  // Load Data
+  const refreshAiData = useCallback(async () => {
+    if (!room) return;
+
+    try {
+      const aiPrefs = await getRoomAiPreferences(room);
+      setAiEnabled(aiPrefs.preferences.enabled);
+    } catch (err) {
+      console.log("Room AI prefs load error", err);
+    }
+
+    try {
+      const trainingPrefs = await getTrainingPreferences(room);
+      if (trainingPrefs?.preferences) {
+        setAutoTraining(trainingPrefs.preferences.enabled);
+        setTrainingFrequency(trainingPrefs.preferences.frequency);
+        setLastTrainedAt(trainingPrefs.preferences.last_trained_at ?? null);
       }
+    } catch (err) {
+      console.log("Training prefs load error", err);
+    }
 
-      try {
-        const trainingPrefs = await getTrainingPreferences(room);
-        if (trainingPrefs?.preferences) {
-          setAutoTraining(trainingPrefs.preferences.enabled);
-          setTrainingFrequency(trainingPrefs.preferences.frequency);
-          setLastTrainedAt(trainingPrefs.preferences.last_trained_at ?? null);
-        }
-      } catch (err) {
-        console.log("Training prefs load error", err);
-      }
+    try {
+      const readiness = await getTrainingReadiness(room);
 
-      try {
-        const readiness = await getTrainingReadiness(room);
-        console.log("Training readiness", readiness);
+      setCanTrain(readiness.ready);
+      setDaysCollected(readiness.days_available);
+      setDaysRequired(readiness.min_days_required);
+    } catch (err) {
+      console.log("Training readiness load error", err);
+    }
 
-        setCanTrain(readiness.ready);
-        setDaysCollected(readiness.days_available);
-        setDaysRequired(readiness.min_days_required);
-      } catch (err) {
-        console.log("Training readiness load error", err);
-      }
-    };
-
-    load();
+    try {
+      const summary = await getModelSummary(room);
+      setModelSummary(summary.models);
+    } catch (err) {
+      console.log("Model summary load error", err);
+    }
   }, [room]);
 
-  /* -----------------------------
-     NAVIGATION
-  ----------------------------- */
+  useEffect(() => {
+    refreshAiData();
+  }, [refreshAiData]);
 
+  // Navigation
   const handleCancel = () => {
     if (targetRoomId) {
       router.replace({
@@ -117,18 +153,12 @@ export default function AiPreferencesScreen() {
     }
   };
 
-  /* -----------------------------
-     SAVE SETTINGS
-  ----------------------------- */
-
+  // Save settings
   const save = async () => {
     if (!room) return;
 
     try {
-      // Always save AI preferences with current enabled state
       await setRoomAiPreferences(room, aiEnabled);
-
-      // Always save training preferences with current enabled state and frequency
       await setTrainingPreferences(room, autoTraining, trainingFrequency);
     } catch (err) {
       console.log("Save failed", err);
@@ -137,10 +167,7 @@ export default function AiPreferencesScreen() {
     handleCancel();
   };
 
-  /* -----------------------------
-     TRAIN MODEL
-  ----------------------------- */
-
+  // Train Model
   const trainNow = async () => {
     if (!canTrain || !room || isTraining) return;
 
@@ -149,14 +176,9 @@ export default function AiPreferencesScreen() {
 
     try {
       await trainRoomModel(room);
+      await refreshAiData();
 
-      const now = new Date();
-      const formatted = `${now.toLocaleDateString()} ${now.toLocaleTimeString(
-        [],
-        { hour: "2-digit", minute: "2-digit" }
-      )}`;
-
-      setLastTrainedAt(formatted);
+      setLastTrainedAt(new Date().toISOString());
       setIsTraining(false);
       setDialogVisible(true);
     } catch (err) {
@@ -176,15 +198,11 @@ export default function AiPreferencesScreen() {
     setTrainingFrequency(next);
   };
 
-  /* -----------------------------
-     UI
-  ----------------------------- */
-
+  //Main Screen
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
 
-      {/* HEADER */}
-
+      {/* Header */}
       <View
         style={{
           flexDirection: "row",
@@ -216,8 +234,7 @@ export default function AiPreferencesScreen() {
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
 
-        {/* DATA COLLECTION */}
-
+        {/* Data collection */}
         {!canTrain && (
           <SectionCard title="Data Collection Status">
             <View className="px-4 py-4">
@@ -256,8 +273,7 @@ export default function AiPreferencesScreen() {
           </SectionCard>
         )}
 
-        {/* AI BEHAVIOUR */}
-
+        {/* AI behaviour */}
         <SectionCard title="AI behaviour">
 
           <View
@@ -322,20 +338,105 @@ export default function AiPreferencesScreen() {
             <Text style={{ color: "#9CA3AF", fontSize: 18 }}>›</Text>
           </Pressable>
 
+          <View className="mx-4 h-px bg-gray-200" />
+
           <View className="px-4 py-4">
             <Text className="text-subtext text-black">
               Last trained
             </Text>
 
             <Text className="text-hint text-textSecondary mt-1">
-              {lastTrainedAt ?? "Not trained yet"}
+              {formatLastTrained(lastTrainedAt)}
             </Text>
           </View>
 
         </SectionCard>
 
-        {/* MANUAL TRAINING */}
+        {/* AI Model Performance */}
+        {modelSummary && (
+          <SectionCard title="AI Model Performance">
 
+            {Object.entries(modelSummary).map(([name, model]: any, index, entries) => {
+
+              const color = getPerformanceColor(model);
+
+              return (
+                <View
+                  key={name}
+                  className={`px-4 py-4 flex-row items-center justify-between ${
+                    index < entries.length - 1 ? "border-b border-gray-200" : ""
+                  }`}
+                >
+
+                  <View>
+                    <Text className="text-subtext text-black capitalize">
+                      {name.replace("_", " ")}
+                    </Text>
+
+                    <Text className="text-hint text-textSecondary mt-1">
+                      {model.trained ? "Model trained" : "Not trained"}
+                    </Text>
+                  </View>
+
+                  <View className="flex-row items-center">
+
+                    {model.metrics?.accuracy !== undefined && (
+                      <Text style={{ color, fontWeight: "600", marginRight: 8 }}>
+                        {(model.metrics.accuracy * 100).toFixed(0)}%
+                      </Text>
+                    )}
+
+                    {model.metrics?.rmse !== undefined && (
+                      <Text style={{ color, fontWeight: "600", marginRight: 8 }}>
+                        RMSE {model.metrics.rmse.toFixed(1)}℃
+                      </Text>
+                    )}
+
+                    <View
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: 5,
+                        backgroundColor: color,
+                      }}
+                    />
+
+                  </View>
+
+                </View>
+              );
+
+            })}
+
+            <View className="px-4 pt-2 pb-3">
+              <Pressable
+                onPress={() => setShowMetricsInfo((prev) => !prev)}
+                className="self-start py-1"
+              >
+                <Text className="text-hint text-blue-600">
+                  {showMetricsInfo ? "Hide metric info" : "What do these mean?"}
+                </Text>
+              </Pressable>
+
+              {showMetricsInfo && (
+                <View className="mt-2">
+                  <Text className="text-hint text-textSecondary">
+                    Accuracy: higher is better (shown as a percentage).
+                  </Text>
+                  <Text className="text-hint text-textSecondary mt-1">
+                    RMSE: lower is better (average prediction error in °C).
+                  </Text>
+                  <Text className="text-hint text-textSecondary mt-1">
+                    Dot color: green = strong, amber = okay, red = weak.
+                  </Text>
+                </View>
+              )}
+            </View>
+
+          </SectionCard>
+        )}
+
+        {/* Manual Training */}
         <SectionCard title="Manual training">
 
           <View className="px-4 py-4">
@@ -364,7 +465,7 @@ export default function AiPreferencesScreen() {
             {trainingError && (
               <View className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
                 <Text className="text-hint text-red-800">
-                  ⚠️ {trainingError}
+                  {trainingError}
                 </Text>
               </View>
             )}

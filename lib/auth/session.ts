@@ -3,8 +3,6 @@ import { router } from "expo-router";
 import { clearToken } from "@/lib/storage/token";
 import { useDashboardWidgetsStore } from "@/lib/storage/dashboardWidgetStore";
 
-
-
 export async function logout() {
   await clearToken();
   await useDashboardWidgetsStore.persist.clearStorage();
