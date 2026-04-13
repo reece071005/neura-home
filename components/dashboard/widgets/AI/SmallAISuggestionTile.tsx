@@ -111,9 +111,9 @@ export default function SmallAISuggestionTile({
   }, [hasSuggestions, suggestions]);
 
   async function executeAllSuggestions() {
+    if (!room) return;
     try {
       setExecutingAll(true);
-      console.log(room);
       await runAutomation(room);
 
       setModalVisible(false);
@@ -300,11 +300,11 @@ export default function SmallAISuggestionTile({
               }}
             >
               <Pressable
-                disabled={executingAll}
+                disabled={executingAll || !room}
                 onPress={executeAllSuggestions}
                 style={({ pressed }) => ({
                   width: "85%",
-                  backgroundColor: executingAll ? "#9CA3AF" : "#4985EE",
+                  backgroundColor: executingAll || !room ? "#9CA3AF" : "#4985EE",
                   paddingBottom: 16,
                   borderRadius: 12,
                   alignItems: "center",

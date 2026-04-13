@@ -71,7 +71,6 @@ export function RenderTile({
   presenceMap,
 
   aiSuggestions,
-  room,
 }: {
   tile: Tile;
   variant: Variant;
@@ -97,8 +96,7 @@ export function RenderTile({
 
   presenceMap: Record<string, boolean>;
 
-  aiSuggestions: any[];
-  room: string;
+  aiSuggestions: Record<string, any[]>;
 }) {
   switch (tile.kind) {
     // Light
@@ -223,7 +221,8 @@ export function RenderTile({
       if (variant !== "small")
         return <DashboardTile tile={tile} variant={variant} />;
 
-      const suggestions = aiSuggestions ?? [];
+      const room = tile.entityId ?? "";
+      const suggestions = room ? aiSuggestions[room] ?? [] : [];
 
       return (
         <SmallAISuggestionTile
@@ -266,7 +265,6 @@ export function RenderRow({
   presenceMap,
 
   aiSuggestions,
-  room,
 }: {
   row: DashboardRow;
 
@@ -291,8 +289,7 @@ export function RenderRow({
 
   presenceMap: Record<string, boolean>;
 
-  aiSuggestions: any[];
-  room: string;
+  aiSuggestions: Record<string, any[]>;
 }) {
   const render = (tile: Tile, variant: Variant) => (
     <RenderTile
@@ -315,7 +312,6 @@ export function RenderRow({
       onChangeCover={onChangeCover}
       presenceMap={presenceMap}
       aiSuggestions={aiSuggestions}
-      room={room}
     />
   );
 

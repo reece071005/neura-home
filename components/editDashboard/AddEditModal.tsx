@@ -1,5 +1,5 @@
 // components/editDashboard/AddEditModal.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
   AddMode,
   kindOptions,
   sizeOptions,
+  SUPPORTED_SIZES_BY_KIND,
   TILEKIND_TO_DEVICEKINDS,
 } from "@/lib/editDashboard/dashboardTypes";
 
@@ -25,6 +26,7 @@ import type {
 } from "@/lib/storage/dashboardWidgetStore";
 
 import { useDeviceAutocomplete } from "@/lib/editDashboard/useDeviceAutocomplete";
+import { getRooms, type RoomDto } from "@/lib/api/ai/rooms";
 
 import IconPickerModal from "@/components/editDashboard/IconPickerModal";
 import MdiIcon from "@/components/general/MdiIcon";
@@ -44,19 +46,31 @@ function PillButton({
   label,
   active,
   onPress,
+  disabled = false,
 }: {
   label: string;
   active: boolean;
   onPress: () => void;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       className={`px-3 py-2 rounded-full border ${
-        active ? "bg-black border-black" : "bg-white border-gray-300"
+        active
+          ? "bg-black border-black"
+          : disabled
+          ? "bg-gray-100 border-gray-200"
+          : "bg-white border-gray-300"
       }`}
+      style={({ pressed }) => ({ opacity: pressed && !disabled ? 0.8 : 1 })}
     >
-      <Text className={`font-semibold ${active ? "text-white" : "text-black"}`}>
+      <Text
+        className={`font-semibold ${
+          active ? "text-white" : disabled ? "text-gray-400" : "text-black"
+        }`}
+      >
         {label}
       </Text>
     </Pressable>
@@ -82,12 +96,21 @@ export default function AddEditModal({
   const [newEntityId, setNewEntityId] = useState("");
   const [entityQuery, setEntityQuery] = useState("");
   const [entityPickerOpen, setEntityPickerOpen] = useState(false);
+  const [rooms, setRooms] = useState<RoomDto[]>([]);
+  const [roomsLoading, setRoomsLoading] = useState(false);
 
   const { devicesLoading, suggestions } = useDeviceAutocomplete({
     kind: newKind,
     query: entityQuery,
   });
   const entitySuggestions = suggestions ?? [];
+  const availableSizes = useMemo(
+    () => SUPPORTED_SIZES_BY_KIND[newKind] ?? ["small"],
+    [newKind]
+  );
+  const roomSuggestions = rooms.filter((r) =>
+    r.name.toLowerCase().includes(entityQuery.toLowerCase())
+  );
 
   const [newHeaderTitle, setNewHeaderTitle] = useState("New section");
   const [newHeaderIconPath, setNewHeaderIconPath] = useState<string | undefined>(undefined);
@@ -98,6 +121,15 @@ export default function AddEditModal({
     return () => {
       AvoidSoftInput.setEnabled(false);
     };
+  }, [visible]);
+
+  useEffect(() => {
+    if (!visible) return;
+    setRoomsLoading(true);
+    getRooms()
+      .then((data) => setRooms(data))
+      .catch(() => setRooms([]))
+      .finally(() => setRoomsLoading(false));
   }, [visible]);
 
   const resetToAddDefaults = () => {
@@ -139,14 +171,22 @@ export default function AddEditModal({
     }
   }, [editingItem]);
 
+  useEffect(() => {
+    if (!availableSizes.includes(newSize)) {
+      setNewSize(availableSizes[0]);
+    }
+  }, [availableSizes, newSize]);
+
   const onSave = () => {
     const trimmedEntity = newEntityId.trim();
 
-    if (addMode === "tile" && trimmedEntity) {
+    if (addMode === "tile" && newKind === "ai" && !trimmedEntity) {
+      return;
+    }
+
+    if (addMode === "tile" && newKind !== "ai" && trimmedEntity) {
       const allowed = TILEKIND_TO_DEVICEKINDS[newKind];
-      const valid =
-        newKind === "generic" ||
-        allowed.some((k) => trimmedEntity.startsWith(k + "."));
+      const valid = allowed.some((k) => trimmedEntity.startsWith(k + "."));
       if (!valid) return;
     }
 
@@ -157,10 +197,13 @@ export default function AddEditModal({
           iconPath: newHeaderIconPath,
         });
       } else {
+        const sizeToSave = availableSizes.includes(newSize)
+          ? newSize
+          : availableSizes[0];
         updateItem(editingItem.id, {
           title: newTitle.trim() || "Widget",
           kind: newKind,
-          size: newSize,
+          size: sizeToSave,
           entityId: trimmedEntity || undefined,
         });
       }
@@ -168,10 +211,13 @@ export default function AddEditModal({
       if (addMode === "header") {
         addHeader(newHeaderTitle.trim() || "Section", newHeaderIconPath);
       } else {
+        const sizeToSave = availableSizes.includes(newSize)
+          ? newSize
+          : availableSizes[0];
         addTile({
           title: newTitle.trim() || "Widget",
           kind: newKind,
-          size: newSize,
+          size: sizeToSave,
           entityId: trimmedEntity || undefined,
         });
       }
@@ -346,12 +392,18 @@ export default function AddEditModal({
                         key={s}
                         label={s}
                         active={newSize === s}
-                        onPress={() => setNewSize(s)}
+                        disabled={!availableSizes.includes(s)}
+                        onPress={() => {
+                          if (!availableSizes.includes(s)) return;
+                          setNewSize(s);
+                        }}
                       />
                     ))}
                   </View>
 
-                  <Text className="text-gray-600 mt-4 mb-2">Entity ID</Text>
+                  <Text className="text-gray-600 mt-4 mb-2">
+                    {newKind === "ai" ? "Room" : "Entity ID"}
+                  </Text>
                   <TextInput
                     value={entityQuery}
                     onChangeText={(t) => {
@@ -361,10 +413,12 @@ export default function AddEditModal({
                     }}
                     onFocus={() => setEntityPickerOpen(true)}
                     placeholder={
-                      devicesLoading
+                      newKind === "ai"
+                        ? roomsLoading
+                          ? "Loading rooms..."
+                          : "Choose a room"
+                        : devicesLoading
                         ? "Loading devices…"
-                        : newKind === "media"
-                        ? "e.g. media_player.living_room_tv"
                         : `e.g. ${newKind}.kitchen`
                     }
                     placeholderTextColor="#9CA3AF"
@@ -373,7 +427,36 @@ export default function AddEditModal({
                     autoCorrect={false}
                   />
 
-                  {entityPickerOpen && entitySuggestions.length > 0 && (
+                  {entityPickerOpen && newKind === "ai" && roomSuggestions.length > 0 && (
+                    <View
+                      className="mt-2 border border-gray-200 rounded-2xl overflow-hidden"
+                      style={{ maxHeight: 200 }}
+                    >
+                      <ScrollView
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                        nestedScrollEnabled
+                      >
+                        {roomSuggestions.map((r, i) => (
+                          <Pressable
+                            key={r.id}
+                            onPress={() => {
+                              setNewEntityId(r.name);
+                              setEntityQuery(r.name);
+                              setEntityPickerOpen(false);
+                            }}
+                            className={`px-4 py-3 bg-white ${
+                              i < roomSuggestions.length - 1 ? "border-b border-gray-100" : ""
+                            }`}
+                          >
+                            <Text className="text-black font-semibold">{r.name}</Text>
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
+
+                  {entityPickerOpen && newKind !== "ai" && entitySuggestions.length > 0 && (
                     <View
                       className="mt-2 border border-gray-200 rounded-2xl overflow-hidden"
                       style={{ maxHeight: 200 }}
@@ -406,18 +489,24 @@ export default function AddEditModal({
                     </View>
                   )}
 
-                  {entityPickerOpen && entityQuery.length > 0 && entitySuggestions.length === 0 && (
+                  {entityPickerOpen &&
+                    newKind !== "ai" &&
+                    entityQuery.length > 0 &&
+                    entitySuggestions.length === 0 && (
                     <Text className="text-gray-500 text-xs mt-2">
                       No matching {newKind} devices found.
                     </Text>
                   )}
 
-                  {newKind === "lock" && (
+                  {entityPickerOpen &&
+                    newKind === "ai" &&
+                    entityQuery.length > 0 &&
+                    roomSuggestions.length === 0 && (
                     <Text className="text-gray-500 text-xs mt-2">
-                      Locks aren&apos;t returned by /homecontrollers/devices yet. Ask backend to add kind:
-                      &quot;lock&quot; if you want locks selectable here.
+                      No matching rooms found.
                     </Text>
                   )}
+
                 </>
               )}
 

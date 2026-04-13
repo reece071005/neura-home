@@ -11,11 +11,9 @@ export type TileKind =
   | "climate"
   | "fan"
   | "cover"
-  | "lock"
   | "camera"
-  | "media"
   | "ai"
-  | "generic";
+  | "sensor";
 
 // Dashboard Item Model
 export type DashboardItem =

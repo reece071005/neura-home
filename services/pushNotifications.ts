@@ -7,7 +7,6 @@ const PUSH_TOKEN_KEY = "expo_push_token";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldShowBanner: true,
     shouldShowList: true,
     shouldPlaySound: true,

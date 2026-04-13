@@ -1,3 +1,4 @@
+//notification.tsx
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {ActivityIndicator, Image, NativeScrollEvent, NativeSyntheticEvent, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

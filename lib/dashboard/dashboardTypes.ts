@@ -15,11 +15,8 @@ export type TileKind =
     | "fan"
     | "cover"
     | "camera"
-    | "lock"
-    | "media"
     | "sensor"
-    | "ai"
-    | "generic";
+    | "ai";
 
 //A single dashboard tile configuration.
 export type Tile = {
