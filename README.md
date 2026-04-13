@@ -21,7 +21,20 @@ An AI-driven smart home platform that learns user routines from time-series sens
     <img src="https://cdn.simpleicons.org/instagram" width="18" style="vertical-align: middle;" />
     Instagram
   </a>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="docs/NeuraHomeFinalProjectReport.pdf">
+    📄 Final Project Report
+  </a>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="docs/NeuraHomeTechnicalPoster.pdf">
+    🧠 Technical Poster
+  </a>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="docs/NeuraHomeMarketingPoster.pdf">
+    🎨 Marketing Poster
+  </a>
 </div>
+<br>
 
 **Note:** This repository contains the **mobile frontend application** for the Neura Home system. The backend services and AI components are maintained in a separate repository.
 
