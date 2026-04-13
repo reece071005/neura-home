@@ -1,4 +1,4 @@
-// VoiceAssistant.tsx
+// voiceAssistant.tsx
 import React, { useEffect, useRef, useState } from "react";
 import Markdown from "react-native-markdown-display";
 import {

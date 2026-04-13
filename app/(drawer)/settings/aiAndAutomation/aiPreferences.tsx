@@ -11,8 +11,8 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 
 import SectionCard from "@/components/aiAndAutomation/SectionCard";
-import ConfirmDialog from "@/components/ConfirmDialog";
-import GradientButton from "@/components/GradientButton";
+import ConfirmDialog from "@/components/general/ConfirmDialog";
+import GradientButton from "@/components/general/GradientButton";
 
 import {
   getRoomAiPreferences,

@@ -27,7 +27,7 @@ import type {
 import { useDeviceAutocomplete } from "@/lib/editDashboard/useDeviceAutocomplete";
 
 import IconPickerModal from "@/components/editDashboard/IconPickerModal";
-import MdiIcon from "@/components/MdiIcon";
+import MdiIcon from "@/components/general/MdiIcon";
 
 type Props = {
   visible: boolean;

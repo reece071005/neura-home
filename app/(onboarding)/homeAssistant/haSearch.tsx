@@ -3,7 +3,7 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useRef } from "react";
 import Zeroconf from "react-native-zeroconf";
 
-import Spinner from "@/components/Spinner";
+import Spinner from "@/components/general/Spinner";
 import { DiscoveredHA, setDiscoveredInstances } from "@/lib/storage/onboardingStore";
 
 const SCAN_TIMEOUT_MS = 8000;

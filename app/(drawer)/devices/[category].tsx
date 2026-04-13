@@ -1,7 +1,7 @@
+//[category].tsx
 import React, { useEffect, useMemo, useState} from "react";
 import { Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native";
-import { Stack, router, useLocalSearchParams } from "expo-router";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Stack, useLocalSearchParams } from "expo-router";
 
 import { listDevices, type ApiDevice } from "@/lib/api/devices";
 import { kindToCategory, type CategoryKey} from "@/utils/deviceCategory";
@@ -78,7 +78,7 @@ export default function DevicesByCategory() {
                             <Pressable
                                 key={d.entity_id}
                                 className="flex-row items-center px-4 py-4 border-b border-gray-100"
-                                onPress={() => {}} //To be completed
+                                onPress={() => {}}
                             >
                                 <View className="flex-1">
                                     <Text className="text-black text-subtext font-semibold">{d.name || d.entity_id}</Text>

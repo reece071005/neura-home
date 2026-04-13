@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
 
-import MdiIcon from "@/components/MdiIcon";
-import ConfirmDialog from "@/components/ConfirmDialog";
+import MdiIcon from "@/components/general/MdiIcon";
+import ConfirmDialog from "@/components/general/ConfirmDialog";
 import IconPickerModal from "@/components/editDashboard/IconPickerModal";
 
 type Props = {

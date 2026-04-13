@@ -22,7 +22,6 @@ const GradientTextInput = forwardRef(
       onSubmitEditing,
       maxLength,
 
-      // ✅ allow parent to hook focus/blur
       onFocus,
       onBlur,
       ...rest
@@ -47,7 +46,6 @@ const GradientTextInput = forwardRef(
     const isPasswordField = secureTextEntry || showPasswordToggle;
     const effectiveSecure = isPasswordField ? passwordHidden : false;
 
-    // ✅ always reserve message space so nothing shifts
     const message = error && errorText ? errorText : helperText ?? " ";
     const messageIsError = !!(error && errorText);
 
@@ -82,7 +80,7 @@ const GradientTextInput = forwardRef(
               )}
 
               <TextInput
-                ref={ref} // ✅ THIS is the key
+                ref={ref}
                 placeholder={placeholder}
                 value={value}
                 onChangeText={onChangeText}
@@ -97,11 +95,11 @@ const GradientTextInput = forwardRef(
                 className="flex-1 text-black font-semibold py-3"
                 onFocus={(e) => {
                   setFocused(true);
-                  onFocus?.(e); // ✅ bubble up
+                  onFocus?.(e);
                 }}
                 onBlur={(e) => {
                   setFocused(false);
-                  onBlur?.(e); // ✅ bubble up
+                  onBlur?.(e);
                 }}
                 {...rest}
               />

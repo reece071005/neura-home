@@ -115,22 +115,23 @@ export async function deleteTrainingPreferences(room: string) {
     }
 }
 
-// Train model manually
+// Train models manually
 export async function trainRoomModel(room: string, days: number = 1) {
-    const url = `/ai/train-room-xgb?room=${encodeURIComponent(room)}&days=${days}`;
-    console.log('📤 [trainRoomModel] Request:', url);
+  const url = `/ai/train-room-all-xgb?room=${encodeURIComponent(room)}&days=${days}`;
+  console.log("📤 [trainRoomModel] Request:", url);
 
-    try {
-        const response = await api<{ ok: boolean }>(url, {
-            method: "POST",
-            auth: true,
-        });
-        console.log('📥 [trainRoomModel] Response:', response);
-        return response;
-    } catch (error) {
-        console.error('❌ [trainRoomModel] Error:', error);
-        throw error;
-    }
+  try {
+    const response = await api<{ ok: boolean }>(url, {
+      method: "POST",
+      auth: true,
+    });
+
+    console.log("📥 [trainRoomModel] Response:", response);
+    return response;
+  } catch (error) {
+    console.error("❌ [trainRoomModel] Error:", error);
+    throw error;
+  }
 }
 
 // Training readiness

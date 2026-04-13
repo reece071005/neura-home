@@ -1,21 +1,24 @@
-/**
- * Dashboard layout and widget type definitions
- */
+// DashboardRenderer.tsx
 import React from "react";
 import { View, Text } from "react-native";
 
 import Card from "@/components/dashboard/Card";
-import SectionHeader from "@/components/dashboard/widgets/SectionHeader";
+import SectionHeader from "@/components/dashboard/widgets/header/SectionHeader";
 
-import LargeLightTile from "@/components/dashboard/widgets/LargeLightTile";
-import SmallLightTile from "@/components/dashboard/widgets/SmallLightTile";
+import LargeLightTile from "@/components/dashboard/widgets/lights/LargeLightTile";
+import SmallLightTile from "@/components/dashboard/widgets/lights/SmallLightTile";
 
-import LargeClimateTile from "@/components/dashboard/widgets/LargeClimateTile";
+import LargeClimateTile from "@/components/dashboard/widgets/climate/LargeClimateTile";
 
-import SmallFanTile from "@/components/dashboard/widgets/SmallFanTile";
-import SmallCoverTile from "@/components/dashboard/widgets/SmallCoverTile";
-import LargeCameraTile from "@/components/dashboard/widgets/LargeCameraTile";
-import SmallPresenceTile from "@/components/dashboard/widgets/SmallPresenceTile";
+import SmallFanTile from "@/components/dashboard/widgets/fan/SmallFanTile";
+
+import SmallCoverTile from "@/components/dashboard/widgets/cover/SmallCoverTile";
+
+import LargeCameraTile from "@/components/dashboard/widgets/camera/LargeCameraTile";
+
+import SmallPresenceTile from "@/components/dashboard/widgets/presence/SmallPresenceTile";
+
+import SmallAISuggestionTile from "@/components/dashboard/widgets/AI/SmallAISuggestionTile";
 
 import type { DashboardRow, Tile, Variant } from "@/lib/dashboard/dashboardTypes";
 
@@ -23,7 +26,7 @@ type HvacMode = "cool" | "heat" | "auto" | "off";
 
 const GAP = 8;
 
-/* ----------------------------- Fallback Tile ----------------------------- */
+//  Fallback Tile
 export function DashboardTile({
   tile,
   variant,
@@ -41,10 +44,7 @@ export function DashboardTile({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                   Tile                                     */
-/* -------------------------------------------------------------------------- */
-
+// Tile
 export function RenderTile({
   tile,
   variant,
@@ -69,6 +69,9 @@ export function RenderTile({
   onChangeCover,
 
   presenceMap,
+
+  aiSuggestions,
+  room,
 }: {
   tile: Tile;
   variant: Variant;
@@ -93,10 +96,12 @@ export function RenderTile({
   onChangeCover: (entityId: string, nextPos: number) => void;
 
   presenceMap: Record<string, boolean>;
+
+  aiSuggestions: any[];
+  room: string;
 }) {
   switch (tile.kind) {
-    /* ------------------------------- LIGHT -------------------------------- */
-
+    // Light
     case "light": {
       const entityId = tile.entityId ?? "";
       const isOn = lightOnMap[entityId] ?? false;
@@ -133,8 +138,7 @@ export function RenderTile({
       );
     }
 
-    /* ------------------------------ CLIMATE ------------------------------- */
-
+    // Climate
     case "climate": {
       if (variant !== "large")
         return <DashboardTile tile={tile} variant={variant} />;
@@ -154,8 +158,7 @@ export function RenderTile({
       );
     }
 
-    /* -------------------------------- FAN -------------------------------- */
-
+    // Fan
     case "fan": {
       if (variant !== "small")
         return <DashboardTile tile={tile} variant={variant} />;
@@ -173,8 +176,7 @@ export function RenderTile({
       );
     }
 
-    /* ------------------------------- COVER -------------------------------- */
-
+    // Cover
     case "cover": {
       if (variant !== "small")
         return <DashboardTile tile={tile} variant={variant} />;
@@ -191,8 +193,7 @@ export function RenderTile({
       );
     }
 
-    /* ------------------------------- CAMERA ------------------------------- */
-
+    // Camera
     case "camera":
       if (variant === "large") {
         return (
@@ -204,8 +205,7 @@ export function RenderTile({
       }
       return <DashboardTile tile={tile} variant={variant} />;
 
-    /* ------------------------------- SENSOR ------------------------------- */
-
+    // Sensor
     case "sensor": {
       const entityId = tile.entityId ?? "";
       const detected = presenceMap[entityId] ?? false;
@@ -218,15 +218,29 @@ export function RenderTile({
       );
     }
 
+    // AI
+    case "ai": {
+      if (variant !== "small")
+        return <DashboardTile tile={tile} variant={variant} />;
+
+      const suggestions = aiSuggestions ?? [];
+
+      return (
+        <SmallAISuggestionTile
+          title={tile.title}
+          room={room}
+          suggestions={suggestions}
+        />
+      );
+    }
+
+    //Default
     default:
       return <DashboardTile tile={tile} variant={variant} />;
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                   Row                                      */
-/* -------------------------------------------------------------------------- */
-
+// Row
 export function RenderRow({
   row,
 
@@ -250,6 +264,9 @@ export function RenderRow({
   onChangeCover,
 
   presenceMap,
+
+  aiSuggestions,
+  room,
 }: {
   row: DashboardRow;
 
@@ -273,6 +290,9 @@ export function RenderRow({
   onChangeCover: (entityId: string, nextPos: number) => void;
 
   presenceMap: Record<string, boolean>;
+
+  aiSuggestions: any[];
+  room: string;
 }) {
   const render = (tile: Tile, variant: Variant) => (
     <RenderTile
@@ -294,16 +314,21 @@ export function RenderRow({
       coverPosMap={coverPosMap}
       onChangeCover={onChangeCover}
       presenceMap={presenceMap}
+      aiSuggestions={aiSuggestions}
+      room={room}
     />
   );
 
   switch (row.type) {
+    // Header
     case "header":
       return <SectionHeader title={row.title} iconPath={row.iconPath} />;
 
+    // Full tile
     case "full":
       return render(row.item, row.variant);
 
+    // Two tiles
     case "two":
       return (
         <View className="flex-row" style={{ gap: GAP }}>
@@ -316,6 +341,7 @@ export function RenderRow({
         </View>
       );
 
+    // Split tiles (single + double)
     case "split":
       return (
         <View className="flex-row" style={{ gap: GAP }}>

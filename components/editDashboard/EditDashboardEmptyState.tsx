@@ -1,7 +1,7 @@
 // components/editDashboard/EditDashboardEmptyState.tsx
 import React from "react";
 import { View, Text, Pressable } from "react-native";
-import MdiIcon from "@/components/MdiIcon";
+import MdiIcon from "@/components/general/MdiIcon";
 import { mdiPlus, mdiViewDashboard } from "@mdi/js";
 
 type Props = {

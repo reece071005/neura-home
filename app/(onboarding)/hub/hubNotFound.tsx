@@ -2,7 +2,7 @@ import {StyleSheet, Text, View, Dimensions, Pressable} from 'react-native'
 import {router} from "expo-router";
 import React from 'react'
 
-import GradientButton from "@/components/GradientButton";
+import GradientButton from "@/components/general/GradientButton";
 
 import HubNotFoundIllustration from "@/assets/illustrations/hubNotFound.svg";
 

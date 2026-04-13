@@ -16,13 +16,13 @@ import {
 import { sizeOptions } from "@/lib/editDashboard/dashboardTypes";
 
 import SyncPill from "@/components/editDashboard/SyncPill";
-import MdiIcon from "@/components/MdiIcon";
+import MdiIcon from "@/components/general/MdiIcon";
 import DashboardItemRow from "@/components/editDashboard/DashboardItemRow";
 import DashboardSettingsSheet from "@/components/editDashboard/DashboardSettingsSheet";
 import AddEditModal from "@/components/editDashboard/AddEditModal";
 import EditDashboardEmptyState from "@/components/editDashboard/EditDashboardEmptyState";
 
-// ─── Pill button ─────────────────────────────────────────────────────────────
+// Pill button
 function PillButton({
   label,
   active,
@@ -46,7 +46,7 @@ function PillButton({
   );
 }
 
-// ─── Main screen ─────────────────────────────────────────────────────────────
+// Main screen
 export default function EditDashboard() {
   // Store
   const items = useDashboardWidgetsStore((s) => s.items);
@@ -79,8 +79,6 @@ export default function EditDashboard() {
   const [dashIconDraft, setDashIconDraft] = useState<string | undefined>(undefined);
   const [dashIconPickerOpen, setDashIconPickerOpen] = useState(false);
 
-  // Defensive cleanup: if this tab loses focus, close any overlays so they
-  // cannot capture touches on other screens.
   useFocusEffect(
     useCallback(() => {
       return () => {
@@ -91,8 +89,7 @@ export default function EditDashboard() {
     }, [])
   );
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-
+  // Helpers
   const openAdd = () => {
     setEditingItem(null);
     setOpenAddSignal((n) => n + 1);
@@ -109,8 +106,7 @@ export default function EditDashboard() {
     setDashIconPickerOpen(true);
   };
 
-  // ── Renderer ─────────────────────────────────────────────────────────────
-
+  // Renderer
   const renderItem = ({ item, drag, isActive }: RenderItemParams<DashboardItem>) => (
     <DashboardItemRow
       item={item}
@@ -130,7 +126,7 @@ export default function EditDashboard() {
     />
   );
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // Render
 
   return (
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white pb-6">
@@ -190,7 +186,7 @@ export default function EditDashboard() {
         </View>
       </View>
 
-      {/* Content: Empty state or Draggable list */}
+      {/* Empty state or Draggable list */}
       {items.length === 0 ? (
         <EditDashboardEmptyState onPressAdd={openAdd} />
       ) : (

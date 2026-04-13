@@ -1,4 +1,4 @@
-import { Icons } from "@/assets/illustrations/customMaterialIcons/index";
+import { Icons } from "@/assets/illustrations/customMaterialIcons";
 
 type Props = {
   name: keyof typeof Icons;
@@ -9,7 +9,7 @@ type Props = {
 export default function TabIcon({ name, focused, size = 26 }: Props) {
   const entry = Icons[name];
 
-  // single-variant icons
+  // single variant icons
   if ("default" in entry) {
     const Icon = entry.default;
     return <Icon width={size} height={size} />;

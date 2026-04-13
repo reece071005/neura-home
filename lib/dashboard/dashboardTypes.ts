@@ -18,6 +18,7 @@ export type TileKind =
     | "lock"
     | "media"
     | "sensor"
+    | "ai"
     | "generic";
 
 //A single dashboard tile configuration.

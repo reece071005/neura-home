@@ -5,9 +5,9 @@ import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { mdiArrowLeft } from "@mdi/js";
 
-import GradientButton from "@/components/GradientButton";
-import GradientTextInput from "@/components/GradientTextInput";
-import MdiIcon from "@/components/MdiIcon";
+import GradientButton from "@/components/general/GradientButton";
+import GradientTextInput from "@/components/general/GradientTextInput";
+import MdiIcon from "@/components/general/MdiIcon";
 
 import { changePasswordSelf } from "@/lib/api/auth";
 

@@ -4,15 +4,6 @@ import { View } from "react-native";
 import LogoGradientSquareNoText from '@/assets/logo/svg/logoGradientSquareNoText.svg';
 import LogoWhiteSquareWithText from '@/assets/logo/svg/logoWhiteSquareWithText.svg';
 
-/**
- * Variants:
- * - color: white | gradient
- * - shape: square | rect
- * - text: with | none  (ONLY applies to square)
- *
- * Add new imports later and register them in REGISTRY.
- */
-
 type LogoColor = "white" | "gradient";
 type LogoShape = "square" | "rect";
 type LogoSquareText = "with" | "none";
@@ -22,7 +13,7 @@ type LogoProps =
       color?: LogoColor;
       shape?: "square";
       text?: LogoSquareText;
-      size?: number; // square size (width=height)
+      size?: number;
       width?: never;
       height?: never;
       className?: string;
@@ -30,7 +21,6 @@ type LogoProps =
   | {
       color?: LogoColor;
       shape: "rect";
-      // text doesn't apply to rect
       text?: never;
       width?: number;
       height?: number;
@@ -42,19 +32,15 @@ const REGISTRY = {
   gradient: {
     square: {
       none: LogoGradientSquareNoText,
-      // with: LogoGradientSquareWithText, // add later
     },
     rect: {
-      // base: LogoGradientRect, // add later
     },
   },
   white: {
     square: {
       with: LogoWhiteSquareWithText,
-      // none: LogoWhiteSquareNoText, // add later
     },
     rect: {
-      // base: LogoWhiteRect, // add later
     },
   },
 } as const;
@@ -63,16 +49,13 @@ export default function Logo(props: LogoProps) {
   const color: LogoColor = props.color ?? "gradient";
   const shape: LogoShape = props.shape ?? "square";
 
-  // Resolve component
   let LogoComponent: React.ComponentType<{ width: number; height: number }> | undefined;
 
   if (shape === "square") {
     const text: LogoSquareText = (props as any).text ?? "none";
 
-    // Exact match
     LogoComponent = (REGISTRY as any)?.[color]?.square?.[text];
 
-    // Fallbacks if you haven't added a specific variant yet
     if (!LogoComponent) {
       LogoComponent =
         (REGISTRY as any)?.[color]?.square?.none ??
@@ -93,10 +76,8 @@ export default function Logo(props: LogoProps) {
     );
   }
 
-  // rect
   LogoComponent = (REGISTRY as any)?.[color]?.rect?.base;
 
-  // If rect not available yet, gracefully fall back to a square logo
   if (!LogoComponent) {
     const fallback =
       (REGISTRY as any)?.[color]?.square?.none ??
