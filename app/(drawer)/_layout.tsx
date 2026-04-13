@@ -151,6 +151,13 @@ export default function DrawerLayout() {
                     headerShown: false,
                 }}
             />
+            <Drawer.Screen
+                name="notifications/aiNotificationDetail"
+                options={{
+                    drawerItemStyle: { display: "none" },
+                    headerShown: false,
+                }}
+            />
         </Drawer>
     );
 }

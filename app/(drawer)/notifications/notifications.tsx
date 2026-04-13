@@ -165,12 +165,11 @@ function AiNotificationCard({
           flexDirection: "row",
         }}
       >
-        {/* Unread indicator strip */}
         <View style={{ width: 3, backgroundColor: isRead ? "transparent" : "#6366F1" }} />
 
         <View style={{ flex: 1, padding: 14 }}>
           <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-            {/* Icon thumbnail */}
+            {/* Thumbnail */}
             <View
               style={{
                 width: 52,
@@ -210,6 +209,7 @@ function AiNotificationCard({
                 <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: "#EEF2FF" }}>
                   <Text style={{ fontSize: 11, fontWeight: "600", color: "#6366F1" }}>AI Automation</Text>
                 </View>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: "#111827" }}>View details →</Text>
               </View>
             </View>
           </View>
@@ -230,6 +230,10 @@ export default function Notifications() {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Track pagination offsets separately
+  const [visionOffset, setVisionOffset] = useState(0);
+  const [aiOffset, setAiOffset] = useState(0);
+
   const hasUserScrolledRef = useRef(false);
   const lastYRef = useRef(0);
   const loadingMoreRef = useRef(false); // ref copy prevents stale closure issues
@@ -249,14 +253,6 @@ export default function Notifications() {
         getAiNotifications(0, PAGE_SIZE),
       ]);
 
-      console.log('=== AI NOTIFICATIONS RESPONSE ===');
-      console.log('Count:', ai.length);
-      console.log('Full response:', JSON.stringify(ai, null, 2));
-      if (ai.length > 0) {
-        console.log('First AI notification:', JSON.stringify(ai[0], null, 2));
-      }
-      console.log('=================================');
-
       const merged: CombinedNotification[] = [
         ...vision.map((v) => ({ ...v, source: "vision" as const })),
         ...ai.map((a) => ({ ...a, source: "ai" as const })),
@@ -268,8 +264,10 @@ export default function Notifications() {
           new Date(a.created_at).getTime()
       );
 
-      setItems(merged.slice(0, PAGE_SIZE));
-      setHasMore(merged.length >= PAGE_SIZE);
+      setItems(merged);
+      setVisionOffset(vision.length);
+      setAiOffset(ai.length);
+      setHasMore(vision.length === PAGE_SIZE || ai.length === PAGE_SIZE);
 
     } catch (e: any) {
       setError(e?.message ?? "Failed to load notifications");
@@ -279,55 +277,61 @@ export default function Notifications() {
     }
   }, []);
 
-  /** Load the next page when the user scrolls near the bottom */
+  // Load the next page when the user scrolls near the bottom
   const fetchMore = useCallback(async () => {
     if (loadingMoreRef.current || !hasMore || refreshing || loading) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
       const [vision, ai] = await Promise.all([
-        getVisionNotifications(items.length, PAGE_SIZE),
-        getAiNotifications(items.length, PAGE_SIZE),
+        getVisionNotifications(visionOffset, PAGE_SIZE),
+        getAiNotifications(aiOffset, PAGE_SIZE),
       ]);
-
-      console.log('=== LOAD MORE - AI NOTIFICATIONS ===');
-      console.log('Skip:', items.length);
-      console.log('Count:', ai.length);
-      console.log('AI data:', JSON.stringify(ai, null, 2));
-      console.log('====================================');
 
       const newMerged: CombinedNotification[] = [
         ...vision.map((v) => ({ ...v, source: "vision" as const })),
         ...ai.map((a) => ({ ...a, source: "ai" as const })),
       ];
 
-      newMerged.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() -
-          new Date(a.created_at).getTime()
-      );
-
-      const data = newMerged.slice(0, PAGE_SIZE);
-
-      if (data.length === 0) {
+      if (newMerged.length === 0) {
         setHasMore(false);
       } else {
-        const existingIds = new Set(items.map((n) => `${n.source}-${n.id}`));
-        const additions = data.filter((n) => !existingIds.has(`${n.source}-${n.id}`));
-        if (additions.length === 0) {
-          setHasMore(false);
-        } else {
-          setItems((prev) => [...prev, ...additions]);
-          setHasMore(data.length === PAGE_SIZE);
-        }
+        setItems((prev) => {
+          // Create a map of existing items by composite key
+          const itemsMap = new Map(
+            prev.map((item) => [`${item.source}-${item.id}`, item])
+          );
+
+          // Add new items, but only if they don't already exist
+          newMerged.forEach((item) => {
+            const key = `${item.source}-${item.id}`;
+            if (!itemsMap.has(key)) {
+              itemsMap.set(key, item);
+            }
+          });
+
+          // Convert back to array and sort by date
+          const combined = Array.from(itemsMap.values());
+          combined.sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
+          );
+
+          return combined;
+        });
+
+        setVisionOffset(prev => prev + vision.length);
+        setAiOffset(prev => prev + ai.length);
+
+        setHasMore(vision.length === PAGE_SIZE || ai.length === PAGE_SIZE);
       }
     } catch {
-      // Silent — user can scroll again to retry
     } finally {
       setLoadingMore(false);
       loadingMoreRef.current = false;
     }
-  }, [hasMore, items, loading, refreshing]);
+  }, [hasMore, loading, refreshing, visionOffset, aiOffset]);
 
   useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
 
@@ -354,12 +358,12 @@ export default function Notifications() {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
     lastYRef.current = contentOffset.y;
 
-    // Trigger load-more only after user interaction and only when content is actually scrollable.
+    // Trigger load only after user interaction and only when content is actually scrollable
     if (!hasUserScrolledRef.current) return;
     if (contentOffset.y <= 0) return;
     if (contentSize.height <= layoutMeasurement.height) return;
 
-    // Trigger load-more when within 300px of the bottom
+    // Trigger load when within 300px of the bottom
     const distanceFromBottom = contentSize.height - layoutMeasurement.height - contentOffset.y;
     if (distanceFromBottom < 300) fetchMore();
   };
@@ -497,7 +501,7 @@ export default function Notifications() {
           </View>
         </View>
 
-        {/* Load-more footer */}
+        {/* Load more footer */}
         {loadingMore && (
           <View style={{ paddingVertical: 24, alignItems: "center" }}>
             <ActivityIndicator size="small" color="#9CA3AF" />
