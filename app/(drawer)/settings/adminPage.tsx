@@ -13,8 +13,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import * as mdi from "@mdi/js";
-import MdiIcon from "@/components/MdiIcon";
-import ConfirmDialog from "@/components/ConfirmDialog";
+import MdiIcon from "@/components/general/MdiIcon";
+import ConfirmDialog from "@/components/general/ConfirmDialog";
 
 import Plus_Icon from "@/assets/illustrations/customMaterialIcons/outline/gradientPlusOutline.svg";
 

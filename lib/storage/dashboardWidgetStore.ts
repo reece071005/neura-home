@@ -3,9 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as mdi from "@mdi/js";
 
-// --------------------
 // Types
-// --------------------
 export type WidgetSize = "small" | "large";
 
 export type TileKind =
@@ -16,12 +14,10 @@ export type TileKind =
   | "lock"
   | "camera"
   | "media"
+  | "ai"
   | "generic";
 
-// --------------------
 // Dashboard Item Model
-// (what user edits)
-// --------------------
 export type DashboardItem =
   | {
       type: "header";
@@ -38,9 +34,7 @@ export type DashboardItem =
       size: WidgetSize;
     };
 
-// --------------------
-// Internal Row Model (unchanged)
-// --------------------
+// Internal Row Model
 export type Variant = "small" | "large";
 
 export type Tile = {
@@ -80,9 +74,7 @@ export type HeaderRow = {
 
 export type DashboardRow = FullRow | TwoRow | SplitRow | HeaderRow;
 
-// --------------------
 // Helpers
-// --------------------
 const uid = (prefix: string) =>
   `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
@@ -90,9 +82,7 @@ const dashId = () => `dash_${Date.now()}_${Math.random().toString(16).slice(2)}`
 
 const DEFAULT_DASHBOARD_ID = "dash_default";
 
-// --------------------
 // Packing: items → rows
-// --------------------
 export function buildLayoutFromItems(items: DashboardItem[]): DashboardRow[] {
   const rows: DashboardRow[] = [];
   let buffer: Extract<DashboardItem, { type: "tile" }>[] = [];
@@ -181,9 +171,7 @@ export function buildLayoutFromItems(items: DashboardItem[]): DashboardRow[] {
   return rows;
 }
 
-// --------------------
 // Store
-// --------------------
 export type DashboardMeta = {
   id: string;
   name: string;
@@ -191,24 +179,19 @@ export type DashboardMeta = {
 };
 
 export type DashboardState = {
-  // hydration flag (AsyncStorage → Zustand)
   hasHydrated: boolean;
   setHasHydrated: (v: boolean) => void;
 
-  // Registry (max 3)
   dashboards: DashboardMeta[];
   activeDashboardId: string;
 
-  // Layouts
   layoutsById: Record<string, DashboardItem[]>;
 
-  // Convenience: active items
   items: DashboardItem[];
 
-  // ----- actions -----
   setActiveDashboard: (id: string) => void;
 
-  addDashboard: (name?: string) => void; // max 3
+  addDashboard: (name?: string) => void;
   renameDashboard: (id: string, name: string) => void;
   setDashboardIcon: (id: string, iconPath?: string) => void;
   removeDashboard: (id: string) => void;
@@ -234,7 +217,6 @@ function getActiveItems(s: Pick<DashboardState, "layoutsById" | "activeDashboard
 export const useDashboardWidgetsStore = create<DashboardState>()(
   persist(
     (set, get) => {
-      // helper: write active items and keep `items` in sync
       const setActiveItems = (next: DashboardItem[]) => {
         const { activeDashboardId, layoutsById } = get();
         const nextLayouts = { ...layoutsById, [activeDashboardId]: next };
@@ -345,7 +327,6 @@ export const useDashboardWidgetsStore = create<DashboardState>()(
       name: "dashboard-items-v3",
       storage: createJSONStorage(() => AsyncStorage),
 
-      // ✅ critical: after AsyncStorage rehydrates, sync `items` with active dashboard
       onRehydrateStorage: () => (state, err) => {
         if (err) return;
 

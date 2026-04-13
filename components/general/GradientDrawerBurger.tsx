@@ -1,7 +1,6 @@
 import { Pressable } from 'react-native';
 import { useNavigation } from 'expo-router'
 import type { DrawerNavigationProp } from "@react-navigation/drawer";
-import { MaterialIcons } from "@expo/vector-icons";
 import GradientBurgerMenu from "@/assets/illustrations/customMaterialIcons/gradientBurgerMenu.svg"
 
 type Props = {

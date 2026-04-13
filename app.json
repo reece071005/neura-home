@@ -1,35 +1,37 @@
 {
   "expo": {
-    "name": "neura-home",
+    "name": "Neura Home",
     "slug": "neura-home",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo/png/logoGradientSquareNoText.png",
+    "icon": "./assets/expo/logoGradientSquareNoTextBG.png",
     "scheme": "neurahome",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.neurahome.app",
+      "buildNumber": "1",
       "infoPlist": {
-        "NSLocalNetworkUsageDescription": "Used to discover Home Assistant on your local network",
+        "NSLocalNetworkUsageDescription": "Used to discover Neura Hub and Home Assistant on your local network.",
         "NSBonjourServices": [
-          "_home-assistant._tcp",
           "_home-assistant._tcp"
         ],
         "UIBackgroundModes": [
           "remote-notification"
         ],
-        "NSUserNotificationUsageDescription": "Neura Home sends you smart home alerts and updates."
+        "NSUserNotificationUsageDescription": "Neura Home sends you smart home alerts and updates.",
+        "NSMicrophoneUsageDescription": "Neura Home uses the microphone for the voice assistant."
       }
     },
     "android": {
       "package": "com.neurahome.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/logo/png/logoGradientSquareNoText.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/expo/splashIcon.png",
+        "backgroundImage": "./assets/expo/bgImage.png",
+        "monochromeImage": "./assets/expo/monoLogo.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -41,7 +43,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/logo/png/logoGradientSquareNoText.png"
+      "favicon": "./assets/expo/png/logoGradientSquareNoTextBG.png"
     },
     "plugins": [
       "expo-router",
@@ -49,7 +51,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/expo/splashIcon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -62,7 +64,7 @@
       [
         "expo-audio",
         {
-          "recordAudioAndroid": "true",
+          "recordAudioAndroid": true,
           "microphonePermission": "Allow Neura Home to access your microphone."
         }
       ],

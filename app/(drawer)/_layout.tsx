@@ -1,12 +1,13 @@
+// _layout.tsx
 import { Drawer } from "expo-router/drawer";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import { View, Text, Pressable } from "react-native";
 import { router } from "expo-router";
 
-import BurgerWidget from "@/components/BurgerWidget";
+import BurgerWidget from "@/components/general/BurgerWidget";
 
-import TabIcon from "@/components/TabIcon";
+import TabIcon from "@/components/general/TabIcon";
 
 function CustomDrawerContent(props: any) {
     return (
@@ -101,14 +102,6 @@ export default function DrawerLayout() {
                 name="(tabs)"
                 options={{ drawerItemStyle: { display: "none" } }}
             />
-            <Drawer.Screen
-                name="automationsEdit"
-                  options={{
-                    drawerItemStyle: { display: "none" },
-                    headerShown: false,
-                  }}
-            />
-
             <Drawer.Screen
                 name="settings/account/uploadFace"
                 options={{

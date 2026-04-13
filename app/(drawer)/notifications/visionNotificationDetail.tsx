@@ -1,13 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Dimensions,
-  Image,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Dimensions, Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -15,8 +7,7 @@ import { getCachedVisionNotification, getImageUri, getVisionNotificationById, Vi
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-//Helpers
-
+// Helpers
 const formatCameraName = (name?: string) => {
   if (!name) return "Unknown Camera";
   return name
@@ -39,12 +30,8 @@ const formatFullDate = (iso: string) => {
   });
 };
 
-//Detail Row
-function DetailRow({
-  icon,
-  label,
-  value,
-}: {
+// Detail Row
+function DetailRow({ icon, label, value }: {
   icon: keyof typeof MaterialIcons.glyphMap;
   label: string;
   value: string;
@@ -84,8 +71,7 @@ function DetailRow({
   );
 }
 
-/* ---------------- Screen ---------------- */
-
+// Screen
 export default function VisionNotificationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const notificationId = id ? Number(id) : NaN;
@@ -236,8 +222,7 @@ export default function VisionNotificationDetail() {
   );
 }
 
-/* ---------------- Back header ---------------- */
-
+// Back header
 function Header({ title = "Back" }: { title?: string }) {
   return (
     <View

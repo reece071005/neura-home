@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { mdiPencil } from "@mdi/js";
 
-import MdiIcon from "@/components/MdiIcon";
+import MdiIcon from "@/components/general/MdiIcon";
 
 type Props = {
   onPressEdit: () => void;

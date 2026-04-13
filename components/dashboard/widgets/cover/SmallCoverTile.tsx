@@ -4,7 +4,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { mdiBlinds } from '@mdi/js';
 
 import Card from "@/components/dashboard/Card";
-import MdiIcon from "@/components/MdiIcon";
+import MdiIcon from "@/components/general/MdiIcon";
 import Slider from "@react-native-community/slider";
 
 const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));

@@ -4,7 +4,7 @@ import { View, Text} from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import GradientButton from "@/components/GradientButton";
+import GradientButton from "@/components/general/GradientButton";
 
 import SetupCompleteIllustration from "@/assets/illustrations/setupComplete.svg";
 

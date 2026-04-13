@@ -7,7 +7,7 @@ import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { createRoom, getRoom, updateRoom, deleteRoom, type RoomDto } from "@/lib/api/ai/rooms";
 import { listDevices, type ApiDevice } from "@/lib/api/devices";
 
-import ConfirmDialog from "@/components/ConfirmDialog";
+import ConfirmDialog from "@/components/general/ConfirmDialog";
 import SectionCard from "@/components/aiAndAutomation/SectionCard";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -180,6 +180,20 @@ export default function CreateRoomScreen() {
   const selectedDevices = allDevices.filter((d) => selectedIds.has(d.entity_id));
 
   const hasClimateDevice = selectedDevices.some(d => d.kind === "climate");
+  const hasPresenceSensor = selectedDevices.some(d => d.kind === "binary_sensor");
+  const canUseClimateAutomation = hasClimateDevice && hasPresenceSensor;
+
+  let climateMessage = "";
+
+  if (!hasClimateDevice && !hasPresenceSensor) {
+    climateMessage = "Add a climate device and motion sensor to enable automation";
+  } else if (!hasClimateDevice) {
+    climateMessage = "Add a climate device to enable automation";
+  } else if (!hasPresenceSensor) {
+    climateMessage = "Add a motion or presence sensor to enable automation";
+  } else {
+    climateMessage = "Configure AI temperature control";
+  }
 
   const toggleDevice = useCallback((entityId: string) => {
     setSelectedIds((prev) => {
@@ -440,12 +454,12 @@ export default function CreateRoomScreen() {
             )}
           </SectionCard>
 
-          {/* Climate automation - only show in view mode and only if room exists */}
+          {/* Climate automation, only show in view mode and only if room exists */}
           {isEditMode && !isEditing && (
             <SectionCard title="Climate automation">
               <Pressable
                 onPress={() => {
-                  if (hasClimateDevice) {
+                  if (canUseClimateAutomation) {
                     router.push({
                       pathname: "/settings/aiAndAutomation/climatePreferences",
                       params: {
@@ -455,62 +469,71 @@ export default function CreateRoomScreen() {
                     });
                   }
                 }}
-                disabled={!hasClimateDevice}
+                disabled={!canUseClimateAutomation}
                 className="px-4 py-4 flex-row items-center justify-between"
                 style={({ pressed }) => ({
-                  opacity: !hasClimateDevice ? 0.5 : pressed ? 0.7 : 1,
+                  opacity: !canUseClimateAutomation ? 0.5 : pressed ? 0.7 : 1,
                 })}
               >
                 <View className="flex-1">
                   <Text
                     className="text-subtext"
-                    style={{ color: hasClimateDevice ? "#111827" : "#9CA3AF" }}
+                    style={{ color: canUseClimateAutomation ? "#111827" : "#9CA3AF" }}
                   >
                     Climate preconditioning
                   </Text>
+
                   <Text className="text-hint text-textSecondary mt-1">
-                    {hasClimateDevice
-                      ? "Configure AI temperature control"
-                      : "Add a climate device to enable automation"}
+                    {climateMessage}
                   </Text>
                 </View>
 
-                {hasClimateDevice && (
+                {canUseClimateAutomation && (
                   <Text style={{ color: "#9CA3AF", fontSize: 18 }}>›</Text>
                 )}
               </Pressable>
             </SectionCard>
           )}
 
-          {/* AI behaviour - only show in view mode for an existing room */}
+          {/* AI behaviour, only show in view mode for an existing room */}
           {isEditMode && !isEditing && (
             <SectionCard title="AI behaviour">
               <Pressable
                 onPress={() => {
-                  router.push({
-                    pathname: "/settings/aiAndAutomation/aiPreferences",
-                    params: {
-                      roomId: roomId?.toString() ?? "",
-                      room: roomName ?? "",
-                    },
-                  });
+                  if (hasPresenceSensor) {
+                    router.push({
+                      pathname: "/settings/aiAndAutomation/aiPreferences",
+                      params: {
+                        roomId: roomId?.toString() ?? "",
+                        room: roomName ?? "",
+                      },
+                    });
+                  }
                 }}
+                disabled={!hasPresenceSensor}
                 className="px-4 py-4 flex-row items-center justify-between"
                 style={({ pressed }) => ({
-                  opacity: pressed ? 0.7 : 1,
+                  opacity: !hasPresenceSensor ? 0.5 : pressed ? 0.7 : 1,
                 })}
               >
                 <View className="flex-1">
-                  <Text className="text-subtext text-black">
+                  <Text
+                    className="text-subtext"
+                    style={{ color: hasPresenceSensor ? "#111827" : "#9CA3AF" }}
+                  >
                     AI behaviour
                   </Text>
 
                   <Text className="text-hint text-textSecondary mt-1">
-                    Configure AI automation and training
+                    {hasPresenceSensor
+                      ? "Configure AI automation and training"
+                      : "Add a motion or presence sensor to enable AI"}
                   </Text>
                 </View>
 
-                <Text style={{ color: "#9CA3AF", fontSize: 18 }}>›</Text>
+                {hasPresenceSensor && (
+                  <Text style={{ color: "#9CA3AF", fontSize: 18 }}>›</Text>
+                )}
               </Pressable>
             </SectionCard>
           )}

@@ -1,11 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  PanResponder,
-  LayoutChangeEvent,
-} from "react-native";
+import { View, Text, Pressable, PanResponder, LayoutChangeEvent } from "react-native";
 import Svg, { Path, Circle } from "react-native-svg";
 import Card from "@/components/dashboard/Card";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -17,9 +11,7 @@ type Props = {
   entityId: string;
   value: number;
   isOn: boolean;
-  /** Current RGB from HA state — drives arc & bulb colour. Undefined = no colour info (falls back to yellow). */
   rgbColor?: [number, number, number];
-  /** Current colour temp from HA state in Kelvin */
   colorTemp?: number;
   onChange: (v: number) => void;
   onCommit?: (v: number) => void;
@@ -77,10 +69,7 @@ export default function LargeLightTile({
   const effectiveOn = isOn || value > 0.02;
   const v = clamp(effectiveOn ? value : 0, 0, 1);
 
-  // Derive the active colour:
-  //   - off               → grey
-  //   - on + rgb from HA  → that RGB
-  //   - on + no rgb       → yellow fallback
+  // Derive the active colour
   const activeColor = effectiveOn
     ? rgbColor ? rgbToCss(rgbColor) : YELLOW
     : OFF_COLOR;
@@ -162,7 +151,7 @@ export default function LargeLightTile({
     });
   }, [onChange, entityId]);
 
-  /* ── colour helpers ─────────────────────────────────────────────────────── */
+  // colour helpers
   const sendColor = async (color: RgbColor, brightness: number) => {
     try {
       await setLight({
@@ -189,7 +178,7 @@ export default function LargeLightTile({
     await sendColor(color, brightness);
   };
 
-  /* ── colour temp helpers ────────────────────────────────────────────────── */
+  // colour temp helpers
   const sendColorTemp = async (kelvin: number, brightness: number) => {
     try {
       await setLight({
@@ -215,7 +204,7 @@ export default function LargeLightTile({
     await sendColorTemp(kelvin, brightness);
   };
 
-  /* ── initial colour seed for the picker ────────────────────────────────── */
+  //  initial colour seed for the picker
   // Convert HA rgb_color [0-255] → HSV [0-1] for the modal's initialColor.
   // Falls back to a warm yellow if no colour data exists yet.
   const initialPickerColor = useMemo(() => {
@@ -239,7 +228,6 @@ export default function LargeLightTile({
     <>
       <Card variant="large">
         <View onLayout={onLayout} className="flex-1 pt-1.5 items-center">
-          {/* menu → opens colour picker */}
           <View style={{ position: "absolute", top: 1, right: 1, zIndex: 10 }}>
             <Pressable
               onPress={() => {

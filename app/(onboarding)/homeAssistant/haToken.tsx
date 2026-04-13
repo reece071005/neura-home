@@ -5,8 +5,8 @@ import React, { useState } from "react";
 import { setOnboardingToken, getOnboardingData } from "@/lib/storage/onboardingStore";
 import { finalizeOnboarding } from "@/services/finalizeOnboarding";
 
-import GradientButton from "@/components/GradientButton";
-import GradientTextInput from "@/components/GradientTextInput";
+import GradientButton from "@/components/general/GradientButton";
+import GradientTextInput from "@/components/general/GradientTextInput";
 import SignInIllustration from "@/assets/illustrations/signIn.svg";
 
 const HaLogin = () => {

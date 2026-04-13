@@ -1,4 +1,4 @@
-// app/(drawer)/(tabs)/shared/DashboardScreen.tsx
+// DashboardScreen.tsx
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { router } from "expo-router";
 import { ScrollView, View, RefreshControl } from "react-native";
@@ -9,12 +9,13 @@ import { useDashboardWidgetsStore, buildLayoutFromItems } from "@/lib/storage/da
 import { setLight } from "@/lib/api/deviceControllers/light";
 import { setCover } from "@/lib/api/deviceControllers/cover";
 import { setClimate } from "@/lib/api/deviceControllers/climate";
+
 import type { ClimateHvacMode } from "@/lib/api/deviceControllers/climate";
 
 import { useDashboardState } from "@/lib/hooks/useDashboardState";
 import { getDashboardEntityIds } from "@/lib/dashboard/getDashboardEntityIds";
 
-import { getDashboardState, type DashboardStateV2 } from "@/lib/api/userState";
+import { getAISuggestions } from "@/lib/api/ai/aiGetSuggestions";
 
 import { RenderRow } from "@/components/dashboard/DashboardRenderer";
 import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
@@ -23,9 +24,8 @@ import type { RgbColor } from "@/components/dashboard/widgets/lights/LightModal"
 const GAP = 8;
 
 export default function DashboardScreen() {
-  // -------------------------
+  const aiRoom = "Master Bedroom";
   // Layout
-  // -------------------------
   const items = useDashboardWidgetsStore((s) => s.items);
 
   const layout = useMemo(() => buildLayoutFromItems(items), [items]);
@@ -33,9 +33,7 @@ export default function DashboardScreen() {
 
   const dashboardEntityIds = useMemo(() => getDashboardEntityIds(layout), [layout]);
 
-  // -------------------------
   // Live state from backend polling
-  // -------------------------
   const {
     lightOnMap,
     lightValues,
@@ -48,13 +46,11 @@ export default function DashboardScreen() {
     presenceMap,
     refreshNow,
     setLightOnMap,
-    setLightColorMap,   // ← for optimistic colour updates
+    setLightColorMap,
     setCoverPosMap,
   } = useDashboardState(dashboardEntityIds);
 
-  // -------------------------
-  // Pull-to-refresh
-  // -------------------------
+  // Pull to refresh
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -66,9 +62,7 @@ export default function DashboardScreen() {
     }
   }, [refreshNow]);
 
-  // -------------------------
   // Fan (UI-only overrides for slider)
-  // -------------------------
   const [fanPctOverrides, setFanPctOverrides] = useState<Record<string, number>>({});
   const mergedFanPctMap = useMemo(
     () => ({ ...fanPctMap, ...fanPctOverrides }),
@@ -79,9 +73,7 @@ export default function DashboardScreen() {
     setFanPctOverrides((prev) => ({ ...prev, [entityId]: pct }));
   };
 
-  // -------------------------
   // Light (UI-only overrides for large slider)
-  // -------------------------
   const [lightValueOverrides, setLightValueOverrides] = useState<Record<string, number>>({});
   const pendingLightRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -148,8 +140,7 @@ export default function DashboardScreen() {
     }, 5000);
   };
 
-  // Optimistically update lightColorMap when the picker commits a colour
-  // so the tile updates immediately without waiting for the next HA poll.
+  // Optimistically update lightColorMap when the picker commits a colour, tile updates immediately without waiting for the next HA poll.
   const onColorCommit = useCallback((entityId: string, color: RgbColor) => {
     setLightColorMap((prev) => ({
       ...prev,
@@ -157,9 +148,7 @@ export default function DashboardScreen() {
     }));
   }, [setLightColorMap]);
 
-  // -------------------------
   // Cover
-  // -------------------------
   const onChangeCover = async (entityId: string, nextPos: number) => {
     const prev = coverPosMap[entityId] ?? 0;
 
@@ -173,9 +162,7 @@ export default function DashboardScreen() {
     }
   };
 
-  // -------------------------
   // Climate
-  // -------------------------
   const [climateModeOverrides, setClimateModeOverrides] = useState<
     Record<string, ClimateHvacMode>
   >({});
@@ -224,9 +211,30 @@ export default function DashboardScreen() {
     } catch {}
   };
 
-  // -------------------------
+  //Load AI suggestion
+  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadAISuggestions = async () => {
+      try {
+        const res = await getAISuggestions(aiRoom);
+
+        if (res.ok) {
+          setAiSuggestions(res.suggestions ?? []);
+        }
+      } catch (err) {
+        console.log("AI suggestions error", err);
+      }
+    };
+
+    loadAISuggestions();
+
+    const interval = setInterval(loadAISuggestions, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Render
-  // -------------------------
   return (
     <SafeAreaView edges={["top"]} className="flex-1">
       <ScrollView
@@ -267,6 +275,8 @@ export default function DashboardScreen() {
                 coverPosMap={coverPosMap}
                 onChangeCover={onChangeCover}
                 presenceMap={presenceMap}
+                aiSuggestions={aiSuggestions}
+                room={aiRoom}
               />
             ))
           )}

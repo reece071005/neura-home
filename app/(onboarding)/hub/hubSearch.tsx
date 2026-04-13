@@ -2,7 +2,7 @@ import {Image, Pressable, Text, View} from 'react-native';
 import {router, useFocusEffect, useLocalSearchParams } from "expo-router"
 import React, { useCallback, useRef } from 'react';
 
-import Spinner from "@/components/Spinner";
+import Spinner from "@/components/general/Spinner";
 
 import {startHubDiscovery, checkHubAddress} from "@/services/hubDiscovery";
 

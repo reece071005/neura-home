@@ -4,8 +4,8 @@ import { router } from "expo-router";
 
 import { setOnboardingAccount } from "@/lib/storage/onboardingStore";
 
-import GradientButton from "@/components/GradientButton";
-import GradientTextInput from "@/components/GradientTextInput";
+import GradientButton from "@/components/general/GradientButton";
+import GradientTextInput from "@/components/general/GradientTextInput";
 import SignInIllustration from "@/assets/illustrations/signIn.svg";
 
 const HubNewAccount = () => {

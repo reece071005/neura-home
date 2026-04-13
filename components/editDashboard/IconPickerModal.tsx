@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Modal, Pressable, View, Text, TextInput, FlatList } from "react-native";
 import * as mdi from "@mdi/js";
-import MdiIcon from "@/components/MdiIcon";
+import MdiIcon from "@/components/general/MdiIcon";
 
 type Props = {
     visible: boolean;

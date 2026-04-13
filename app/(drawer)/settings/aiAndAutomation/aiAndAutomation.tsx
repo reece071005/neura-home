@@ -7,10 +7,10 @@ import { mdiPencil } from "@mdi/js";
 import {AvailableCamera, getAvailableCameras, getTrackedCameras, addTrackedCamera, removeTrackedCamera} from "@/lib/api/deviceControllers/camera";
 import { getRooms } from "@/lib/api/ai/rooms";
 
-import GradientButton from "@/components/GradientButton";
-import AddCameraModal from "@/components/AddCameraModal";
-import ConfirmDialog from "@/components/ConfirmDialog";
-import MdiIcon from "@/components/MdiIcon";
+import GradientButton from "@/components/general/GradientButton";
+import AddCameraModal from "@/components/cameras/AddCameraModal";
+import ConfirmDialog from "@/components/general/ConfirmDialog";
+import MdiIcon from "@/components/general/MdiIcon";
 import SectionCard from "@/components/aiAndAutomation/SectionCard";
 import Row from "@/components/aiAndAutomation/Row";
 

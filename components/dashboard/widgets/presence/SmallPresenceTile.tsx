@@ -1,4 +1,4 @@
-// components/dashboard/widgets/SmallPresenceTile.tsx
+// SmallPresenceTile.tsx
 import React from "react";
 import { View, Text } from "react-native";
 import Card from "@/components/dashboard/Card";

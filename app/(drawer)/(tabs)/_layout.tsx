@@ -1,10 +1,10 @@
+// _layout.tsx
 import { Tabs } from "expo-router";
 import { View, ActivityIndicator } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import MdiIcon from "@/components/MdiIcon";
+import MdiIcon from "@/components/general/MdiIcon";
 import { useDashboardWidgetsStore } from "@/lib/storage/dashboardWidgetStore";
 import { useHydrateDashboardsFromDb } from "@/lib/hooks/useHydrateDashboardsFromDb";
-
 
 import {
     mdiMicrophone,
@@ -58,15 +58,14 @@ export default function TabsLayout() {
                     sceneStyle: { backgroundColor: "transparent" },
                 }}
             >
-                {/* Hide shared renderer route from tab bar */}
                 <Tabs.Screen name="shared/DashboardScreen" options={{ href: null }} />
 
-                {/* Dashboard slots (dynamic show/hide) */}
+                {/* Dashboard slots */}
                 <Tabs.Screen name="dash0" options={dashTabOptions(d0)} />
                 <Tabs.Screen name="dash1" options={dashTabOptions(d1)} />
                 <Tabs.Screen name="dash2" options={dashTabOptions(d2)} />
 
-                {/* Always present */}
+                {/* VA Slot */}
                 <Tabs.Screen
                     name="voiceAssistant"
                     options={{

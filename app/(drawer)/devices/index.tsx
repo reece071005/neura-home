@@ -1,8 +1,9 @@
+// index.tsx
 import React from "react";
 import { Pressable, Text, View, ScrollView } from "react-native";
 import { router, Stack } from "expo-router";
 
-import MdiIcon from "@/components/MdiIcon";
+import MdiIcon from "@/components/general/MdiIcon";
 
 import {
   mdiLightbulb,

@@ -4,7 +4,7 @@ import { View, Text, Pressable, Image, Dimensions, ActivityIndicator } from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
 
-import GradientButton from "@/components/GradientButton";
+import GradientButton from "@/components/general/GradientButton";
 
 import { addUserFace } from "@/lib/api/faces";
 

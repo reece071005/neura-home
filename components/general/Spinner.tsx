@@ -1,4 +1,4 @@
-import {View, Text, Animated} from 'react-native'
+import {Animated} from 'react-native'
 import React, {useEffect, useRef} from 'react'
 import SpinnerSvg from "@/assets/illustrations/spinner.svg"
 
