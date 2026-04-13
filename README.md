@@ -14,7 +14,7 @@ An AI-driven smart home platform that learns user routines from time-series sens
   &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="https://www.youtube.com/watch?v=8MGqcfFiD_Q">
     <img src="https://cdn.simpleicons.org/youtube" width="18" style="vertical-align: middle;" />
-    Demo Video
+    Demo&nbsp;Video
   </a>
   &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="https://www.instagram.com/neurahome42">
@@ -27,11 +27,11 @@ An AI-driven smart home platform that learns user routines from time-series sens
   </a>
   &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="/docs/NeuraHomeTechnicalPoster.png">
-    🧠 Technical Poster
+    🧠&nbsp;Technical&nbsp;Poster
   </a>
   &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="/docs/NeuraHomeMarketingPoster.png">
-    🎨 Marketing Poster
+    🎨&nbsp;Marketing&nbsp;Poster
   </a>
 </div>
 <br>
